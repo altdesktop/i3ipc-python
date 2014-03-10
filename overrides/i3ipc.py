@@ -8,7 +8,9 @@ __all__ = []
 
 class Connection(i3ipc.Connection):
     def main(self):
-        MainLoop().run()
+        main_loop = MainLoop()
+        self.connect('ipc_shutdown', lambda self: main_loop.quit())
+        main_loop.run()
 
 Connection = override(Connection)
 __all__.append('Connection')
