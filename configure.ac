@@ -7,7 +7,7 @@ AM_INIT_AUTOMAKE([-Wall -Werror foreign -Wno-portability])
 AM_PATH_PYTHON([3],, [:])
 
 PKG_CHECK_MODULES([PYGOBJECT], [pygobject-3.0])
-PKG_CHECK_MODULES([I3IPC], [i3ipc-glib-1.0])
+PKG_CHECK_MODULES([I3IPC], [i3ipc-glib-1.0 >= 0.1])
 
 AC_ARG_WITH([pygi_overrides_dir],
             AC_HELP_STRING([--with-pygi-overrides-dir], [Path to pygobject overrides directory]))
