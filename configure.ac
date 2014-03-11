@@ -1,6 +1,6 @@
 AC_PREREQ(2.69)
 
-AC_INIT([i3ipc-python], [0.0.1], [tony@dubstepdish.com])
+AC_INIT([i3ipc-python], [0.1.1], [tony@dubstepdish.com])
 
 AM_INIT_AUTOMAKE([-Wall -Werror foreign -Wno-portability])
 
