@@ -8,6 +8,8 @@ i3's interprocess communication (or [ipc](http://i3wm.org/docs/ipc.html)) is the
 
 i3ipc-python is a Python library for controlling the window manager. This project is intended to be useful for general scripting, and for applications that interact with the window manager like status line generators, notification daemons, and pagers.
 
+If you have an idea for a script to extend i3wm, you can add your script to the examples folder or make a [script request](https://github.com/acrisci/i3ipc-python/issues) on the issue tracker.
+
 ## Documentation
 
 The latest documentation can be found [here](http://dubstepdish.com/i3ipc-glib). i3ipc-python is a [GObject introspection](https://developer.gnome.org/gobject/stable/) library (kind of like [gtk](https://developer.gnome.org/)).
