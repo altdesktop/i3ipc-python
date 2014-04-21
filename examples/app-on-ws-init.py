@@ -3,7 +3,7 @@
 # https://faq.i3wm.org/question/3699/how-can-i-open-an-application-when-i-open-a-certain-workspace-for-the-first-time/
 
 from argparse import ArgumentParser
-from gi.repository import i3ipc
+from gi.repository import i3ipc, GLib
 
 i3 = i3ipc.Connection()
 
@@ -15,9 +15,9 @@ parser.add_argument('--command', metavar='CMD', help='The command to run on the 
 args = parser.parse_args()
 
 def on_workspace(i3, e):
-    if e.current.name == args.workspace and not len(e.current.leaves()):
+    if e.current.props.name == args.workspace and not len(e.current.leaves()):
         i3.command('exec {}'.format(args.command))
 
 i3.on('workspace::focus', on_workspace)
 
-i3.main()
+GLib.MainLoop().run()
