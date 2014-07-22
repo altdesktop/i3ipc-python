@@ -25,9 +25,8 @@ class FocusWatcher:
         self.listening_socket.listen(1)
 
     def on_window_focus(self, i3conn, event):
-        if event.change == 'focus':
-            self.old_window_id.value = self.window_id.value
-            self.window_id.value = event.container.props.id
+        self.old_window_id.value = self.window_id.value
+        self.window_id.value = event.container.props.id
 
     def launch_i3(self):
         self.i3.main()
