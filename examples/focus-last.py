@@ -66,6 +66,11 @@ if __name__ == '__main__':
     parser = ArgumentParser(prog='focus-last.py',
         description='''
         Focus last focused window.
+
+        This script should be launch from the .xsessionrc without argument.
+
+        Then you can bind this script with the `--switch` option to one of your
+        i3 keybinding.
         ''')
     parser.add_argument('--switch', dest='switch', action='store_true',
         help='Switch to the previous window', default=False)
