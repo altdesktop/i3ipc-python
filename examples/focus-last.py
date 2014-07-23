@@ -3,18 +3,17 @@
 import os
 import socket
 import selectors
+import threading
 from argparse import ArgumentParser
-from multiprocessing import Process, Value
 from gi.repository import i3ipc
 
 SOCKET_FILE = '/tmp/i3_focus_last'
+MAX_WIN_HISTORY = 15
 
 
 class FocusWatcher:
 
     def __init__(self):
-        self.window_id = Value('i', 0)
-        self.old_window_id = Value('i', 0)
         self.i3 = i3ipc.Connection()
         self.i3.on('window::focus', self.on_window_focus)
         self.listening_socket = socket.socket(socket.AF_UNIX,
@@ -23,10 +22,17 @@ class FocusWatcher:
             os.remove(SOCKET_FILE)
         self.listening_socket.bind(SOCKET_FILE)
         self.listening_socket.listen(1)
+        self.window_list = []
+        self.window_list_lock = threading.RLock()
 
     def on_window_focus(self, i3conn, event):
-        self.old_window_id.value = self.window_id.value
-        self.window_id.value = event.container.props.id
+        with self.window_list_lock:
+            window_id = event.container.props.id
+            if window_id in self.window_list:
+                self.window_list.remove(window_id)
+            self.window_list.insert(0, window_id)
+            if len(self.window_list) > MAX_WIN_HISTORY:
+                del self.window_list[MAX_WIN_HISTORY:]
 
     def launch_i3(self):
         self.i3.main()
@@ -41,10 +47,15 @@ class FocusWatcher:
         def read(conn):
             data = conn.recv(1024)
             if data == b'switch':
-                window_id = self.old_window_id.value
-                if window_id:
-                    self.i3.command('[con_id=%s] focus' %
-                        self.old_window_id.value)
+                with self.window_list_lock:
+                    tree = self.i3.get_tree()
+                    windows = set(w.id for w in tree.leaves())
+                    for window_id in self.window_list[1:]:
+                        if window_id not in windows:
+                            self.window_list.remove(window_id)
+                        else:
+                            self.i3.command('[con_id=%s] focus' % window_id)
+                            break
             elif not data:
                 selector.unregister(conn)
                 conn.close()
@@ -57,10 +68,10 @@ class FocusWatcher:
                 callback(key.fileobj)
 
     def run(self):
-        p_i3 = Process(target=self.launch_i3)
-        p_server = Process(target=self.launch_server)
-        for p in (p_i3, p_server):
-            p.start()
+        t_i3 = threading.Thread(target=self.launch_i3)
+        t_server = threading.Thread(target=self.launch_server)
+        for t in (t_i3, t_server):
+            t.start()
 
 if __name__ == '__main__':
     parser = ArgumentParser(prog='focus-last.py',
@@ -82,5 +93,5 @@ if __name__ == '__main__':
     else:
         client_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         client_socket.connect(SOCKET_FILE)
-        client_socket.send('switch'.encode('utf-8'))
+        client_socket.send(b'switch')
         client_socket.close()
