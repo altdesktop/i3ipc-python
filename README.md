@@ -2,6 +2,10 @@
 
 An improved Python library to control [i3wm](http://i3wm.org).
 
+## NOTICE
+
+This library will be merged into the main project, [i3ipc-GLib](https://github.com/acrisci/i3ipc-glib) soon in the v1.0.0 release of that project.
+
 ## About
 
 i3's interprocess communication (or [ipc](http://i3wm.org/docs/ipc.html)) is the interface i3wm uses to receive [commands](http://i3wm.org/docs/userguide.html#_list_of_commands) from client applications such as `i3-msg`. It also features a publish/subscribe mechanism for notifying interested parties of window manager events.
