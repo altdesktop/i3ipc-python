@@ -3,7 +3,7 @@
 # https://faq.i3wm.org/question/3699/how-can-i-open-an-application-when-i-open-a-certain-workspace-for-the-first-time/
 
 from argparse import ArgumentParser
-from gi.repository import i3ipc, GLib
+import i3ipc
 
 i3 = i3ipc.Connection()
 
@@ -20,4 +20,4 @@ def on_workspace(i3, e):
 
 i3.on('workspace::focus', on_workspace)
 
-GLib.MainLoop().run()
+i3.main()

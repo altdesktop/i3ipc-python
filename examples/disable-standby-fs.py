@@ -2,7 +2,7 @@
 
 from argparse import ArgumentParser
 from subprocess import call
-from gi.repository import i3ipc
+import i3ipc
 
 i3 = i3ipc.Connection()
 

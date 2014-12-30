@@ -2,10 +2,6 @@
 
 An improved Python library to control [i3wm](http://i3wm.org).
 
-## NOTICE
-
-This library will be merged into the main project, [i3ipc-GLib](https://github.com/acrisci/i3ipc-glib) soon in the v1.0.0 release of that project.
-
 ## About
 
 i3's interprocess communication (or [ipc](http://i3wm.org/docs/ipc.html)) is the interface i3wm uses to receive [commands](http://i3wm.org/docs/userguide.html#_list_of_commands) from client applications such as `i3-msg`. It also features a publish/subscribe mechanism for notifying interested parties of window manager events.
@@ -14,29 +10,20 @@ i3ipc-python is a Python library for controlling the window manager. This projec
 
 If you have an idea for a script to extend i3wm, you can add your script to the examples folder or make a [script request](https://github.com/acrisci/i3ipc-python/issues) on the issue tracker.
 
-## Documentation
-
-The latest documentation can be found [here](http://dubstepdish.com/i3ipc-glib). i3ipc-python is a [GObject introspection](https://developer.gnome.org/gobject/stable/) library (kind of like [gtk](https://developer.gnome.org/)).
-
 ## Installation
 
-i3ipc-python requires [i3ipc-GLib](https://github.com/acrisci/i3ipc-glib) and [PyGObject](https://wiki.gnome.org/action/show/Projects/PyGObject).
+i3ipc is on [PyPI](https://pypi.python.org/pypi/i3ipc).
 
-Then simply do:
+`pip install i3ipc`
 
-```shell
-./autogen.sh
-sudo make install
-```
-
-Or get someone to host a package for your distro.
+Right now, only Python 3 is supported.
 
 ## Example
 
 ```python
 #!/usr/bin/env python3
 
-from gi.repository import i3ipc
+import i3ipc
 
 # Create the Connection object that can be used to send commands and subscribe
 # to events.
@@ -60,11 +47,11 @@ def on_workspace(self, e):
     # with the data of the event sent from i3.
     if e.current:
         print('Windows on this workspace:')
-        for w in e.current.descendents():
+        for w in e.current.leaves():
             print(w.name)
 
 # Subscribe to the workspace event
-conn.on('workspace', on_workspace)
+conn.on('workspace::focus', on_workspace)
 
 # Start the main loop and wait for events to come in.
 conn.main()
@@ -72,12 +59,12 @@ conn.main()
 
 ## Contributing
 
-We should do what we can to make this library as "Pythonic" as good tastes allows. New features should be implemented on the main project at [i3ipc-GLib](https://github.com/acrisci/i3ipc-glib).
+Please feel free to report bugs, request features or add examples by submitting a pull request.
 
 ## License
 
-This work is available under the GNU General Public License (See COPYING).
+This work is available under a BSD license (see LICENSE)
 
-Copyright © 2014, Tony Crisci
+Copyright © 2015, Tony Crisci
 
 All rights reserved.

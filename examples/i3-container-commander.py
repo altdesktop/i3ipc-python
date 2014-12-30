@@ -8,7 +8,7 @@
 
 from argparse import ArgumentParser
 from subprocess import check_output
-from gi.repository import i3ipc
+import i3ipc
 
 i3 = i3ipc.Connection()
 

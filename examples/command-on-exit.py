@@ -7,8 +7,8 @@
 # This is the command to run
 COMMAND = [ 'echo', 'hello, world' ]
 
-from gi.repository import i3ipc
 from subprocess import Popen
+import i3ipc
 
 def on_shutdown(i3):
     Popen(COMMAND)

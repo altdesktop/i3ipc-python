@@ -13,7 +13,7 @@ def is_ws_floating(name):
 
     return False
 
-from gi.repository import i3ipc
+import i3ipc
 
 i3 = i3ipc.Connection()
 

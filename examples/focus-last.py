@@ -5,7 +5,7 @@ import socket
 import selectors
 import threading
 from argparse import ArgumentParser
-from gi.repository import i3ipc
+import i3ipc
 
 SOCKET_FILE = '/tmp/i3_focus_last'
 MAX_WIN_HISTORY = 15
