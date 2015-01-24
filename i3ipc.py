@@ -3,7 +3,6 @@
 import Xlib, struct, json, socket, re
 from Xlib import display
 from enum import Enum
-from pubsub import pub
 
 class MessageType(Enum):
     COMMAND = 0
