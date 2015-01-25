@@ -157,16 +157,8 @@ class Connection():
         Packs the given message type and payload. Turns the resulting
         message into a byte string.
         """
-        msg_magic = self.MAGIC
-        # Get the byte count instead of number of characters
-        msg_length = len(payload.encode('utf-8'))
-        msg_type = msg_type.value
-        # "struct.pack" returns byte string, decoding it for concatenation
-        msg_length = struct.pack('I', msg_length).decode('utf-8')
-        msg_type = struct.pack('I', msg_type).decode('utf-8')
-        message = '%s%s%s%s' % (msg_magic, msg_length, msg_type, payload)
-        # Encoding the message back to byte string
-        return message.encode('utf-8')
+        pb = payload.encode()
+        return self.MAGIC.encode() + struct.pack('=II', len(pb), msg_type.value) + pb
     
     def _unpack(self, data):
         """
