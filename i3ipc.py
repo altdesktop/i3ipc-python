@@ -14,7 +14,7 @@ class MessageType(Enum):
     GET_BAR_CONFIG = 6
     GET_VERSION = 7
 
-class Event():
+class Event(object):
     WORKSPACE =         (1 << 0)
     OUTPUT =            (1 << 1)
     MODE =              (1 << 2)
@@ -48,7 +48,7 @@ class OutputReply(_ReplyType):
 class WorkspaceReply(_ReplyType):
     pass
 
-class WorkspaceEvent():
+class WorkspaceEvent(object):
     def __init__(self, data, conn):
         self.change = data['change']
         self.current = None
@@ -60,22 +60,22 @@ class WorkspaceEvent():
         if 'old' in data and data['old']:
             self.old = Con(data['old'], None, conn)
 
-class GenericEvent():
+class GenericEvent(object):
     def __init__(self, data):
         self.change = data['change']
 
-class WindowEvent():
+class WindowEvent(object):
     def __init__(self, data, conn):
         self.change = data['change']
         self.container = Con(data['container'], None, conn)
 
-class BarconfigUpdateEvent():
+class BarconfigUpdateEvent(object):
     def __init__(self, data):
         self.id = data['id']
         self.hidden_state = data['hidden_state']
         self.mode = data['mode']
 
-class BindingInfo():
+class BindingInfo(object):
     def __init__(self, data):
         self.command = data['command']
         self.mods = data['mods']
@@ -83,12 +83,12 @@ class BindingInfo():
         self.symbol = data['symbol']
         self.input_type = data['input_type']
 
-class BindingEvent():
+class BindingEvent(object):
     def __init__(self, data):
         self.change = data['change']
         self.binding = BindingInfo(data['binding'])
 
-class _PubSub():
+class _PubSub(object):
     def __init__(self, conn):
         self.conn = conn
         self._subscriptions = []
@@ -117,7 +117,7 @@ class _PubSub():
                         s['handler'](self.conn)
 
 # this is for compatability with i3ipc-glib
-class _PropsObject():
+class _PropsObject(object):
     def __init__(self, obj):
         object.__setattr__(self, "_obj", obj)
 
@@ -130,7 +130,7 @@ class _PropsObject():
     def __setattr__(self, name, value):
         setattr(object.__getattribute__(self, "_obj"), name, value)
 
-class Connection():
+class Connection(object):
     MAGIC = 'i3-ipc'  # safety string for i3-ipc
     _chunk_size = 1024  # in bytes
     _timeout = 0.5  # in seconds
@@ -325,14 +325,14 @@ class Connection():
         self.sub_socket.close()
         self.sub_socket = None
 
-class Rect():
+class Rect(object):
     def __init__(self, data):
         self.x = data['x']
         self.y = data['y']
         self.height = data['height']
         self.width = data['width']
 
-class Con():
+class Con(object):
     def __init__(self, data, parent, conn):
         self.props = _PropsObject(self)
         self._conn = conn
