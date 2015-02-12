@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 
-import Xlib, struct, json, socket, re
-from Xlib import display
+import Xlib
+import struct
+import json
+import socket
+import re
 from enum import Enum
+from Xlib import display
+
 
 class MessageType(Enum):
     COMMAND = 0
@@ -14,16 +19,18 @@ class MessageType(Enum):
     GET_BAR_CONFIG = 6
     GET_VERSION = 7
 
+
 class Event(object):
-    WORKSPACE =         (1 << 0)
-    OUTPUT =            (1 << 1)
-    MODE =              (1 << 2)
-    WINDOW =            (1 << 3)
-    BARCONFIG_UPDATE =  (1 << 4)
-    BINDING =           (1 << 5)
+    WORKSPACE = (1 << 0)
+    OUTPUT = (1 << 1)
+    MODE = (1 << 2)
+    WINDOW = (1 << 3)
+    BARCONFIG_UPDATE = (1 << 4)
+    BINDING = (1 << 5)
 
 
 class _ReplyType(dict):
+
     def __getattr__(self, name):
             return self[name]
 
@@ -33,22 +40,29 @@ class _ReplyType(dict):
     def __delattr__(self, name):
         del self[name]
 
+
 class CommandReply(_ReplyType):
     pass
+
 
 class VersionReply(_ReplyType):
     pass
 
+
 class BarConfigReply(_ReplyType):
     pass
+
 
 class OutputReply(_ReplyType):
     pass
 
+
 class WorkspaceReply(_ReplyType):
     pass
 
+
 class WorkspaceEvent(object):
+
     def __init__(self, data, conn):
         self.change = data['change']
         self.current = None
@@ -60,22 +74,30 @@ class WorkspaceEvent(object):
         if 'old' in data and data['old']:
             self.old = Con(data['old'], None, conn)
 
+
 class GenericEvent(object):
+
     def __init__(self, data):
         self.change = data['change']
 
+
 class WindowEvent(object):
+
     def __init__(self, data, conn):
         self.change = data['change']
         self.container = Con(data['container'], None, conn)
 
+
 class BarconfigUpdateEvent(object):
+
     def __init__(self, data):
         self.id = data['id']
         self.hidden_state = data['hidden_state']
         self.mode = data['mode']
 
+
 class BindingInfo(object):
+
     def __init__(self, data):
         self.command = data['command']
         self.mods = data['mods']
@@ -83,12 +105,16 @@ class BindingInfo(object):
         self.symbol = data['symbol']
         self.input_type = data['input_type']
 
+
 class BindingEvent(object):
+
     def __init__(self, data):
         self.change = data['change']
         self.binding = BindingInfo(data['binding'])
 
+
 class _PubSub(object):
+
     def __init__(self, conn):
         self.conn = conn
         self._subscriptions = []
@@ -100,7 +126,8 @@ class _PubSub(object):
         if detailed_event.count('::') > 0:
             [event, detail] = detailed_event.split('::')
 
-        self._subscriptions.append({ 'event': event, 'detail': detail, 'handler': handler })
+        self._subscriptions.append({'event': event, 'detail': detail,
+                                    'handler': handler})
 
     def emit(self, event, data):
         detail = ''
@@ -117,7 +144,10 @@ class _PubSub(object):
                         s['handler'](self.conn)
 
 # this is for compatability with i3ipc-glib
+
+
 class _PropsObject(object):
+
     def __init__(self, obj):
         object.__setattr__(self, "_obj", obj)
 
@@ -130,6 +160,7 @@ class _PropsObject(object):
     def __setattr__(self, name, value):
         setattr(object.__getattribute__(self, "_obj"), name, value)
 
+
 class Connection(object):
     MAGIC = 'i3-ipc'  # safety string for i3-ipc
     _chunk_size = 1024  # in bytes
@@ -140,7 +171,8 @@ class Connection(object):
     def __init__(self):
         d = Xlib.display.Display()
         r = d.screen().root
-        data = r.get_property(d.get_atom('I3_SOCKET_PATH'), d.get_atom('UTF8_STRING'), 0, 9999)
+        data = r.get_property(d.get_atom('I3_SOCKET_PATH'),
+                              d.get_atom('UTF8_STRING'), 0, 9999)
 
         if not data.value:
             raise Exception('could not get i3 socket path')
@@ -158,14 +190,14 @@ class Connection(object):
         message into a byte string.
         """
         pb = payload.encode()
-        return self.MAGIC.encode() + struct.pack('=II', len(pb), msg_type.value) + pb
-    
+        s = struct.pack('=II', len(pb), msg_type.value)
+        return self.MAGIC.encode() + s + pb
+
     def _unpack(self, data):
         """
         Unpacks the given byte string and parses the result from JSON.
         Returns None on failure and saves data into "self.buffer".
         """
-        data_size = len(data)
         msg_magic, msg_length, msg_type = self._unpack_header(data)
         msg_size = self._struct_header_size + msg_length
         # XXX: Message shouldn't be any longer than the data
@@ -175,7 +207,8 @@ class Connection(object):
         """
         Unpacks the header of given byte string.
         """
-        return struct.unpack(self._struct_header, data[:self._struct_header_size])
+        return struct.unpack(self._struct_header,
+                             data[:self._struct_header_size])
 
     def _ipc_recv(self, sock):
         data = sock.recv(14)
@@ -237,7 +270,8 @@ class Connection(object):
         if events & Event.BINDING:
             events_obj.append("binding")
 
-        data = self._ipc_send(self.sub_socket, MessageType.SUBSCRIBE, json.dumps(events_obj))
+        data = self._ipc_send(
+            self.sub_socket, MessageType.SUBSCRIBE, json.dumps(events_obj))
         result = json.loads(data, object_hook=CommandReply)
         self.subscriptions |= events
         return result
@@ -282,7 +316,7 @@ class Connection(object):
         self.subscribe(self.subscriptions)
 
         while True:
-            if self.sub_socket == None:
+            if self.sub_socket is None:
                 break
 
             data, msg_type = self._ipc_recv(self.sub_socket)
@@ -325,14 +359,18 @@ class Connection(object):
         self.sub_socket.close()
         self.sub_socket = None
 
+
 class Rect(object):
+
     def __init__(self, data):
         self.x = data['x']
         self.y = data['y']
         self.height = data['height']
         self.width = data['width']
 
+
 class Con(object):
+
     def __init__(self, data, parent, conn):
         self.props = _PropsObject(self)
         self._conn = conn
@@ -340,8 +378,8 @@ class Con(object):
 
         # set simple properties
         ipc_properties = ['border', 'current_border_width', 'focused',
-                'fullscreen_mode', 'id', 'layout', 'mark', 'name',
-                'orientation', 'percent', 'type', 'urgent', 'window']
+                          'fullscreen_mode', 'id', 'layout', 'mark', 'name',
+                          'orientation', 'percent', 'type', 'urgent', 'window']
         for attr in ipc_properties:
             if attr in data:
                 setattr(self, attr, data[attr])
@@ -386,6 +424,7 @@ class Con(object):
 
     def descendents(self):
         descendents = []
+
         def collect_descendents(con):
             for c in con.nodes:
                 descendents.append(c)
@@ -401,7 +440,7 @@ class Con(object):
         leaves = []
 
         for c in self.descendents():
-            if not len(c.nodes) and c.type == "con" and c.parent.type != "dockarea":
+            if not c.nodes and c.type == "con" and c.parent.type != "dockarea":
                 leaves.append(c)
 
         return leaves
@@ -410,6 +449,7 @@ class Con(object):
         self._conn.command('[id="{}"] {}', self.id, command)
 
     def command_children(self):
+        # Unused; "command" is undefined
         if not len(self.nodes):
             return
 
@@ -421,6 +461,7 @@ class Con(object):
 
     def workspaces(self):
         workspaces = []
+
         def collect_workspaces(con):
             if con.type == "workspace" and not con.name.startswith('__'):
                 workspaces.append(con)
@@ -454,7 +495,8 @@ class Con(object):
         return [c for c in self.descendents() if re.search(pattern, c.name)]
 
     def find_classed(self, pattern):
-        return [c for c in self.descendents() if re.search(pattern, c.window_class)]
+        return [c for c in self.descendents()
+                if re.search(pattern, c.window_class)]
 
     def find_marked(self, pattern):
         return [c for c in self.descendents() if re.search(pattern, c.mark)]
