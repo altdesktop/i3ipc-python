@@ -408,6 +408,7 @@ class Con(object):
 
         if 'window_properties' in data:
             self.window_class = data['window_properties']['class']
+            self.window_instance = data['window_properties']['instance']
 
         self.rect = Rect(data['rect'])
 
