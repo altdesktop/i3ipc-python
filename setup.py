@@ -1,6 +1,7 @@
 from setuptools import setup, find_packages  # Always prefer setuptools over distutils
 from codecs import open  # To use a consistent encoding
 from os import path
+import sys
 
 here = path.abspath(path.dirname(__file__))
 
@@ -19,6 +20,14 @@ Examples:
 
 https://github.com/acrisci/i3ipc-python/tree/master/examples
 """
+
+install_requires = []
+if sys.version_info >= (3,):
+    install_requires.append('python3-xlib')
+else:
+    install_requires.append('python-xlib')
+if sys.version_info <= (3, 3):
+    install_requires.append('enum34')
 
 setup(
     name='i3ipc',
@@ -75,8 +84,8 @@ setup(
     # List run-time dependencies here.  These will be installed by pip when your
     # project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
-    # https://packaging.python.org/en/latest/technical.html#install-requires-vs-requirements-files
-    install_requires=['python3-xlib', 'enum34'],
+    # http://python-packaging-user-guide.readthedocs.org/en/latest/requirements.html
+    install_requires=install_requires,
 
     # List additional groups of dependencies here (e.g. development dependencies).
     # You can install these using the following syntax, for example:
