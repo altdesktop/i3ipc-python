@@ -239,7 +239,14 @@ class Connection(object):
         data = self.message(MessageType.GET_VERSION, '')
         return json.loads(data, object_hook=VersionReply)
 
-    def get_bar_config(self, bar_id):
+    def get_bar_config(self, bar_id=None):
+        # default to the first bar id
+        if not bar_id:
+            bar_config_list = self.get_bar_config_list()
+            if not bar_config_list:
+                return None
+            bar_id = bar_config_list[0]
+
         data = self.message(MessageType.GET_BAR_CONFIG, bar_id)
         return json.loads(data, object_hook=BarConfigReply)
 
