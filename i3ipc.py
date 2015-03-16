@@ -243,6 +243,10 @@ class Connection(object):
         data = self.message(MessageType.GET_BAR_CONFIG, bar_id)
         return json.loads(data, object_hook=BarConfigReply)
 
+    def get_bar_config_list(self):
+        data = self.message(MessageType.GET_BAR_CONFIG, '')
+        return json.loads(data)
+
     def get_outputs(self):
         data = self.message(MessageType.GET_OUTPUTS, '')
         return json.loads(data, object_hook=OutputReply)
