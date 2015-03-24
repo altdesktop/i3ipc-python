@@ -460,8 +460,7 @@ class Con(object):
     def command(self, command):
         self._conn.command('[id="{}"] {}', self.id, command)
 
-    def command_children(self):
-        # Unused; "command" is undefined
+    def command_children(self, command):
         if not len(self.nodes):
             return
 
