@@ -6,7 +6,6 @@ import json
 import socket
 import re
 from enum import Enum
-from Xlib import display
 
 
 class MessageType(Enum):
