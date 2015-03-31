@@ -1,21 +1,13 @@
 from setuptools import setup
 from os import path
 import sys
+from subprocess import Popen, PIPE
 
-here = path.abspath(path.dirname(__file__))
+readme_path = path.join(path.abspath(path.dirname(__file__)), 'README.md')
+long_description = ''
 
-long_description = """
-i3ipc is a library for creating scripts and extensions to interact with i3. You
-can send commands or respond to window manager events.
-
-For more information on the ipc interface:
-
-http://i3wm.org/docs/ipc.html
-
-Examples:
-
-https://github.com/acrisci/i3ipc-python/tree/master/examples
-"""
+with Popen(['pandoc', 'README.md', '-t', 'rst'], stdout=PIPE) as proc:
+    long_description = proc.stdout.read().decode('utf-8')
 
 install_requires = []
 if sys.version_info >= (3,):
