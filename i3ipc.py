@@ -461,7 +461,7 @@ class Con(object):
         return leaves
 
     def command(self, command):
-        self._conn.command('[id="{}"] {}', self.id, command)
+        self._conn.command('[con_id="{}"] {}'.format(self.id, command))
 
     def command_children(self, command):
         if not len(self.nodes):
@@ -469,7 +469,7 @@ class Con(object):
 
         commands = []
         for c in self.nodes:
-            commands.append('[id="{}" {};', self.id, command)
+            commands.append('[con_id="{}" {};'.format(self.id, command))
 
         self._conn.command(' '.join(commands))
 
