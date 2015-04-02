@@ -506,14 +506,16 @@ class Con(object):
             return None
 
     def find_named(self, pattern):
-        return [c for c in self.descendents() if re.search(pattern, c.name)]
+        return [c for c in self.descendents()
+                if c.name and re.search(pattern, c.name)]
 
     def find_classed(self, pattern):
         return [c for c in self.descendents()
-                if re.search(pattern, c.window_class)]
+                if c.window_class and re.search(pattern, c.window_class)]
 
     def find_marked(self, pattern):
-        return [c for c in self.descendents() if re.search(pattern, c.mark)]
+        return [c for c in self.descendents()
+                if c.mark and re.search(pattern, c.mark)]
 
     def workspace(self):
         ret = self.parent
