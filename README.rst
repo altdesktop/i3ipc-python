@@ -31,7 +31,7 @@ i3ipc is on `PyPI <https://pypi.python.org/pypi/i3ipc>`__.
 
 ``pip install i3ipc``
 
-Right now, only Python 3 is supported.
+You'll also need ``python-gobject`` and ``python-dbus`` from your package manager.
 
 Example
 -------
