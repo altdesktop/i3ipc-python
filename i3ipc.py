@@ -393,6 +393,8 @@ class Con(object):
         for attr in ipc_properties:
             if attr in data:
                 setattr(self, attr, data[attr])
+            else:
+                setattr(self, attr, None)
 
         # XXX this is for compatability with 4.8
         if isinstance(self.type, int):
@@ -416,6 +418,8 @@ class Con(object):
         for n in data['floating_nodes']:
             self.nodes.append(Con(n, self, conn))
 
+        self.window_class = None
+        self.window_instance = None
         if 'window_properties' in data:
             self.window_class = data['window_properties']['class']
             self.window_instance = data['window_properties']['instance']
