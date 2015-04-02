@@ -1,17 +1,10 @@
 from setuptools import setup
 from os import path
-import sys
 
 readme_path = path.join(path.abspath(path.dirname(__file__)), 'README.rst')
 long_description = open(readme_path).read()
 
-install_requires = []
-if sys.version_info >= (3,):
-    install_requires.append('python3-xlib')
-else:
-    install_requires.append('python-xlib')
-if sys.version_info <= (3, 3):
-    install_requires.append('enum34')
+install_requires = ['python3-xlib', 'enum34']
 
 setup(
     name='i3ipc',
