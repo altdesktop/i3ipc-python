@@ -1,13 +1,9 @@
 from setuptools import setup
 from os import path
 import sys
-from subprocess import Popen, PIPE
 
-readme_path = path.join(path.abspath(path.dirname(__file__)), 'README.md')
-long_description = ''
-
-with Popen(['pandoc', 'README.md', '-t', 'rst'], stdout=PIPE) as proc:
-    long_description = proc.stdout.read().decode('utf-8')
+readme_path = path.join(path.abspath(path.dirname(__file__)), 'README.rst')
+long_description = open(readme_path).read().decode('utf-8')
 
 install_requires = []
 if sys.version_info >= (3,):
