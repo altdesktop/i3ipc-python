@@ -3,7 +3,7 @@ from os import path
 import sys
 
 readme_path = path.join(path.abspath(path.dirname(__file__)), 'README.rst')
-long_description = open(readme_path).read().decode('utf-8')
+long_description = open(readme_path).read()
 
 install_requires = []
 if sys.version_info >= (3,):
@@ -15,7 +15,7 @@ if sys.version_info <= (3, 3):
 
 setup(
     name='i3ipc',
-    version='1.1.2',
+    version='1.1.3',
     description='An improved Python library for i3wm extensions',
     long_description=long_description,
     url='https://github.com/acrisci/i3ipc-python',
