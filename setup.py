@@ -8,7 +8,7 @@ install_requires = ['python3-xlib', 'enum34']
 
 setup(
     name='i3ipc',
-    version='1.1.3',
+    version='1.1.4',
     description='An improved Python library for i3wm extensions',
     long_description=long_description,
     url='https://github.com/acrisci/i3ipc-python',
