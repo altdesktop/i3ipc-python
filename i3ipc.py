@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-import Xlib
 import struct
 import json
 import socket
 import re
 from enum import Enum
+from Xlib import display
 
 
 class MessageType(Enum):
@@ -168,7 +168,7 @@ class Connection(object):
     _struct_header_size = struct.calcsize(_struct_header)
 
     def __init__(self):
-        d = Xlib.display.Display()
+        d = display.Display()
         r = d.screen().root
         data = r.get_property(d.get_atom('I3_SOCKET_PATH'),
                               d.get_atom('UTF8_STRING'), 0, 9999)
