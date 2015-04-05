@@ -421,8 +421,10 @@ class Con(object):
         self.window_class = None
         self.window_instance = None
         if 'window_properties' in data:
-            self.window_class = data['window_properties']['class']
-            self.window_instance = data['window_properties']['instance']
+            if 'class' in data['window_properties']:
+                self.window_class = data['window_properties']['class']
+            if 'instance' in data['window_properties']:
+                self.window_instance = data['window_properties']['instance']
 
         self.rect = Rect(data['rect'])
 
