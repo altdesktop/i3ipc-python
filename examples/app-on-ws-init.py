@@ -7,10 +7,14 @@ import i3ipc
 
 i3 = i3ipc.Connection()
 
-parser = ArgumentParser(description='Open an application on a given workspace when it is initialized')
+parser = ArgumentParser(description="""Open the given application each time the
+    given workspace is created. For instance, running 'app-on-ws-init.py 6 
+    i3-sensible-terminal' should open your terminal as soon as you create the 
+    workspace 6.
+    """)
 
-parser.add_argument('--workspace', metavar='NAME', help='The name of the workspace')
-parser.add_argument('--command', metavar='CMD', help='The command to run on the newly initted workspace')
+parser.add_argument('workspace', metavar='WS_NAME', help='The name of the workspace')
+parser.add_argument('command', metavar='CMD', help='The command to run on the newly initted workspace')
 
 args = parser.parse_args()
 
