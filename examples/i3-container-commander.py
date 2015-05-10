@@ -52,7 +52,7 @@ else:
     menu_args = ['-i', '-f']
 
 def find_group(container):
-    return str(container.get_property(args.group_by)) if args.group_by != 'none' else ''
+    return str(getattr(container, args.group_by)) if args.group_by != 'none' else ''
 
 def show_menu(items, prompt):
     menu_input = bytes(str.join('\n', items), 'UTF-8')
