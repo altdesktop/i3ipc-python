@@ -8,8 +8,8 @@ import i3ipc
 i3 = i3ipc.Connection()
 
 parser = ArgumentParser(description="""Open the given application each time the
-    given workspace is created. For instance, running 'app-on-ws-init.py 6 
-    i3-sensible-terminal' should open your terminal as soon as you create the 
+    given workspace is created. For instance, running 'app-on-ws-init.py 6
+    i3-sensible-terminal' should open your terminal as soon as you create the
     workspace 6.
     """)
 
