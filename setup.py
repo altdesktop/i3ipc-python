@@ -1,10 +1,16 @@
+from sys import version_info
+
 from setuptools import setup
 from os import path
 
 readme_path = path.join(path.abspath(path.dirname(__file__)), 'README.rst')
 long_description = open(readme_path).read()
 
-install_requires = ['python3-xlib', 'enum34']
+install_requires = ['python3-xlib']
+if version_info < (3, 4, 0):
+    # Python versions < 3.4 require "enum34" to be installed, Python 3.5 seems
+    # easily broken by this library...
+    install_requires.append("enum34")
 
 setup(
     name='i3ipc',
