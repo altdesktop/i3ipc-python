@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
 
 """
-focus_next_visible.py - cycles input focus between visible windows on workspace
-
- - requires https://github.com/acrisci/i3ipc-python
+focus-next-visible.py - cycles input focus between visible windows on workspace
 
  Usage:
 
     # focus next visible window
-    bindsym $mod+n exec --no-startup-id focus_next_visible.py
+    bindsym $mod+n exec --no-startup-id focus-next-visible.py
 
     # focus previous visible window
-    bindsym $mod+Shift+n exec --no-startup-id focus_next_visible.py reverse
+    bindsym $mod+Shift+n exec --no-startup-id focus-next-visible.py reverse
 
 
 https://faq.i3wm.org/question/6937/move-focus-from-tabbed-container-to-win...
