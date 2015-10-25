@@ -4,7 +4,7 @@ from os import path
 readme_path = path.join(path.abspath(path.dirname(__file__)), 'README.rst')
 long_description = open(readme_path).read()
 
-install_requires = ['python3-xlib', 'enum34']
+install_requires = ['python3-xlib', 'enum-compat']
 
 setup(
     name='i3ipc',
