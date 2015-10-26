@@ -3,6 +3,8 @@
 """
 focus-next-visible.py - cycles input focus between visible windows on workspace
 
+- requires the `xprop` utility
+
  Usage:
 
     # focus next visible window
