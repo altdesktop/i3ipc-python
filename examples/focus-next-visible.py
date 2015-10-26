@@ -31,7 +31,12 @@ def get_windows_on_ws(conn):
 def find_visible_windows(windows_on_workspace):
     visible_windows = []
     for w in windows_on_workspace:
-        xprop = check_output(['xprop', '-id', str(w.window)]).decode()
+     
+        try:
+            xprop = check_output(['xprop', '-id', str(w.window)]).decode()
+        except FileNotFoundError:
+            raise SystemExit("The `xprop` utility is not found!"
+                             " Please install it and retry.")
 
         if '_NET_WM_STATE_HIDDEN' not in xprop:
             visible_windows.append(w)
