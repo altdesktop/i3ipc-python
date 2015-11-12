@@ -3,6 +3,7 @@
 import struct
 import json
 import socket
+import os
 import re
 from enum import Enum
 from Xlib import display
@@ -167,19 +168,24 @@ class Connection(object):
     _struct_header = '<%dsII' % len(MAGIC.encode('utf-8'))
     _struct_header_size = struct.calcsize(_struct_header)
 
-    def __init__(self):
-        d = display.Display()
-        r = d.screen().root
-        data = r.get_property(d.get_atom('I3_SOCKET_PATH'),
-                              d.get_atom('UTF8_STRING'), 0, 9999)
+    def __init__(self, socket_path=None):
+        if not socket_path:
+            socket_path = os.environ.get("I3SOCK")
 
-        if not data.value:
-            raise Exception('could not get i3 socket path')
+        if not socket_path:
+            d = display.Display()
+            r = d.screen().root
+            data = r.get_property(d.get_atom('I3_SOCKET_PATH'),
+                                  d.get_atom('UTF8_STRING'), 0, 9999)
+
+            if not data.value:
+                raise Exception('could not get i3 socket path')
+            socket_path = data.value
 
         self._pubsub = _PubSub(self)
         self.props = _PropsObject(self)
         self.subscriptions = 0
-        self.socket_path = data.value
+        self.socket_path = socket_path
         self.cmd_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.cmd_socket.connect(self.socket_path)
 
