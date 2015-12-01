@@ -526,6 +526,10 @@ class Con(object):
         return [c for c in self.descendents()
                 if c.mark and re.search(pattern, c.mark)]
 
+    def find_fullscreen(self):
+        return [c for c in self.descendents()
+                if c.type == 'con' and c.fullscreen_mode]
+
     def workspace(self):
         ret = self.parent
 
