@@ -522,7 +522,7 @@ class Con(object):
         return [c for c in self.descendents()
                 if c.window_class and re.search(pattern, c.window_class)]
 
-    def find_marked(self, pattern):
+    def find_marked(self, pattern=".*"):
         return [c for c in self.descendents()
                 if c.mark and re.search(pattern, c.mark)]
 
