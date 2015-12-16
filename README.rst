@@ -44,6 +44,11 @@ Example
     # to events.
     i3 = i3ipc.Connection()
 
+    # Print the name of the focused window
+    focused = i3.get_tree().find_focused()
+    print('Focused window %s is on workspace %s' %
+          (focused.name, focused.workspace().name))
+
     # Query the ipc for outputs. The result is a list that represents the parsed
     # reply of a command like `i3-msg -t get_outputs`.
     outputs = i3.get_outputs()
@@ -55,6 +60,10 @@ Example
 
     # Send a command to be executed synchronously.
     i3.command('focus left')
+
+    # Take all fullscreen windows out of fullscreen
+    for container in i3.get_tree().find_fullscreen():
+        container.command('fullscreen')
 
     # Define a callback to be called when you switch workspaces.
     def on_workspace_focus(self, e):
