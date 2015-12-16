@@ -42,11 +42,11 @@ Example
 
     # Create the Connection object that can be used to send commands and subscribe
     # to events.
-    conn = i3ipc.Connection()
+    i3 = i3ipc.Connection()
 
     # Query the ipc for outputs. The result is a list that represents the parsed
     # reply of a command like `i3-msg -t get_outputs`.
-    outputs = conn.get_outputs()
+    outputs = i3.get_outputs()
 
     print('Active outputs:')
 
@@ -54,10 +54,10 @@ Example
         print(output.name)
 
     # Send a command to be executed synchronously.
-    conn.command('focus left')
+    i3.command('focus left')
 
     # Define a callback to be called when you switch workspaces.
-    def on_workspace(self, e):
+    def on_workspace_focus(self, e):
         # The first parameter is the connection to the ipc and the second is an object
         # with the data of the event sent from i3.
         if e.current:
@@ -65,11 +65,11 @@ Example
             for w in e.current.leaves():
                 print(w.name)
 
-    # Subscribe to the workspace event
-    conn.on('workspace::focus', on_workspace)
+    # Subscribe to events when a workspace is focused
+    i3.on('workspace::focus', on_workspace_focus)
 
     # Start the main loop and wait for events to come in.
-    conn.main()
+    i3.main()
 
 Contributing
 ------------
