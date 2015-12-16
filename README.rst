@@ -74,8 +74,15 @@ Example
             for w in e.current.leaves():
                 print(w.name)
 
-    # Subscribe to events when a workspace is focused
+    # Dynamically name your workspaces after the current window class
+    def on_window_focus(i3, e):
+        focused = i3.get_tree().find_focused()
+        ws_name = "%s:%s" % (focused.workspace().num, focused.window_class)
+        i3.command('rename workspace to "%s"' % ws_name)
+
+    # Subscribe to events
     i3.on('workspace::focus', on_workspace_focus)
+    i3.on("window::focus", on_window_focus)
 
     # Start the main loop and wait for events to come in.
     i3.main()
