@@ -427,11 +427,14 @@ class Con(object):
 
         self.window_class = None
         self.window_instance = None
+        self.window_role = None
         if 'window_properties' in data:
             if 'class' in data['window_properties']:
                 self.window_class = data['window_properties']['class']
             if 'instance' in data['window_properties']:
                 self.window_instance = data['window_properties']['instance']
+            if 'window_role' in data['window_properties']:
+                self.window_role = data['window_properties']['window_role']
 
         self.rect = Rect(data['rect'])
 
@@ -513,6 +516,10 @@ class Con(object):
             return next(c for c in self.descendents() if c.window == window)
         except StopIteration:
             return None
+
+    def find_by_role(self, pattern):
+        return [c for c in self.descendents()
+                if c.window_role and re.search(pattern, c.window_role)]
 
     def find_named(self, pattern):
         return [c for c in self.descendents()
