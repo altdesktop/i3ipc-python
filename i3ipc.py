@@ -132,7 +132,7 @@ class _PubSub(object):
     def emit(self, event, data):
         detail = ''
 
-        if data:
+        if data and hasattr(data, 'change'):
             detail = data.change
 
         for s in self._subscriptions:
