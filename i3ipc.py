@@ -120,7 +120,7 @@ class _PubSub(object):
         self._subscriptions = []
 
     def subscribe(self, detailed_event, handler):
-        event = detailed_event.replace('_', '-')
+        event = detailed_event.replace('-', '_')
         detail = ''
 
         if detailed_event.count('::') > 0:
@@ -293,7 +293,7 @@ class Connection(object):
         return result
 
     def on(self, detailed_event, handler):
-        event = detailed_event.replace('_', '-')
+        event = detailed_event.replace('-', '_')
         detail = ''
 
         if detailed_event.count('::') > 0:
