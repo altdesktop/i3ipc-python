@@ -5,6 +5,7 @@ import json
 import socket
 import os
 import re
+import subprocess
 from enum import Enum
 
 
@@ -172,7 +173,12 @@ class Connection(object):
             socket_path = os.environ.get("I3SOCK")
 
         if not socket_path:
-            raise Exception('could not get i3 socket path')
+            try:
+                socket_path = subprocess.check_output(
+                    ['i3', '--get-socketpath'],
+                    close_fds=True, universal_newlines=True)
+            except:
+                raise Exception('Failed to retrieve the i3 IPC socket path')
 
         self._pubsub = _PubSub(self)
         self.props = _PropsObject(self)
