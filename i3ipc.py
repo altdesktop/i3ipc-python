@@ -292,10 +292,9 @@ class Connection(object):
 
     def on(self, detailed_event, handler):
         event = detailed_event.replace('-', '_')
-        detail = ''
 
         if detailed_event.count('::') > 0:
-            [event, detail] = detailed_event.split('::')
+            [event, __] = detailed_event.split('::')
 
         # special case: ipc-shutdown is not in the protocol
         if event == 'ipc-shutdown':
