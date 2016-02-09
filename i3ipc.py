@@ -5,6 +5,7 @@ import json
 import socket
 import os
 import re
+import time
 from enum import Enum
 from Xlib import display
 
@@ -220,6 +221,20 @@ class Connection(object):
 
         if len(data) == 0:
             # EOF
+            # try to reconnect 3 times to reconnect after reload
+            sock.close()
+            time.sleep(0.5)
+            
+            for i in range(3):
+                try:
+                    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                    sock.connect(self.socket_path)
+        
+                    self.cmd_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                    self.cmd_socket.connect(self.socket_path)
+                except Exception as e:
+                    continue
+                return 'reload', sock
             return '', 0
 
         msg_magic, msg_length, msg_type = self._unpack_header(data)
@@ -328,19 +343,25 @@ class Connection(object):
     def main(self):
         self.sub_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.sub_socket.connect(self.socket_path)
-
+        
         self.subscribe(self.subscriptions)
-
+        
         while True:
             if self.sub_socket is None:
+                self._pubsub.emit('exit', None)
                 break
-
+                
             data, msg_type = self._ipc_recv(self.sub_socket)
 
             if len(data) == 0:
                 # EOF
                 self._pubsub.emit('ipc-shutdown', None)
                 break
+            
+            if data == 'reload': # resubscribe to events
+                self.sub_socket = msg_type
+                self.subscribe(self.subscriptions)
+                continue
 
             data = json.loads(data)
             msg_type = 1 << (msg_type & 0x7f)
