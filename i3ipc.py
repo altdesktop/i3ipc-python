@@ -396,7 +396,7 @@ class Con(object):
         ipc_properties = ['border', 'current_border_width', 'focused',
                           'fullscreen_mode', 'id', 'layout', 'mark', 'name',
                           'orientation', 'percent', 'type', 'urgent', 'window',
-                          'num']
+                          'num', 'scratchpad_state']
         for attr in ipc_properties:
             if attr in data:
                 setattr(self, attr, data[attr])
