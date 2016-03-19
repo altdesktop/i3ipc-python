@@ -423,7 +423,7 @@ class Con(object):
 
         self.floating_nodes = []
         for n in data['floating_nodes']:
-            self.nodes.append(Con(n, self, conn))
+            self.floating_nodes.append(Con(n, self, conn))
 
         self.window_class = None
         self.window_instance = None
