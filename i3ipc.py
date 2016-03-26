@@ -5,8 +5,8 @@ import json
 import socket
 import os
 import re
+import subprocess
 from enum import Enum
-from Xlib import display
 
 
 class MessageType(Enum):
@@ -32,7 +32,7 @@ class Event(object):
 class _ReplyType(dict):
 
     def __getattr__(self, name):
-            return self[name]
+        return self[name]
 
     def __setattr__(self, name, value):
         self[name] = value
@@ -173,14 +173,12 @@ class Connection(object):
             socket_path = os.environ.get("I3SOCK")
 
         if not socket_path:
-            d = display.Display()
-            r = d.screen().root
-            data = r.get_property(d.get_atom('I3_SOCKET_PATH'),
-                                  d.get_atom('UTF8_STRING'), 0, 9999)
-
-            if not data.value:
-                raise Exception('could not get i3 socket path')
-            socket_path = data.value
+            try:
+                socket_path = subprocess.check_output(
+                    ['i3', '--get-socketpath'],
+                    close_fds=True, universal_newlines=True)
+            except:
+                raise Exception('Failed to retrieve the i3 IPC socket path')
 
         self._pubsub = _PubSub(self)
         self.props = _PropsObject(self)
@@ -294,10 +292,9 @@ class Connection(object):
 
     def on(self, detailed_event, handler):
         event = detailed_event.replace('-', '_')
-        detail = ''
 
         if detailed_event.count('::') > 0:
-            [event, detail] = detailed_event.split('::')
+            [event, __] = detailed_event.split('::')
 
         # special case: ipc-shutdown is not in the protocol
         if event == 'ipc-shutdown':
