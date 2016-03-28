@@ -176,7 +176,7 @@ class Connection(object):
             try:
                 socket_path = subprocess.check_output(
                     ['i3', '--get-socketpath'],
-                    close_fds=True, universal_newlines=True)
+                    close_fds=True, universal_newlines=True).strip()
             except:
                 raise Exception('Failed to retrieve the i3 IPC socket path')
 
