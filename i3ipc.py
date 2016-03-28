@@ -478,7 +478,7 @@ class Con(object):
 
         commands = []
         for c in self.nodes:
-            commands.append('[con_id="{}" {};'.format(self.id, command))
+            commands.append('[con_id="{}"] {};'.format(c.id, command))
 
         self._conn.command(' '.join(commands))
 
