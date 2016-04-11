@@ -217,6 +217,7 @@ class Connection(object):
     def _recv_robust(self, sock, size):
         """
         Receive size from sock, and retry if the recv() call was interrupted.
+        (this is only required for python2 compatability)
         """
         while True:
             try:
