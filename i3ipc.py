@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import errno
 import struct
 import json
 import socket
@@ -213,8 +214,19 @@ class Connection(object):
         return struct.unpack(self._struct_header,
                              data[:self._struct_header_size])
 
+    def _recv_robust(self, sock, size):
+        """
+        Receive size from sock, and retry if the recv() call was interrupted.
+        """
+        while True:
+            try:
+                return sock.recv(size)
+            except socket.error as e:
+                if e.errno != errno.EINTR:
+                    raise
+
     def _ipc_recv(self, sock):
-        data = sock.recv(14)
+        data = self._recv_robust(sock, 14)
 
         if len(data) == 0:
             # EOF
@@ -223,7 +235,7 @@ class Connection(object):
         msg_magic, msg_length, msg_type = self._unpack_header(data)
         msg_size = self._struct_header_size + msg_length
         while len(data) < msg_size:
-            data += sock.recv(msg_length)
+            data += self._recv_robust(sock, msg_length)
         return self._unpack(data), msg_type
 
     def _ipc_send(self, sock, message_type, payload):
