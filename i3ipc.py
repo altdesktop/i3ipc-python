@@ -404,7 +404,7 @@ class Con(object):
 
         # set simple properties
         ipc_properties = ['border', 'current_border_width', 'focused',
-                          'fullscreen_mode', 'id', 'layout', 'mark', 'marks', 'name',
+                          'fullscreen_mode', 'id', 'layout', 'marks', 'name',
                           'orientation', 'percent', 'type', 'urgent', 'window',
                           'num', 'scratchpad_state']
         for attr in ipc_properties:
@@ -413,14 +413,9 @@ class Con(object):
             else:
                 setattr(self, attr, None)
 
-        # Make sure marks is never None (use []) to simplify client code. Older
-        # versions of i3 used mark instead of marks, so collapse that into
-        # marks to provide a consistent API.
+        # Make sure marks is always a list to simplify client code.
         if not self.marks:
             self.marks = []
-            if self.mark:
-                self.marks.append(mark)
-            del self.mark
 
         # XXX this is for compatability with 4.8
         if isinstance(self.type, int):
