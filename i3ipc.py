@@ -404,7 +404,7 @@ class Con(object):
 
         # set simple properties
         ipc_properties = ['border', 'current_border_width', 'focused',
-                          'fullscreen_mode', 'id', 'layout', 'mark', 'name',
+                          'fullscreen_mode', 'id', 'layout', 'marks', 'name',
                           'orientation', 'percent', 'type', 'urgent', 'window',
                           'num', 'scratchpad_state']
         for attr in ipc_properties:
@@ -412,6 +412,10 @@ class Con(object):
                 setattr(self, attr, data[attr])
             else:
                 setattr(self, attr, None)
+
+        # Make sure marks is always a list to simplify client code.
+        if not self.marks:
+            self.marks = []
 
         # XXX this is for compatability with 4.8
         if isinstance(self.type, int):
@@ -540,8 +544,9 @@ class Con(object):
                 if c.window_class and re.search(pattern, c.window_class)]
 
     def find_marked(self, pattern=".*"):
+        pattern = re.compile(pattern)
         return [c for c in self.descendents()
-                if c.mark and re.search(pattern, c.mark)]
+                if any(pattern.search(mark) for mark in c.marks)]
 
     def find_fullscreen(self):
         return [c for c in self.descendents()
