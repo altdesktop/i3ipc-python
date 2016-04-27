@@ -447,6 +447,10 @@ class Con(object):
                 self.window_role = data['window_properties']['window_role']
 
         self.rect = Rect(data['rect'])
+        if 'window_rect' in data:
+            self.window_rect = Rect(data['window_rect'])
+        if 'deco_rect' in data:
+            self.deco_rect = Rect(data['deco_rect'])
 
     def root(self):
         if not self.parent:
