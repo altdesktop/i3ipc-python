@@ -413,9 +413,11 @@ class Con(object):
             else:
                 setattr(self, attr, None)
 
-        # Make sure marks is always a list to simplify client code.
+        # XXX in 4.12, marks is an array (old property was a string "mark")
         if not self.marks:
             self.marks = []
+            if 'mark' in data and data['mark']:
+                self.marks.append(data['mark'])
 
         # XXX this is for compatability with 4.8
         if isinstance(self.type, int):
