@@ -559,6 +559,9 @@ class Con(object):
                 if c.type == 'con' and c.fullscreen_mode]
 
     def workspace(self):
+        if self.type == 'workspace':
+            return self
+
         ret = self.parent
 
         while ret:
