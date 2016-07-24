@@ -2,7 +2,9 @@
 
 import i3ipc
 from argparse import ArgumentParser
-from subprocess import check_output, Popen
+from subprocess import check_output, Popen, PIPE, CalledProcessError
+from sys import exit
+from os.path import basename
 
 history = []
 
@@ -13,8 +15,10 @@ parser = ArgumentParser(prog='i3-cmd',
                         ''',
                         epilog='''
                         Additional arguments after "--" will be passed to
-                        dmenu.
+                        the menu command.
                         ''')
+
+parser.add_argument('--menu', default='dmenu', help='The menu command to run (ex: --menu=rofi)')
 
 try:
     with open('/tmp/i3-cmd-history') as f:
@@ -28,12 +32,24 @@ i3 = i3ipc.Connection()
 
 if len(menu_args) and menu_args[0] == '--':
     menu_args = menu_args[1:]
-else:
-    menu_args = ['-i', '-f']
 
-menu_cmd = ['dmenu'] + menu_args
-cmd = check_output(menu_cmd, input=bytes('\n'.join(history), 'UTF-8'))
-cmd = cmd.decode('UTF-8').strip()
+# set default menu args for supported menus
+if basename(args.menu) == 'dmenu':
+    menu_args += ['-i', '-f']
+elif basename(args.menu) == 'rofi':
+    menu_args += ['-show', '-dmenu', '-p', 'i3-cmd: ']
+
+cmd = ''
+
+try:
+    cmd = check_output([ args.menu ] + menu_args,
+            input=bytes('\n'.join(history), 'UTF-8')).decode('UTF-8').strip()
+except CalledProcessError as e:
+    exit(e.returncode)
+
+if not cmd:
+    # nothing to do
+    exit(0)
 
 result = i3.command(cmd)
 
