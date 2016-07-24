@@ -8,6 +8,7 @@
 
 from argparse import ArgumentParser
 from subprocess import check_output
+from os.path import basename
 import i3ipc
 
 i3 = i3ipc.Connection()
@@ -44,19 +45,29 @@ parser.add_argument('--item-format', metavar='FORMAT_STRING',
         template variables. (default: '{workspace.name}: {container.name}')
         ''')
 
+
+parser.add_argument('--menu',
+        default='dmenu',
+        help='The menu command to run (ex: --menu=rofi)')
+
 (args, menu_args) = parser.parse_known_args()
 
 if len(menu_args) and menu_args[0] == '--':
     menu_args = menu_args[1:]
-else:
-    menu_args = ['-i', '-f']
+
+# set default menu args for supported menus
+if basename(args.menu) == 'dmenu':
+    menu_args += ['-i', '-f']
+elif basename(args.menu) == 'rofi':
+    menu_args += [ '-show', '-dmenu' ]
+
 
 def find_group(container):
     return str(getattr(container, args.group_by)) if args.group_by != 'none' else ''
 
 def show_menu(items, prompt):
     menu_input = bytes(str.join('\n', items), 'UTF-8')
-    menu_cmd = ['dmenu'] + ['-l', str(len(items)), '-p', prompt] + menu_args
+    menu_cmd = [ args.menu ] + ['-l', str(len(items)), '-p', prompt] + menu_args
     menu_result = check_output(menu_cmd, input=menu_input)
     return menu_result.decode('UTF-8').strip()
 
