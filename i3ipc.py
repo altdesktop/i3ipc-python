@@ -349,7 +349,7 @@ class Connection(object):
 
             if len(data) == 0:
                 # EOF
-                self._pubsub.emit('ipc-shutdown', None)
+                self._pubsub.emit('ipc_shutdown', None)
                 break
 
             data = json.loads(data)
