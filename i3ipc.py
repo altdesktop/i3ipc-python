@@ -310,7 +310,7 @@ class Connection(object):
             [event, __] = detailed_event.split('::')
 
         # special case: ipc-shutdown is not in the protocol
-        if event == 'ipc-shutdown':
+        if event == 'ipc_shutdown':
             self._pubsub.subscribe(event, handler)
             return
 
