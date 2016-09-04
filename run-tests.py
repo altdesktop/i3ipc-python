@@ -11,21 +11,15 @@ import re
 import time
 
 PYTEST = 'py.test-3.5'
-XEPHYR = 'Xephyr'
-XVFB_RUN = 'xvfb-run'
+XVFB = 'Xvfb'
 I3_BINARY = 'i3'
 LOCKDIR = '/tmp'
 
 def check_dependencies():
-    if not which(XEPHYR):
-        print('Xephyr is required to run tests')
-        print('Command "%s" not found in PATH' % XEPHYR)
-        sys.exit(127)
-
-    if not which(XVFB_RUN):
+    if not which(XVFB):
         # TODO make this optional
         print('Xvfb is required to run tests')
-        print('Command "%s" not found in PATH' % XVFB_RUN)
+        print('Command "%s" not found in PATH' % XVFB)
         sys.exit(127)
 
     if not which(I3_BINARY):
@@ -41,9 +35,9 @@ def get_open_display():
     open_display = min([i for i in range(0, max(displays) + 2) if i not in displays])
     return open_display
 
-def start_xephyr(display):
-    process = Popen([XVFB_RUN, XEPHYR, ':%d' % display])
-    # wait for the lock file to make sure xephyr is running
+def start_server(display):
+    xvfb = Popen([XVFB, ':%d' % display])
+    # wait for the lock file to make sure the server is running
     lockfile = path.join(LOCKDIR, '.X%d-lock' % display)
     tries = 0
     while True:
@@ -53,13 +47,13 @@ def start_xephyr(display):
             tries += 1
 
             if tries > 100:
-                print('could not start Xephyr server')
-                process.kill()
+                print('could not start x server')
+                xvfb.kill()
                 sys.exit(1)
 
             time.sleep(0.1)
 
-    return process
+    return xvfb
 
 def run_pytest(display):
     env = os.environ.copy()
@@ -70,9 +64,9 @@ def run_pytest(display):
 def main():
     display = get_open_display()
 
-    with start_xephyr(display) as xephyr:
+    with start_server(display) as server:
         run_pytest(display)
-        xephyr.kill()
+        server.terminate()
 
 if __name__ == '__main__':
     main()
