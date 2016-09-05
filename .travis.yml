@@ -1,7 +1,9 @@
 language: python
+sudo: required
+dist: xenial
 python:
     - "3.5"
 before_install:
     - sudo apt-get update -qq
-    - sudo apt-get install xvfb
+    - sudo apt-get install xvfb i3
 script: ./run-tests.py
