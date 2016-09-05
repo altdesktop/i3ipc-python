@@ -32,7 +32,7 @@ def get_open_display():
     lock_re = re.compile(r'^\.X([0-9]+)-lock$')
     lock_files = [f for f in listdir(LOCKDIR) if lock_re.match(f)]
     displays = [int(lock_re.search(f).group(1)) for f in lock_files]
-    open_display = min([i for i in range(0, max(displays) + 2) if i not in displays])
+    open_display = min([i for i in range(0, max(displays or [0]) + 2) if i not in displays])
     return open_display
 
 def start_server(display):
