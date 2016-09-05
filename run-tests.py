@@ -27,6 +27,11 @@ def check_dependencies():
         print('Command "%s" not found in PATH' % I3_BINARY)
         sys.exit(127)
 
+    if not which(PYTEST):
+        print('pytest is required to run tests')
+        print('Command %s not found in PATH' % PYTEST)
+        sys.exit(127)
+
 def get_open_display():
     # TODO find the general lock directory
     lock_re = re.compile(r'^\.X([0-9]+)-lock$')
