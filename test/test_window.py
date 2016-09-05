@@ -15,6 +15,6 @@ class TestWindow(IpcTest):
 
     def test_window_event(self):
         self.i3.on('window', self.on_window)
-        self.i3.command('open')
+        self.open_window()
         self.main()
         assert self.event

@@ -44,5 +44,11 @@ class IpcTest:
         with quit_cv:
             quit_cv.notify()
 
+
+    def open_window(self):
+        # TODO: use gtk to open windows
+        self.i3.command('open')
+
+
     def __del__(self):
         i3_process.kill()
