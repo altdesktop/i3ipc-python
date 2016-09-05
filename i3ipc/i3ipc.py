@@ -187,6 +187,7 @@ class Connection(object):
         self.socket_path = socket_path
         self.cmd_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.cmd_socket.connect(self.socket_path)
+        self.sub_socket = None
 
     def _pack(self, msg_type, payload):
         """
@@ -382,7 +383,8 @@ class Connection(object):
             self._pubsub.emit(event_name, event)
 
     def main_quit(self):
-        self.sub_socket.close()
+        if self.sub_socket:
+            self.sub_socket.shutdown(socket.SHUT_WR)
         self.sub_socket = None
 
 
