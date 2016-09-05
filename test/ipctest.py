@@ -2,10 +2,13 @@ from subprocess import Popen, run
 import pytest
 import time
 import i3ipc
+import threading
+from threading import Thread, Condition
 
 class IpcTest:
     i3_process = None
     i3 = None
+    timeout_thread = None
 
     @classmethod
     @pytest.fixture(scope='class', autouse=True)
@@ -23,6 +26,23 @@ class IpcTest:
 
                 if tries > 100:
                     raise Exception('could not start i3')
+
+
+    def main(self):
+        """Start the main thread and wait for events with a timeout"""
+
+        def timeout_function(quit_cv: Condition):
+            with quit_cv:
+                quit_cv.wait(3)
+                self.i3.main_quit()
+
+        quit_cv = Condition()
+        self.timeout_thread = Thread(target=timeout_function, args=(quit_cv,))
+        self.timeout_thread.start()
+        self.i3.main()
+
+        with quit_cv:
+            quit_cv.notify()
 
     def __del__(self):
         i3_process.kill()

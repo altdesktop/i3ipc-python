@@ -3,6 +3,7 @@ import i3ipc
 import time
 import subprocess
 from subprocess import check_output
+from threading import Thread
 import sys
 
 class TestWindow(IpcTest):
@@ -10,10 +11,10 @@ class TestWindow(IpcTest):
 
     def on_window(self, i3, e):
         self.event = e
-        self.i3.main_quit()
+        i3.main_quit()
 
     def test_window_event(self):
         self.i3.on('window', self.on_window)
         self.i3.command('open')
-        self.i3.main()
+        self.main()
         assert self.event
