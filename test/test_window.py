@@ -14,6 +14,8 @@ class TestWindow(IpcTest):
         i3.main_quit()
 
     def test_window_event(self):
+        self.fresh_workspace()
+        workspaces = self.i3.get_workspaces()
         self.i3.on('window', self.on_window)
         self.open_window()
         self.main()

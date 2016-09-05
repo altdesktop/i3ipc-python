@@ -4,6 +4,8 @@ import time
 import i3ipc
 import threading
 from threading import Thread, Condition
+import math
+from random import random
 
 class IpcTest:
     i3_process = None
@@ -48,6 +50,15 @@ class IpcTest:
     def open_window(self):
         # TODO: use gtk to open windows
         self.i3.command('open')
+
+
+    def fresh_workspace(self):
+        workspaces = self.i3.get_workspaces()
+        while True:
+            new_name = str(math.floor(random() * 100000))
+            if not any(w for w in workspaces if w['name'] == new_name):
+                self.i3.command('workspace %s' % new_name)
+                return new_name
 
 
     def __del__(self):
