@@ -15,6 +15,6 @@ def on_shutdown(i3):
 
 i3 = i3ipc.Connection()
 
-i3.on('ipc-shutdown', on_shutdown)
+i3.on('ipc_shutdown', on_shutdown)
 
 i3.main()
