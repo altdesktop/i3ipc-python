@@ -6,4 +6,5 @@ python:
 before_install:
     - sudo apt-get update -qq
     - sudo apt-get install xvfb i3
+    - sudo pip install pytest
 script: ./run-tests.py

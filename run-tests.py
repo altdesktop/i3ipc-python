@@ -10,7 +10,7 @@ import sys
 import re
 import time
 
-PYTEST = 'py.test-3.5'
+PYTEST = 'pytest'
 XVFB = 'Xvfb'
 I3_BINARY = 'i3'
 LOCKDIR = '/tmp'
@@ -67,6 +67,7 @@ def run_pytest(display):
     subprocess.run([PYTEST], env=env)
 
 def main():
+    check_dependencies()
     display = get_open_display()
 
     with start_server(display) as server:
