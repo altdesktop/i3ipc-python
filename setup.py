@@ -27,6 +27,6 @@ setup(
         'Programming Language :: Python :: 3.4',
     ],
     keywords='i3 i3wm extensions add-ons',
-    py_modules=['i3ipc'],
+    packages=['i3ipc'],
     install_requires=install_requires,
 )
