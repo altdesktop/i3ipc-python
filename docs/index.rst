@@ -20,3 +20,7 @@ Indices and tables
 * :ref:`modindex`
 * :ref:`search`
 
+
+.. automodule:: i3ipc
+    :members:
+    :exclude-members: MessageType
