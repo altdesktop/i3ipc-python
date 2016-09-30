@@ -419,7 +419,12 @@ class Connection(object):
         return json.loads(data, object_hook=VersionReply)
 
     def get_bar_config(self, bar_id=None):
-        # default to the first bar id
+        """
+        Get the configuration of a single bar. Defaults to the first if none is
+        specified. Use ``get_bar_config_list()`` to obtain valid IDs.
+
+        :rtype: BarConfigReply
+        """
         if not bar_id:
             bar_config_list = self.get_bar_config_list()
             if not bar_config_list:
@@ -430,10 +435,18 @@ class Connection(object):
         return json.loads(data, object_hook=BarConfigReply)
 
     def get_bar_config_list(self):
+        """
+        Get list of bar IDs as active in the connected i3 session.
+
+        :rtype: List
+        """
         data = self.message(MessageType.GET_BAR_CONFIG, '')
         return json.loads(data)
 
     def get_outputs(self):
+        """
+        Get a list of outputs
+        """
         data = self.message(MessageType.GET_OUTPUTS, '')
         return json.loads(data, object_hook=OutputReply)
 
