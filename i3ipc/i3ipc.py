@@ -308,7 +308,14 @@ class Connection(object):
     executing commands, subscribing to window manager events, and querying the
     window manager for information about the current state of windows,
     workspaces, outputs, and the i3bar. For more information, see the `ipc
-    doucmentation <http://i3wm.org/docs/ipc.html>`_
+    documentation <http://i3wm.org/docs/ipc.html>`_
+
+    :param str socket_path: The path for the socket to the current i3 session.
+        In most situations, you will not have to supply this yourself. Guessing
+        first happens by the environment variable :envvar:`I3SOCK`, and, if this is
+        empty, by executing :command:`i3 --get-socketpath`.
+    :raises Exception: If the connection to ``i3`` cannot be established, or when
+        the connection terminates.
     """
     MAGIC = 'i3-ipc'  # safety string for i3-ipc
     _chunk_size = 1024  # in bytes
@@ -404,16 +411,33 @@ class Connection(object):
         ``i3-msg`` or an ``exec`` block in your i3 config to control the
         window manager.
 
-        :rtype: list of :class:`CommandReply`
+        :rtype: List of :class:`CommandReply`.
         """
         data = self.message(MessageType.COMMAND, payload)
         return json.loads(data, object_hook=CommandReply)
 
     def get_version(self):
         """
-        Get the version of the running i3 instance.
+        Get json encoded information about the running i3 instance.  The
+        equivalent of :command:`i3-msg -t get_version`. The return
+        object exposes the following attributes :attr:`~VersionReply.major`,
+        :attr:`~VersionReply.minor`, :attr:`~VersionReply.patch`,
+        :attr:`~VersionReply.human_readable`, and 
+        :attr:`~VersionReply.loaded_config_file_name`.
+
+        Example output:
+
+        .. code:: json
+
+            {'patch': 0,
+             'human_readable': '4.12 (2016-03-06, branch "4.12")',
+             'major': 4,
+             'minor': 12,
+             'loaded_config_file_name': '/home/joep/.config/i3/config'}
+
 
         :rtype: VersionReply
+
         """
         data = self.message(MessageType.GET_VERSION, '')
         return json.loads(data, object_hook=VersionReply)
@@ -421,7 +445,8 @@ class Connection(object):
     def get_bar_config(self, bar_id=None):
         """
         Get the configuration of a single bar. Defaults to the first if none is
-        specified. Use ``get_bar_config_list()`` to obtain valid IDs.
+        specified. Use :meth:`get_bar_config_list` to obtain a list of valid
+        IDs.
 
         :rtype: BarConfigReply
         """
@@ -438,23 +463,57 @@ class Connection(object):
         """
         Get list of bar IDs as active in the connected i3 session.
 
-        :rtype: List
+        :rtype: List of strings that can be fed as ``bar_id`` into
+            :meth:`get_bar_config`.
         """
         data = self.message(MessageType.GET_BAR_CONFIG, '')
         return json.loads(data)
 
     def get_outputs(self):
         """
-        Get a list of outputs
+        Get a list of outputs.  The equivalent of :command:`i3-msg -t get_outputs`.
+
+        :rtype: List of :class:`OutputReply`.
+
+        Example output:
+
+        .. code:: python
+
+            >>> i3ipc.Connection().get_outputs()
+            [{'name': 'eDP1',
+              'primary': True,
+              'active': True,
+              'rect': {'width': 1920, 'height': 1080, 'y': 0, 'x': 0},
+              'current_workspace': '2'},
+             {'name': 'xroot-0',
+              'primary': False,
+              'active': False,
+              'rect': {'width': 1920, 'height': 1080, 'y': 0, 'x': 0},
+              'current_workspace': None}]
         """
         data = self.message(MessageType.GET_OUTPUTS, '')
         return json.loads(data, object_hook=OutputReply)
 
     def get_workspaces(self):
+        """
+        Get a list of workspaces. Returns JSON-like data, not a Con instance.
+
+        You might want to try the :meth:`Con.workspaces` instead if the info
+        contained here is too little.
+
+        :rtype: List of :class:`WorkspaceReply`.
+
+        """
         data = self.message(MessageType.GET_WORKSPACES, '')
         return json.loads(data, object_hook=WorkspaceReply)
 
     def get_tree(self):
+        """
+        Returns a :class:`Con` instance with all kinds of methods and selectors.
+        Start here with exploration. Read up on the :class:`Con` stuffs.
+
+        :rtype: Con
+        """
         data = self.message(MessageType.GET_TREE, '')
         return Con(json.loads(data), None, self)
 
@@ -573,6 +632,147 @@ class Rect(object):
 
 
 class Con(object):
+    """
+    The container class. Has all internal information about the windows,
+    outputs, workspaces and containers that :command:`i3` manages.
+
+    .. attribute:: id
+
+        The internal ID (actually a C pointer value within i3) of the container.
+        You can use it to (re-)identify and address containers when talking to
+        i3.
+
+    .. attribute:: name
+
+        The internal name of the container.  ``None`` for containers which
+        are not leaves.  The string `_NET_WM_NAME <://specifications.freedesktop.org/wm-spec/1.3/ar01s05.html#idm140238712347280>`_
+        for windows. Read-only value.
+
+    .. attribute:: type
+
+        The type of the container. Can be one of ``root``, ``output``, ``con``,
+        ``floating_con``, ``workspace`` or ``dockarea``.
+
+    .. attribute:: title
+
+        The window title.
+
+    .. attribute:: window_class
+
+        The window class.
+
+    .. attribute:: instance
+
+        The instance name of the window class.
+
+    .. attribute:: border
+
+        The type of border style for the selected container. Can be either
+        ``normal``, ``none`` or ``1pixel``.
+
+    .. attribute:: current_border_width
+
+       Returns amount of pixels for the border. Readonly value. See `i3's user
+       manual <https://i3wm.org/docs/userguide.html#_border_style_for_new_windows>_
+       for more info.
+
+    .. attribute:: layout
+
+        Can be either ``splith``, ``splitv``, ``stacked``, ``tabbed``, ``dockarea`` or
+        ``output``.
+        :rtype: string
+
+    .. attribute:: percent
+
+        The percentage which this container takes in its parent. A value of
+        null means that the percent property does not make sense for this
+        container, for example for the root container.
+        :rtype: float
+
+    .. attribute:: rect
+
+        The absolute display coordinates for this container. Display
+        coordinates means that when you have two 1600x1200 monitors on a single
+        X11 Display (the standard way), the coordinates of the first window on
+        the second monitor are ``{ "x": 1600, "y": 0, "width": 1600, "height":
+        1200 }``.
+
+    .. attribute:: window_rect
+
+        The coordinates of the *actual client window* inside the container,
+        without the window decorations that may also occupy space.
+
+    .. attribute:: deco_rect
+
+        The coordinates of the window decorations within a container. The
+        coordinates are relative to the container and do not include the client
+        window.
+
+    .. attribute:: geometry
+
+        The original geometry the window specified when i3 mapped it. Used when
+        switching a window to floating mode, for example.
+
+    .. attribute:: window
+
+        The X11 window ID of the client window.
+
+    .. attribute:: focused
+
+        Whether or not the current container is focused. There is only
+        one focused container.
+
+    .. attribute:: visible
+
+        Whether or not the current container is visible.
+
+    .. attribute:: num
+
+        Optional attribute that only makes sense for workspaces. This allows
+        for arbitrary and changeable names, even though the keyboard
+        shortcuts remain the same.  See `the i3wm docs <https://i3wm.org/docs/userguide.html#_named_workspaces>`_
+        for more information
+
+    .. attribute:: urgent
+
+        Whether the window or workspace has the `urgent` state.
+
+        :returns: :bool:`True` or :bool:`False`.
+
+
+    ..
+        command <-- method
+        command_children <-- method
+        deco_rect IPC
+        descendents
+        find_by_id
+        find_by_role
+        find_by_window
+        find_classed
+        find_focused
+        find_fullscreen
+        find_marked
+        find_named
+        floating_nodes
+        fullscreen_mode
+        leaves
+        marks
+        nodes
+        orientation
+        parent
+        props
+        root
+        scratchpad
+        scratchpad_state
+        window_class
+        window_instance
+        window_rect
+        window_role
+        workspace
+        workspaces
+
+
+    """
 
     def __init__(self, data, parent, conn):
         self.props = _PropsObject(self)
@@ -636,6 +836,12 @@ class Con(object):
             self.deco_rect = Rect(data['deco_rect'])
 
     def root(self):
+        """
+        Retrieves the root container.
+
+        :rtype: :class:`Con`.
+        """
+
         if not self.parent:
             return self
 
@@ -647,6 +853,12 @@ class Con(object):
         return con
 
     def descendents(self):
+        """
+        Retrieve a list of all containers that delineate from the currently
+        selected container.  Includes any kind of container.
+
+        :rtype: List of :class:`Con`.
+        """
         descendents = []
 
         def collect_descendents(con):
@@ -661,6 +873,13 @@ class Con(object):
         return descendents
 
     def leaves(self):
+        """
+        Retrieve a list of windows that delineate from the currently
+        selected container.  Only lists client windows, no intermediate
+        containers.
+
+        :rtype: List of :class:`Con`.
+        """
         leaves = []
 
         for c in self.descendents():
@@ -670,9 +889,20 @@ class Con(object):
         return leaves
 
     def command(self, command):
+        """
+        Run a command on the currently active container.
+
+        :rtype: CommandReply
+        """
         self._conn.command('[con_id="{}"] {}'.format(self.id, command))
 
     def command_children(self, command):
+        """
+        Run a command on the direct children of the currently selected
+        container.
+
+        :rtype: List of CommandReply????
+        """
         if not len(self.nodes):
             return
 
@@ -683,6 +913,11 @@ class Con(object):
         self._conn.command(' '.join(commands))
 
     def workspaces(self):
+        """
+        Retrieve a list of currently active workspaces.
+
+        :rtype: List of :class:`Con`.
+        """
         workspaces = []
 
         def collect_workspaces(con):
@@ -697,6 +932,11 @@ class Con(object):
         return workspaces
 
     def find_focused(self):
+        """
+        Finds the focused container.
+
+        :rtype class Con:
+        """
         try:
             return next(c for c in self.descendents() if c.focused)
         except StopIteration:
