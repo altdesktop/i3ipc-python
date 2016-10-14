@@ -206,7 +206,8 @@ class Connection(object):
         msg_magic, msg_length, msg_type = self._unpack_header(data)
         msg_size = self._struct_header_size + msg_length
         # XXX: Message shouldn't be any longer than the data
-        return data[self._struct_header_size:msg_size].decode('utf-8')
+        payload = data[self._struct_header_size:msg_size]
+        return payload.decode('utf-8', 'replace')
 
     def _unpack_header(self, data):
         """
