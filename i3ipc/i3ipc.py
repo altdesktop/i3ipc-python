@@ -43,15 +43,155 @@ class _ReplyType(dict):
 
 
 class CommandReply(_ReplyType):
-    pass
+    """
+    Info about a command that was executed with :func:`Connection.command`.
+    """
+    def __init__(self, data):
+        super(CommandReply, self).__init__(data)
+
+    @property
+    def error(self):
+        """
+        A human-readable error message
+
+        :type: str
+        """
+        return self.__getattr__('error')
+
+    @property
+    def success(self):
+        """
+        Whether the command executed successfully
+
+        :type: bool
+        """
+        return self.__getattr__('success')
 
 
 class VersionReply(_ReplyType):
-    pass
+    """
+    Info about the version of the running i3 instance.
+    """
+    def __init__(self, data):
+        super(VersionReply, self).__init__(data)
 
+    @property
+    def major(self):
+        """
+        The major version of i3.
+
+        :type: int
+        """
+        return self.__getattr__('major')
+
+    @property
+    def minor(self):
+        """
+        The minor version of i3.
+
+        :type: int
+        """
+        return self.__getattr__('minor')
+
+    @property
+    def patch(self):
+        """
+        The patch version of i3.
+
+        :type: int
+        """
+        return self.__getattr__('patch')
+
+    @property
+    def human_readable(self):
+        """
+        A human-readable version of i3 containing the precise git version,
+        build date, and branch name.
+
+        :type: str
+        """
+        return self.__getattr__('human_readable')
+
+    @property
+    def loaded_config_file_name(self):
+        """
+        The current config path.
+
+        :type: str
+        """
+        return self.__getattr__('loaded_config_file_name')
 
 class BarConfigReply(_ReplyType):
-    pass
+    """
+    This can be used by third-party workspace bars (especially i3bar, but
+    others are free to implement compatible alternatives) to get the bar block
+    configuration from i3.
+
+    Not all properties are documented here. A complete list of properties of
+    this reply type can be found `here
+    <http://i3wm.org/docs/ipc.html#_bar_config_reply>`_.
+    """
+    def __init__(self, data):
+        super(BarConfigReply, self).__init__(data)
+
+    @property
+    def colors(self):
+        """
+        Contains key/value pairs of colors. Each value is a color code in hex,
+        formatted #rrggbb (like in HTML). 
+
+        :type: dict
+        """
+        return self.__getattr__('colors')
+
+    @property
+    def id(self):
+        """
+        The ID for this bar.
+
+        :type: str
+        """
+        return self.__getattr__('id')
+
+    @property
+    def mode(self):
+        """
+        Either ``dock`` (the bar sets the dock window type) or ``hide`` (the
+        bar does not show unless a specific key is pressed). 
+
+        :type: str
+        """
+        return self.__getattr__('mode')
+
+    @property
+    def position(self):
+        """
+        Either ``bottom`` or ``top``.
+
+        :type: str
+        """
+        return self.__getattr__('position')
+
+    @property
+    def status_command(self):
+        """
+        Command which will be run to generate a statusline. Each line on
+        stdout of this command will be displayed in the bar. At the moment, no
+        formatting is supported. 
+
+        :type: str
+        """
+        return self.__getattr__('status_command')
+
+    @property
+    def font(self):
+        """
+        The font to use for text on the bar. 
+
+        :type: str
+        """
+        return self.__getattr__('font')
+
 
 
 class OutputReply(_ReplyType):
@@ -163,6 +303,13 @@ class _PropsObject(object):
 
 
 class Connection(object):
+    """
+    This class controls a connection to the i3 ipc socket. It is capable of
+    executing commands, subscribing to window manager events, and querying the
+    window manager for information about the current state of windows,
+    workspaces, outputs, and the i3bar. For more information, see the `ipc
+    doucmentation <http://i3wm.org/docs/ipc.html>`_
+    """
     MAGIC = 'i3-ipc'  # safety string for i3-ipc
     _chunk_size = 1024  # in bytes
     _timeout = 0.5  # in seconds
@@ -250,10 +397,25 @@ class Connection(object):
         return self._ipc_send(self.cmd_socket, message_type, payload)
 
     def command(self, payload):
+        """
+        Send a command to i3. See the `list of commands
+        <http://i3wm.org/docs/userguide.html#_list_of_commands>`_ in the user
+        guide for available commands. Pass the text of the command to execute
+        as the first arguments. This is essentially the same as using
+        ``i3-msg`` or an ``exec`` block in your i3 config to control the
+        window manager.
+
+        :rtype: list of :class:`CommandReply`
+        """
         data = self.message(MessageType.COMMAND, payload)
         return json.loads(data, object_hook=CommandReply)
 
     def get_version(self):
+        """
+        Get the version of the running i3 instance.
+
+        :rtype: VersionReply
+        """
         data = self.message(MessageType.GET_VERSION, '')
         return json.loads(data, object_hook=VersionReply)
 
