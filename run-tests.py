@@ -5,10 +5,42 @@ from subprocess import Popen
 import os
 from os import listdir, path
 from os.path import isfile, join
-from shutil import which
 import sys
 import re
 import time
+try:
+    from shutil import which
+except ImportError:
+    def which(cmd):
+        path = os.getenv('PATH')
+        for p in path.split(os.path.pathsep):
+            p = os.path.join(p, cmd)
+            if os.path.exists(p) and os.access(p, os.X_OK):
+                return p
+
+if not hasattr(subprocess, 'run'):
+    subprocess.run = subprocess.call
+
+if not hasattr(Popen, '__enter__'):
+
+    def backported_enter(self):
+        return self
+
+    def backported_exit(self, type, value, traceback):
+        if self.stdout:
+            self.stdout.close()
+        if self.stderr:
+            self.stderr.close()
+        try:  # Flushing a BufferedWriter may raise an error
+            if self.stdin:
+                self.stdin.close()
+        finally:
+            # Wait for the process to terminate, to avoid zombies.
+            return
+            self.wait()
+
+    Popen.__enter__ = backported_enter
+    Popen.__exit__ = backported_exit
 
 PYTEST = 'pytest'
 XVFB = 'Xvfb'
