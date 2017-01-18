@@ -348,9 +348,9 @@ class Connection(object):
         Packs the given message type and payload. Turns the resulting
         message into a byte string.
         """
-        pb = payload.encode()
+        pb = payload.encode('utf-8')
         s = struct.pack('=II', len(pb), msg_type.value)
-        return self.MAGIC.encode() + s + pb
+        return self.MAGIC.encode('utf-8') + s + pb
 
     def _unpack(self, data):
         """
