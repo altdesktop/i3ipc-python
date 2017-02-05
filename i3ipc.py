@@ -549,6 +549,10 @@ class Con(object):
         return [c for c in self.descendents()
                 if c.window_class and re.search(pattern, c.window_class)]
 
+    def find_instanced(self, pattern):
+        return [c for c in self.descendents()
+                if c.window_instance and re.search(pattern, c.window_instance)]
+
     def find_marked(self, pattern=".*"):
         pattern = re.compile(pattern)
         return [c for c in self.descendents()
