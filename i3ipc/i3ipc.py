@@ -740,6 +740,11 @@ class Con(object):
 
         :returns: :bool:`True` or :bool:`False`.
 
+    .. attribute:: floating
+
+        Whether the container is floating or not. Possible values are
+        "auto_on", "auto_off", "user_on" and "user_off"
+
 
     ..
         command <-- method
@@ -754,6 +759,7 @@ class Con(object):
         find_fullscreen
         find_marked
         find_named
+        floating
         floating_nodes
         fullscreen_mode
         leaves
