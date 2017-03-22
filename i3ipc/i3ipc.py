@@ -740,6 +740,11 @@ class Con(object):
 
         :returns: :bool:`True` or :bool:`False`.
 
+    .. attribute:: floating
+
+        Whether the container is floating or not. Possible values are
+        "auto_on", "auto_off", "user_on" and "user_off"
+
 
     ..
         command <-- method
@@ -754,6 +759,7 @@ class Con(object):
         find_fullscreen
         find_marked
         find_named
+        floating
         floating_nodes
         fullscreen_mode
         leaves
@@ -796,6 +802,10 @@ class Con(object):
             self.marks = []
             if 'mark' in data and data['mark']:
                 self.marks.append(data['mark'])
+
+        # Possible values 'user_off', 'user_on', 'auto_off', 'auto_on'
+        if data['floating']:
+            self.floating = data['floating']
 
         # XXX this is for compatability with 4.8
         if isinstance(self.type, int):
