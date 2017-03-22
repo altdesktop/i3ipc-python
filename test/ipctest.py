@@ -1,4 +1,8 @@
-from subprocess import Popen, run
+from subprocess import Popen
+try:
+    from subprocess import run
+except ImportError:
+    from subprocess import call as run
 import pytest
 import time
 import i3ipc
@@ -33,7 +37,7 @@ class IpcTest:
     def main(self):
         """Start the main thread and wait for events with a timeout"""
 
-        def timeout_function(quit_cv: Condition):
+        def timeout_function(Condition):
             with quit_cv:
                 quit_cv.wait(3)
                 self.i3.main_quit()
