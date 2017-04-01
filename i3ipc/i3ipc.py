@@ -631,6 +631,12 @@ class Rect(object):
         self.height = data['height']
         self.width = data['width']
 
+class Gaps(object):
+
+    def __init__(self,data):
+        self.inner = data['inner']
+        self.outer = data['outer']
+
 
 class Con(object):
     """
@@ -665,6 +671,10 @@ class Con(object):
     .. attribute:: instance
 
         The instance name of the window class.
+
+    .. attribute:: gaps
+
+        The inner and outer gaps devation from default values.
 
     .. attribute:: border
 
@@ -762,6 +772,7 @@ class Con(object):
         floating
         floating_nodes
         fullscreen_mode
+        gaps
         leaves
         marks
         nodes
@@ -845,6 +856,10 @@ class Con(object):
             self.window_rect = Rect(data['window_rect'])
         if 'deco_rect' in data:
             self.deco_rect = Rect(data['deco_rect'])
+
+        self.gaps = None
+        if 'gaps' in data:
+            self.gaps = Gaps(data['gaps'])
 
     def root(self):
         """
