@@ -728,6 +728,11 @@ class Con(object):
 
         The X11 window ID of the client window.
 
+    .. attribute:: focus
+
+        A list of container ids describing the focus situation within the current
+        container. The first element refers to the container with (in)active focus.
+
     .. attribute:: focused
 
         Whether or not the current container is focused. There is only
@@ -798,7 +803,7 @@ class Con(object):
         self.parent = parent
 
         # set simple properties
-        ipc_properties = ['border', 'current_border_width', 'focused',
+        ipc_properties = ['border', 'current_border_width', 'focus', 'focused',
                           'fullscreen_mode', 'id', 'layout', 'marks', 'name',
                           'orientation', 'percent', 'type', 'urgent', 'window',
                           'num', 'scratchpad_state']
