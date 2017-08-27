@@ -571,56 +571,65 @@ class Connection(object):
 
         self._pubsub.subscribe(detailed_event, handler)
 
-    def main(self):
+    def event_socket_setup(self):
         self.sub_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.sub_socket.connect(self.socket_path)
 
         self.subscribe(self.subscriptions)
 
-        while True:
-            if self.sub_socket is None:
-                break
-
-            data, msg_type = self._ipc_recv(self.sub_socket)
-
-            if len(data) == 0:
-                # EOF
-                self._pubsub.emit('ipc_shutdown', None)
-                break
-
-            data = json.loads(data)
-            msg_type = 1 << (msg_type & 0x7f)
-            event_name = ''
-            event = None
-
-            if msg_type == Event.WORKSPACE:
-                event_name = 'workspace'
-                event = WorkspaceEvent(data, self)
-            elif msg_type == Event.OUTPUT:
-                event_name = 'output'
-                event = GenericEvent(data)
-            elif msg_type == Event.MODE:
-                event_name = 'mode'
-                event = GenericEvent(data)
-            elif msg_type == Event.WINDOW:
-                event_name = 'window'
-                event = WindowEvent(data, self)
-            elif msg_type == Event.BARCONFIG_UPDATE:
-                event_name = 'barconfig_update'
-                event = BarconfigUpdateEvent(data)
-            elif msg_type == Event.BINDING:
-                event_name = 'binding'
-                event = BindingEvent(data)
-            else:
-                # we have not implemented this event
-                continue
-
-            self._pubsub.emit(event_name, event)
-
-    def main_quit(self):
+    def event_socket_teardown(self):
         if self.sub_socket:
             self.sub_socket.shutdown(socket.SHUT_WR)
         self.sub_socket = None
+
+    def event_socket_poll(self):
+        if self.sub_socket is None:
+            return True
+
+        data, msg_type = self._ipc_recv(self.sub_socket)
+
+        if len(data) == 0:
+            # EOF
+            self._pubsub.emit('ipc_shutdown', None)
+            return True
+
+        data = json.loads(data)
+        msg_type = 1 << (msg_type & 0x7f)
+        event_name = ''
+        event = None
+
+        if msg_type == Event.WORKSPACE:
+            event_name = 'workspace'
+            event = WorkspaceEvent(data, self)
+        elif msg_type == Event.OUTPUT:
+            event_name = 'output'
+            event = GenericEvent(data)
+        elif msg_type == Event.MODE:
+            event_name = 'mode'
+            event = GenericEvent(data)
+        elif msg_type == Event.WINDOW:
+            event_name = 'window'
+            event = WindowEvent(data, self)
+        elif msg_type == Event.BARCONFIG_UPDATE:
+            event_name = 'barconfig_update'
+            event = BarconfigUpdateEvent(data)
+        elif msg_type == Event.BINDING:
+            event_name = 'binding'
+            event = BindingEvent(data)
+        else:
+            # we have not implemented this event
+            return
+
+        self._pubsub.emit(event_name, event)
+
+    def main(self):
+        self.event_socket_setup()
+
+        while not self.event_socket_poll():
+            pass
+
+    def main_quit(self):
+        self.event_socket_teardown()
 
 
 class Rect(object):
