@@ -138,7 +138,7 @@ class BarConfigReply(_ReplyType):
     def colors(self):
         """
         Contains key/value pairs of colors. Each value is a color code in hex,
-        formatted #rrggbb (like in HTML). 
+        formatted #rrggbb (like in HTML).
 
         :type: dict
         """
@@ -157,7 +157,7 @@ class BarConfigReply(_ReplyType):
     def mode(self):
         """
         Either ``dock`` (the bar sets the dock window type) or ``hide`` (the
-        bar does not show unless a specific key is pressed). 
+        bar does not show unless a specific key is pressed).
 
         :type: str
         """
@@ -177,7 +177,7 @@ class BarConfigReply(_ReplyType):
         """
         Command which will be run to generate a statusline. Each line on
         stdout of this command will be displayed in the bar. At the moment, no
-        formatting is supported. 
+        formatting is supported.
 
         :type: str
         """
@@ -186,7 +186,7 @@ class BarConfigReply(_ReplyType):
     @property
     def font(self):
         """
-        The font to use for text on the bar. 
+        The font to use for text on the bar.
 
         :type: str
         """
@@ -423,7 +423,7 @@ class Connection(object):
         equivalent of :command:`i3-msg -t get_version`. The return
         object exposes the following attributes :attr:`~VersionReply.major`,
         :attr:`~VersionReply.minor`, :attr:`~VersionReply.patch`,
-        :attr:`~VersionReply.human_readable`, and 
+        :attr:`~VersionReply.human_readable`, and
         :attr:`~VersionReply.loaded_config_file_name`.
 
         Example output:
@@ -920,7 +920,7 @@ class Con(object):
 
         :rtype: CommandReply
         """
-        self._conn.command('[con_id="{}"] {}'.format(self.id, command))
+        return self._conn.command('[con_id="{}"] {}'.format(self.id, command))
 
     def command_children(self, command):
         """
