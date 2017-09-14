@@ -880,14 +880,11 @@ class Con(object):
         """
         Iterate through the descendents of this node (breadth-first tree traversal)
         """
-        queue = deque()
-        queue.append(self)
+        queue = deque(self.nodes)
 
         while queue:
             con = queue.popleft()
-            if not con is self:
-                yield con
-
+            yield con
             queue.extend(con.nodes)
 
     def root(self):
