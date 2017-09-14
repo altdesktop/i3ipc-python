@@ -65,6 +65,12 @@ Example
     for container in i3.get_tree().find_fullscreen():
         container.command('fullscreen')
 
+    # Print the names of all the containers in the tree
+    root = i3.get_tree()
+    print(root.name)
+    for con in root:
+        print(con.name)
+
     # Define a callback to be called when you switch workspaces.
     def on_workspace_focus(self, e):
         # The first parameter is the connection to the ipc and the second is an object

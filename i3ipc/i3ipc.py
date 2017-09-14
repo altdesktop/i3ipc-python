@@ -8,6 +8,7 @@ import os
 import re
 import subprocess
 from enum import Enum
+from collections import deque
 
 
 class MessageType(Enum):
@@ -875,6 +876,20 @@ class Con(object):
         if 'gaps' in data:
             self.gaps = Gaps(data['gaps'])
 
+    def __iter__(self):
+        """
+        Iterate through the descendents of this node (breadth-first tree traversal)
+        """
+        queue = deque()
+        queue.append(self)
+
+        while queue:
+            con = queue.popleft()
+            if not con is self:
+                yield con
+
+            queue.extend(con.nodes)
+
     def root(self):
         """
         Retrieves the root container.
@@ -899,18 +914,7 @@ class Con(object):
 
         :rtype: List of :class:`Con`.
         """
-        descendents = []
-
-        def collect_descendents(con):
-            for c in con.nodes:
-                descendents.append(c)
-                collect_descendents(c)
-            for c in con.floating_nodes:
-                descendents.append(c)
-                collect_descendents(c)
-
-        collect_descendents(self)
-        return descendents
+        return [c for c in self]
 
     def leaves(self):
         """
@@ -922,7 +926,7 @@ class Con(object):
         """
         leaves = []
 
-        for c in self.descendents():
+        for c in self:
             if not c.nodes and c.type == "con" and c.parent.type != "dockarea":
                 leaves.append(c)
 
@@ -978,45 +982,45 @@ class Con(object):
         :rtype class Con:
         """
         try:
-            return next(c for c in self.descendents() if c.focused)
+            return next(c for c in self if c.focused)
         except StopIteration:
             return None
 
     def find_by_id(self, id):
         try:
-            return next(c for c in self.descendents() if c.id == id)
+            return next(c for c in self if c.id == id)
         except StopIteration:
             return None
 
     def find_by_window(self, window):
         try:
-            return next(c for c in self.descendents() if c.window == window)
+            return next(c for c in self if c.window == window)
         except StopIteration:
             return None
 
     def find_by_role(self, pattern):
-        return [c for c in self.descendents()
+        return [c for c in self
                 if c.window_role and re.search(pattern, c.window_role)]
 
     def find_named(self, pattern):
-        return [c for c in self.descendents()
+        return [c for c in self
                 if c.name and re.search(pattern, c.name)]
 
     def find_classed(self, pattern):
-        return [c for c in self.descendents()
+        return [c for c in self
                 if c.window_class and re.search(pattern, c.window_class)]
 
     def find_instanced(self, pattern):
-        return [c for c in self.descendents()
+        return [c for c in self
                 if c.window_instance and re.search(pattern, c.window_instance)]
 
     def find_marked(self, pattern=".*"):
         pattern = re.compile(pattern)
-        return [c for c in self.descendents()
+        return [c for c in self
                 if any(pattern.search(mark) for mark in c.marks)]
 
     def find_fullscreen(self):
-        return [c for c in self.descendents()
+        return [c for c in self
                 if c.type == 'con' and c.fullscreen_mode]
 
     def workspace(self):
