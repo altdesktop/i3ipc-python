@@ -321,7 +321,7 @@ class Connection(object):
     MAGIC = 'i3-ipc'  # safety string for i3-ipc
     _chunk_size = 1024  # in bytes
     _timeout = 0.5  # in seconds
-    _struct_header = '<%dsII' % len(MAGIC.encode('utf-8'))
+    _struct_header = '=%dsII' % len(MAGIC.encode('utf-8'))
     _struct_header_size = struct.calcsize(_struct_header)
 
     def __init__(self, socket_path=None):
