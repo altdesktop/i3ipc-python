@@ -886,6 +886,7 @@ class Con(object):
             con = queue.popleft()
             yield con
             queue.extend(con.nodes)
+            queue.extend(con.floating_nodes)
 
     def root(self):
         """
