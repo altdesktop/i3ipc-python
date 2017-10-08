@@ -7,25 +7,29 @@ i3 = i3ipc.Connection()
 
 # check if workspaces are all in order
 def workspaces_ordered(i3conn):
-    last_workspace_number = 0
+    last_workspace = 0
     for i in sorted(i3conn.get_workspaces(), key=lambda x: x['num']):
-        if i['num'] != last_workspace_number+1:
+        number = int(i['num'])
+        if number != last_workspace+1:
             return False
-        last_workspace_number += 1
+        last_workspace += 1
     return True
 
 # find all the workspaces that are out of order and 
 # the least possible valid workspace number that is unassigned
 def find_disordered(i3conn):
-    last_workspace_number = 0
     disordered = []
     least_number = None
-    for i in sorted(i3conn.get_workspaces(), key=lambda x: x['num']):
-        if i['num'] != last_workspace_number+1:
-            disordered.append(i['num'])
-            if least_number is None:
-                least_number = last_workspace_number + 1
-        last_workspace_number += 1
+    workspaces = sorted(i3conn.get_workspaces(), key=lambda x: x['num'])
+    occupied_workspaces = [int(x['num']) for x in workspaces] 
+    last_workspace = 0
+    for i in workspaces:
+        number = int(i['num'])
+        if number != last_workspace+1:
+            disordered.append(number)
+            if least_number is None and last_workspace + 1 not in occupied_workspaces:
+                least_number = last_workspace + 1
+        last_workspace += 1
     return (disordered, least_number)
 
 # renumber all the workspaces that appear out of order from the others
