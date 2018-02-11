@@ -9,7 +9,7 @@ install_requires = ['enum-compat']
 
 setup(
     name='i3ipc',
-    version='1.3.0',
+    version='1.4.0',
     description='An improved Python library for i3wm extensions',
     long_description=long_description,
     url='https://github.com/acrisci/i3ipc-python',
