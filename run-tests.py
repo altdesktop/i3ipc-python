@@ -96,7 +96,7 @@ def run_pytest(display):
     env = os.environ.copy()
     env['DISPLAY'] = ':%d' % display
     env['PYTHONPATH'] = './i3ipc'
-    subprocess.run([PYTEST], env=env)
+    subprocess.check_call([PYTEST], env=env)
 
 def main():
     check_dependencies()
