@@ -100,7 +100,7 @@ def run_pytest(display):
 
 def main():
     check_dependencies()
-    display = get_open_display()
+    display = get_open_display() + 1
 
     with start_server(display) as server:
         run_pytest(display)
