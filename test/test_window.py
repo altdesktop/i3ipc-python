@@ -13,16 +13,16 @@ class TestWindow(IpcTest):
         self.event = e
         i3.main_quit()
 
-    def test_window_event(self):
+    def test_window_event(self, i3):
         self.fresh_workspace()
-        workspaces = self.i3.get_workspaces()
-        self.i3.on('window', self.on_window)
+        workspaces = i3.get_workspaces()
+        i3.on('window', self.on_window)
         self.open_window()
         self.main()
         assert self.event
 
-    def test_marks(self):
+    def test_marks(self, i3):
         ws = self.fresh_workspace()
         self.open_window()
-        self.i3.command('mark foo')
-        assert 'foo' in self.i3.get_tree().find_focused().marks
+        i3.command('mark foo')
+        assert 'foo' in i3.get_tree().find_focused().marks
