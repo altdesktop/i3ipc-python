@@ -882,6 +882,7 @@ class Con(object):
         Iterate through the descendents of this node (breadth-first tree traversal)
         """
         queue = deque(self.nodes)
+        queue.extend(self.floating_nodes)
 
         while queue:
             con = queue.popleft()
