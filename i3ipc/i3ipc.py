@@ -833,10 +833,6 @@ class Con(object):
             if 'mark' in data and data['mark']:
                 self.marks.append(data['mark'])
 
-        # Possible values 'user_off', 'user_on', 'auto_off', 'auto_on'
-        if data['floating']:
-            self.floating = data['floating']
-
         # XXX this is for compatability with 4.8
         if isinstance(self.type, int):
             if self.type == 0:
