@@ -1,10 +1,5 @@
 from ipctest import IpcTest
 import i3ipc
-import time
-import subprocess
-from subprocess import check_output
-from threading import Thread
-import sys
 
 class TestWindow(IpcTest):
     event = None
