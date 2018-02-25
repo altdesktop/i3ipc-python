@@ -852,12 +852,14 @@ class Con(object):
 
         # set complex properties
         self.nodes = []
-        for n in data['nodes']:
-            self.nodes.append(Con(n, self, conn))
+        if 'nodes' in data:
+            for n in data['nodes']:
+                self.nodes.append(Con(n, self, conn))
 
         self.floating_nodes = []
-        for n in data['floating_nodes']:
-            self.floating_nodes.append(Con(n, self, conn))
+        if 'floating_nodes' in data:
+            for n in data['floating_nodes']:
+                self.floating_nodes.append(Con(n, self, conn))
 
         self.window_class = None
         self.window_instance = None
