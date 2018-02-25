@@ -329,6 +329,9 @@ class Connection(object):
             socket_path = os.environ.get("I3SOCK")
 
         if not socket_path:
+            socket_path = os.environ.get("SWAYSOCK")
+
+        if not socket_path:
             try:
                 socket_path = subprocess.check_output(
                     ['i3', '--get-socketpath'],
