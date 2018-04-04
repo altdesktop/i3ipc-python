@@ -271,6 +271,9 @@ class _PubSub(object):
         self._subscriptions.append({'event': event, 'detail': detail,
                                     'handler': handler})
 
+    def unsubscribe(self, handler):
+        self._subscriptions = list(filter(lambda s: s['handler'] != handler, self._subscriptions))
+
     def emit(self, event, data):
         detail = ''
 
@@ -542,6 +545,9 @@ class Connection(object):
         result = json.loads(data, object_hook=CommandReply)
         self.subscriptions |= events
         return result
+
+    def off(self, handler):
+        self._pubsub.unsubscribe(handler)
 
     def on(self, detailed_event, handler):
         event = detailed_event.replace('-', '_')
