@@ -589,7 +589,7 @@ class Connection(object):
 
     def event_socket_teardown(self):
         if self.sub_socket:
-            self.sub_socket.shutdown(socket.SHUT_WR)
+            self.sub_socket.shutdown(socket.SHUT_RDWR)
         self.sub_socket = None
 
     def event_socket_poll(self):
