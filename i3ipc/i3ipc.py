@@ -9,7 +9,7 @@ import re
 import subprocess
 from enum import Enum
 from collections import deque
-
+from threading import Timer
 
 class MessageType(Enum):
     COMMAND = 0
@@ -272,7 +272,7 @@ class _PubSub(object):
                                     'handler': handler})
 
     def unsubscribe(self, handler):
-        self._subscriptions = list(filter(lambda s: s['handler'] != handler, self._subscriptions))
+        self._subscriptions = list(filter(lambda s: s['handler'] is handler, self._subscriptions))
 
     def emit(self, event, data):
         detail = ''
@@ -632,11 +632,19 @@ class Connection(object):
 
         self._pubsub.emit(event_name, event)
 
-    def main(self):
+    def main(self, timeout=0):
         self.event_socket_setup()
+
+        timer = None
+
+        if timeout:
+            timer = Timer(timeout, self.main_quit).start()
 
         while not self.event_socket_poll():
             pass
+
+        if timer:
+            timer.cancel()
 
     def main_quit(self):
         self.event_socket_teardown()
