@@ -272,7 +272,7 @@ class _PubSub(object):
                                     'handler': handler})
 
     def unsubscribe(self, handler):
-        self._subscriptions = list(filter(lambda s: s['handler'] is handler, self._subscriptions))
+        self._subscriptions = list(filter(lambda s: s['handler'] != handler, self._subscriptions))
 
     def emit(self, event, data):
         detail = ''
