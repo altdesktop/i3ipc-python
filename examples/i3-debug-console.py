@@ -64,7 +64,7 @@ def main(stdscr):
         stdscr.refresh()
         last_txt = txt
 
-    on_window(ipc, None)
+    on_event(ipc, None)
 
     ipc.on('window', on_event)
     ipc.on('binding', on_event)
