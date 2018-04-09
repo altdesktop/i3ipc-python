@@ -10,6 +10,6 @@ class TestLeaves(IpcTest):
         con2 = self.open_window()
         con3 = self.open_window()
 
-        ws = next(filter(lambda w: w.name == ws_name,
-            i3.get_tree().workspaces()))
+        ws = [w for w in i3.get_tree().workspaces() if w.name == ws_name][0]
+
         assert(len(ws.leaves()) == 3)

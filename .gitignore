@@ -58,3 +58,5 @@ target/
 
 # Visual studio code
 .vscode/
+
+.pytest_cache
