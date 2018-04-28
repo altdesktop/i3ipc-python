@@ -20,6 +20,7 @@ class MessageType(Enum):
     GET_MARKS = 5
     GET_BAR_CONFIG = 6
     GET_VERSION = 7
+    GET_BINDING_MODES = 8
 
 
 class Event(object):
@@ -524,6 +525,15 @@ class Connection(object):
         """
         data = self.message(MessageType.GET_TREE, '')
         return Con(json.loads(data), None, self)
+
+    def get_binding_modes(self):
+        """
+        Returns all currently configured binding modes.
+
+        :rtype: list
+        """
+        data = self.message(MessageType.GET_BINDING_MODES, '')
+        return json.loads(data)
 
     def subscribe(self, events):
         events_obj = []
