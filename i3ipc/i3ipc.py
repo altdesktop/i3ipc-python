@@ -532,6 +532,15 @@ class Connection(object):
         data = self.message(MessageType.GET_TREE, '')
         return Con(json.loads(data), None, self)
 
+    def get_marks(self):
+        """
+        Get a list of the names of all currently set marks.
+
+        :rtype: list
+        """
+        data = self.message(MessageType.GET_MARKS, '')
+        return json.loads(data)
+
     def get_binding_modes(self):
         """
         Returns all currently configured binding modes.
