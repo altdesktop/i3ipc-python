@@ -633,18 +633,21 @@ class Connection(object):
         self._pubsub.emit(event_name, event)
 
     def main(self, timeout=0):
-        self.event_socket_setup()
+        try:
+            self.event_socket_setup()
 
-        timer = None
+            timer = None
 
-        if timeout:
-            timer = Timer(timeout, self.main_quit).start()
+            if timeout:
+                timer = Timer(timeout, self.main_quit).start()
 
-        while not self.event_socket_poll():
-            pass
+            while not self.event_socket_poll():
+                pass
 
-        if timer:
-            timer.cancel()
+            if timer:
+                timer.cancel()
+        finally:
+            self.main_quit()
 
     def main_quit(self):
         self.event_socket_teardown()
