@@ -647,7 +647,7 @@ class Connection(object):
             if timer:
                 timer.cancel()
         finally:
-            self.event_socket_teardown()
+            self.main_quit()
 
     def main_quit(self):
         self.event_socket_teardown()
