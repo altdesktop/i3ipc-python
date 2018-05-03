@@ -639,7 +639,8 @@ class Connection(object):
             timer = None
 
             if timeout:
-                timer = Timer(timeout, self.main_quit).start()
+                timer = Timer(timeout, self.main_quit)
+                timer.start()
 
             while not self.event_socket_poll():
                 pass
