@@ -20,6 +20,8 @@ class MessageType(Enum):
     GET_MARKS = 5
     GET_BAR_CONFIG = 6
     GET_VERSION = 7
+    GET_BINDING_MODES = 8
+    GET_CONFIG = 9
 
 
 class Event(object):
@@ -253,6 +255,11 @@ class BindingEvent(object):
     def __init__(self, data):
         self.change = data['change']
         self.binding = BindingInfo(data['binding'])
+
+class ConfigReply(object):
+
+    def __init__(self, data):
+        self.config = data['config']
 
 
 class _PubSub(object):
@@ -524,6 +531,34 @@ class Connection(object):
         """
         data = self.message(MessageType.GET_TREE, '')
         return Con(json.loads(data), None, self)
+
+    def get_marks(self):
+        """
+        Get a list of the names of all currently set marks.
+
+        :rtype: list
+        """
+        data = self.message(MessageType.GET_MARKS, '')
+        return json.loads(data)
+
+    def get_binding_modes(self):
+        """
+        Returns all currently configured binding modes.
+
+        :rtype: list
+        """
+        data = self.message(MessageType.GET_BINDING_MODES, '')
+        return json.loads(data)
+
+    def get_config(self):
+        """
+        Currently only contains the "config" member, which is a string
+        containing the config file as loaded by i3 most recently.
+
+        :rtype: ConfigReply
+        """
+        data = self.message(MessageType.GET_CONFIG, '')
+        return json.loads(data, object_hook=ConfigReply)
 
     def subscribe(self, events):
         events_obj = []
