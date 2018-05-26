@@ -22,6 +22,7 @@ class MessageType(Enum):
     GET_VERSION = 7
     GET_BINDING_MODES = 8
     GET_CONFIG = 9
+    SEND_TICK = 10
 
 
 class Event(object):
@@ -31,6 +32,8 @@ class Event(object):
     WINDOW = (1 << 3)
     BARCONFIG_UPDATE = (1 << 4)
     BINDING = (1 << 5)
+    # 1 << 6 is shutdown
+    TICK = (1 << 7)
 
 
 class _ReplyType(dict):
@@ -205,6 +208,10 @@ class WorkspaceReply(_ReplyType):
     pass
 
 
+class TickReply(_ReplyType):
+    pass
+
+
 class WorkspaceEvent(object):
 
     def __init__(self, data, conn):
@@ -260,6 +267,14 @@ class ConfigReply(object):
 
     def __init__(self, data):
         self.config = data['config']
+
+
+class TickEvent(object):
+
+    def __init__(self, data):
+        # i3 didn't include the 'first' field in 4.15. See i3/i3#3271.
+        self.first = ('first' in data) and data['first']
+        self.payload = data['payload']
 
 
 class _PubSub(object):
@@ -560,6 +575,17 @@ class Connection(object):
         data = self.message(MessageType.GET_CONFIG, '')
         return json.loads(data, object_hook=ConfigReply)
 
+    def send_tick(self, payload=""):
+        """
+        Sends a tick event with the specified payload. After the reply was
+        received, the tick event has been written to all IPC connections which
+        subscribe to tick events.
+
+        :rtype: TickReply
+        """
+        data = self.message(MessageType.SEND_TICK, payload)
+        return json.loads(data, object_hook=TickReply)
+
     def subscribe(self, events):
         events_obj = []
         if events & Event.WORKSPACE:
@@ -574,6 +600,8 @@ class Connection(object):
             events_obj.append("barconfig_update")
         if events & Event.BINDING:
             events_obj.append("binding")
+        if events & Event.TICK:
+            events_obj.append("tick")
 
         data = self._ipc_send(
             self.sub_socket, MessageType.SUBSCRIBE, json.dumps(events_obj))
@@ -608,6 +636,8 @@ class Connection(object):
             event_type = Event.BARCONFIG_UPDATE
         elif event == "binding":
             event_type = Event.BINDING
+        elif event == "tick":
+            event_type = Event.TICK
 
         if not event_type:
             raise Exception('event not implemented')
@@ -661,6 +691,9 @@ class Connection(object):
         elif msg_type == Event.BINDING:
             event_name = 'binding'
             event = BindingEvent(data)
+        elif msg_type == Event.TICK:
+            event_name = 'tick'
+            event = TickEvent(data)
         else:
             # we have not implemented this event
             return
