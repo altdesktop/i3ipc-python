@@ -1,6 +1,7 @@
 from ipctest import IpcTest
 import i3ipc
 
+
 class TestWindow(IpcTest):
     event = None
 

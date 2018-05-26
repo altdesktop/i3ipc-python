@@ -1,8 +1,8 @@
 from ipctest import IpcTest
 import i3ipc
 
-class TestGetMarks(IpcTest):
 
+class TestGetMarks(IpcTest):
     def test_get_marks(self, i3):
         self.open_window()
         i3.command('mark a')

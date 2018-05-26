@@ -11,6 +11,7 @@ from enum import Enum
 from collections import deque
 from threading import Timer
 
+
 class MessageType(Enum):
     COMMAND = 0
     GET_WORKSPACES = 1
@@ -37,7 +38,6 @@ class Event(object):
 
 
 class _ReplyType(dict):
-
     def __getattr__(self, name):
         return self[name]
 
@@ -52,6 +52,7 @@ class CommandReply(_ReplyType):
     """
     Info about a command that was executed with :func:`Connection.command`.
     """
+
     def __init__(self, data):
         super(CommandReply, self).__init__(data)
 
@@ -78,6 +79,7 @@ class VersionReply(_ReplyType):
     """
     Info about the version of the running i3 instance.
     """
+
     def __init__(self, data):
         super(VersionReply, self).__init__(data)
 
@@ -127,6 +129,7 @@ class VersionReply(_ReplyType):
         """
         return self.__getattr__('loaded_config_file_name')
 
+
 class BarConfigReply(_ReplyType):
     """
     This can be used by third-party workspace bars (especially i3bar, but
@@ -137,6 +140,7 @@ class BarConfigReply(_ReplyType):
     this reply type can be found `here
     <http://i3wm.org/docs/ipc.html#_bar_config_reply>`_.
     """
+
     def __init__(self, data):
         super(BarConfigReply, self).__init__(data)
 
@@ -199,7 +203,6 @@ class BarConfigReply(_ReplyType):
         return self.__getattr__('font')
 
 
-
 class OutputReply(_ReplyType):
     pass
 
@@ -213,7 +216,6 @@ class TickReply(_ReplyType):
 
 
 class WorkspaceEvent(object):
-
     def __init__(self, data, conn):
         self.change = data['change']
         self.current = None
@@ -227,20 +229,17 @@ class WorkspaceEvent(object):
 
 
 class GenericEvent(object):
-
     def __init__(self, data):
         self.change = data['change']
 
 
 class WindowEvent(object):
-
     def __init__(self, data, conn):
         self.change = data['change']
         self.container = Con(data['container'], None, conn)
 
 
 class BarconfigUpdateEvent(object):
-
     def __init__(self, data):
         self.id = data['id']
         self.hidden_state = data['hidden_state']
@@ -248,7 +247,6 @@ class BarconfigUpdateEvent(object):
 
 
 class BindingInfo(object):
-
     def __init__(self, data):
         self.command = data['command']
         self.mods = data['mods']
@@ -258,19 +256,17 @@ class BindingInfo(object):
 
 
 class BindingEvent(object):
-
     def __init__(self, data):
         self.change = data['change']
         self.binding = BindingInfo(data['binding'])
 
-class ConfigReply(object):
 
+class ConfigReply(object):
     def __init__(self, data):
         self.config = data['config']
 
 
 class TickEvent(object):
-
     def __init__(self, data):
         # i3 didn't include the 'first' field in 4.15. See i3/i3#3271.
         self.first = ('first' in data) and data['first']
@@ -278,7 +274,6 @@ class TickEvent(object):
 
 
 class _PubSub(object):
-
     def __init__(self, conn):
         self.conn = conn
         self._subscriptions = []
@@ -290,11 +285,15 @@ class _PubSub(object):
         if detailed_event.count('::') > 0:
             [event, detail] = detailed_event.split('::')
 
-        self._subscriptions.append({'event': event, 'detail': detail,
-                                    'handler': handler})
+        self._subscriptions.append({
+            'event': event,
+            'detail': detail,
+            'handler': handler
+        })
 
     def unsubscribe(self, handler):
-        self._subscriptions = list(filter(lambda s: s['handler'] != handler, self._subscriptions))
+        self._subscriptions = list(
+            filter(lambda s: s['handler'] != handler, self._subscriptions))
 
     def emit(self, event, data):
         detail = ''
@@ -310,11 +309,11 @@ class _PubSub(object):
                     else:
                         s['handler'](self.conn)
 
+
 # this is for compatability with i3ipc-glib
 
 
 class _PropsObject(object):
-
     def __init__(self, obj):
         object.__setattr__(self, "_obj", obj)
 
@@ -360,7 +359,8 @@ class Connection(object):
             try:
                 socket_path = subprocess.check_output(
                     ['i3', '--get-socketpath'],
-                    close_fds=True, universal_newlines=True).strip()
+                    close_fds=True,
+                    universal_newlines=True).strip()
             except:
                 raise Exception('Failed to retrieve the i3 IPC socket path')
 
@@ -603,8 +603,8 @@ class Connection(object):
         if events & Event.TICK:
             events_obj.append("tick")
 
-        data = self._ipc_send(
-            self.sub_socket, MessageType.SUBSCRIBE, json.dumps(events_obj))
+        data = self._ipc_send(self.sub_socket, MessageType.SUBSCRIBE,
+                              json.dumps(events_obj))
         result = json.loads(data, object_hook=CommandReply)
         self.subscriptions |= events
         return result
@@ -723,16 +723,15 @@ class Connection(object):
 
 
 class Rect(object):
-
     def __init__(self, data):
         self.x = data['x']
         self.y = data['y']
         self.height = data['height']
         self.width = data['width']
 
-class Gaps(object):
 
-    def __init__(self,data):
+class Gaps(object):
+    def __init__(self, data):
         self.inner = data['inner']
         self.outer = data['outer']
 
@@ -902,11 +901,11 @@ class Con(object):
         self.parent = parent
 
         # set simple properties
-        ipc_properties = ['border', 'current_border_width', 'floating',
-                          'focus', 'focused', 'fullscreen_mode', 'id',
-                          'layout', 'marks', 'name', 'orientation', 'percent',
-                          'type', 'urgent', 'window', 'num', 'scratchpad_state'
-                          ]
+        ipc_properties = [
+            'border', 'current_border_width', 'floating', 'focus', 'focused',
+            'fullscreen_mode', 'id', 'layout', 'marks', 'name', 'orientation',
+            'percent', 'type', 'urgent', 'window', 'num', 'scratchpad_state'
+        ]
         for attr in ipc_properties:
             if attr in data:
                 setattr(self, attr, data[attr])
@@ -1086,29 +1085,34 @@ class Con(object):
             return None
 
     def find_by_role(self, pattern):
-        return [c for c in self
-                if c.window_role and re.search(pattern, c.window_role)]
+        return [
+            c for c in self
+            if c.window_role and re.search(pattern, c.window_role)
+        ]
 
     def find_named(self, pattern):
-        return [c for c in self
-                if c.name and re.search(pattern, c.name)]
+        return [c for c in self if c.name and re.search(pattern, c.name)]
 
     def find_classed(self, pattern):
-        return [c for c in self
-                if c.window_class and re.search(pattern, c.window_class)]
+        return [
+            c for c in self
+            if c.window_class and re.search(pattern, c.window_class)
+        ]
 
     def find_instanced(self, pattern):
-        return [c for c in self
-                if c.window_instance and re.search(pattern, c.window_instance)]
+        return [
+            c for c in self
+            if c.window_instance and re.search(pattern, c.window_instance)
+        ]
 
     def find_marked(self, pattern=".*"):
         pattern = re.compile(pattern)
-        return [c for c in self
-                if any(pattern.search(mark) for mark in c.marks)]
+        return [
+            c for c in self if any(pattern.search(mark) for mark in c.marks)
+        ]
 
     def find_fullscreen(self):
-        return [c for c in self
-                if c.type == 'con' and c.fullscreen_mode]
+        return [c for c in self if c.type == 'con' and c.fullscreen_mode]
 
     def workspace(self):
         if self.type == 'workspace':

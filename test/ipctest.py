@@ -11,6 +11,7 @@ from threading import Thread, Condition
 import math
 from random import random
 
+
 class IpcTest:
     timeout_thread = None
     i3_conn = None
@@ -46,13 +47,12 @@ class IpcTest:
                 i3.main_quit()
 
         quit_cv = Condition()
-        self.timeout_thread = Thread(target=timeout_function, args=(quit_cv,))
+        self.timeout_thread = Thread(target=timeout_function, args=(quit_cv, ))
         self.timeout_thread.start()
         i3.main()
 
         with quit_cv:
             quit_cv.notify()
-
 
     def open_window(self):
         i3 = IpcTest.i3_conn
@@ -61,7 +61,6 @@ class IpcTest:
         # TODO: use gtk to open windows
         result = i3.command('open')
         return result[0].id
-
 
     def fresh_workspace(self):
         i3 = IpcTest.i3_conn
