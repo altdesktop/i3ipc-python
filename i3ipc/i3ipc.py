@@ -364,8 +364,20 @@ class Connection(object):
                     ['i3', '--get-socketpath'],
                     close_fds=True,
                     universal_newlines=True).strip()
-            except:
-                raise Exception('Failed to retrieve the i3 IPC socket path')
+            except Exception:
+                pass
+
+        if not socket_path:
+            try:
+                socket_path = subprocess.check_output(
+                    ['sway', '--get-socketpath'],
+                    close_fds=True,
+                    universal_newlines=True).strip()
+            except Exception:
+                pass
+
+        if not socket_path:
+                raise Exception('Failed to retrieve the i3 or sway IPC socket path')
 
         self._pubsub = _PubSub(self)
         self.props = _PropsObject(self)
