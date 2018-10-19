@@ -1,7 +1,7 @@
 i3ipc-python
 ============
 
-An improved Python library to control `i3wm <http://i3wm.org>`__.
+An improved Python library to control `i3wm <http://i3wm.org>`__ and `sway <https://swaywm.org/>`__.
 
 About
 -----
