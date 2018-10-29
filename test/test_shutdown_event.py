@@ -4,17 +4,23 @@ import i3ipc
 
 
 class TestShutdownEvent(IpcTest):
-    event = None
+    events = []
 
     def restart_func(t, i3):
         i3.command('restart')
 
     def on_shutdown(self, i3, e):
-        self.event = e
-        i3.main_quit()
+        self.events.append(e)
+        assert i3._wait_for_socket()
+        if len(self.events) == 1:
+            Timer(0.001, self.restart_func, args=(i3, )).start()
+        elif len(self.events) == 2:
+            i3.main_quit()
 
-    def test_shutdown_event(self, i3):
+    def test_shutdown_event_reconnect(self, i3):
+        i3.auto_reconnect = True
+        self.events = []
         i3.on('shutdown::restart', self.on_shutdown)
         Timer(0.001, self.restart_func, args=(i3, )).start()
         i3.main(timeout=1)
-        assert self.event
+        assert len(self.events) == 2

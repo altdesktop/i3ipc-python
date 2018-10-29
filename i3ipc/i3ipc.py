@@ -10,6 +10,7 @@ import subprocess
 from enum import Enum
 from collections import deque
 from threading import Timer
+import time
 
 
 class MessageType(Enum):
@@ -351,7 +352,7 @@ class Connection(object):
     _struct_header = '=%dsII' % len(MAGIC.encode('utf-8'))
     _struct_header_size = struct.calcsize(_struct_header)
 
-    def __init__(self, socket_path=None):
+    def __init__(self, socket_path=None, auto_reconnect=False):
         if not socket_path:
             socket_path = os.environ.get("I3SOCK")
 
@@ -380,13 +381,20 @@ class Connection(object):
             raise Exception(
                 'Failed to retrieve the i3 or sway IPC socket path')
 
+        if auto_reconnect:
+            self.subscriptions = Event.SHUTDOWN
+        else:
+            self.subscriptions = 0
+
         self._pubsub = _PubSub(self)
         self.props = _PropsObject(self)
-        self.subscriptions = 0
         self.socket_path = socket_path
         self.cmd_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.cmd_socket.connect(self.socket_path)
         self.sub_socket = None
+        self.auto_reconnect = auto_reconnect
+        self._restarting = False
+        self._quitting = False
 
     def _pack(self, msg_type, payload):
         """
@@ -445,8 +453,30 @@ class Connection(object):
         data, msg_type = self._ipc_recv(sock)
         return data
 
+    def _wait_for_socket(self):
+        # for the auto_reconnect feature only
+        socket_path_exists = False
+        for tries in range(0, 500):
+            socket_path_exists = os.path.exists(self.socket_path)
+            if socket_path_exists:
+                break
+            time.sleep(0.001)
+
+        return socket_path_exists
+
     def message(self, message_type, payload):
-        return self._ipc_send(self.cmd_socket, message_type, payload)
+        try:
+            return self._ipc_send(self.cmd_socket, message_type, payload)
+        except BrokenPipeError as e:
+            if not self.auto_reconnect:
+                raise (e)
+
+            if not self._wait_for_socket():
+                raise (e)
+
+            self.cmd_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            self.cmd_socket.connect(self.socket_path)
+            return self._ipc_send(self.cmd_socket, message_type, payload)
 
     def command(self, payload):
         """
@@ -642,6 +672,7 @@ class Connection(object):
 
         # special case: ipc-shutdown is not in the protocol
         if event == 'ipc_shutdown':
+            # TODO deprecate this
             self._pubsub.subscribe(event, handler)
             return
 
@@ -718,6 +749,8 @@ class Connection(object):
         elif msg_type == Event.SHUTDOWN:
             event_name = 'shutdown'
             event = GenericEvent(data)
+            if event.change == 'restart':
+                self._restarting = True
         elif msg_type == Event.TICK:
             event_name = 'tick'
             event = TickEvent(data)
@@ -728,24 +761,37 @@ class Connection(object):
         self._pubsub.emit(event_name, event)
 
     def main(self, timeout=0):
-        try:
-            self.event_socket_setup()
+        self._quitting = False
+        while True:
+            try:
+                self.event_socket_setup()
 
-            timer = None
+                timer = None
 
-            if timeout:
-                timer = Timer(timeout, self.main_quit)
-                timer.start()
+                if timeout:
+                    timer = Timer(timeout, self.main_quit)
+                    timer.start()
 
-            while not self.event_socket_poll():
-                pass
+                while not self.event_socket_poll():
+                    pass
 
-            if timer:
-                timer.cancel()
-        finally:
-            self.main_quit()
+                if timer:
+                    timer.cancel()
+            finally:
+                self.event_socket_teardown()
+
+                if self._quitting or not self._restarting or not self.auto_reconnect:
+                    return
+
+                self._restarting = False
+                # The ipc told us it's restarting and the user wants to survive
+                # restarts. Wait for the socket path to reappear and reconnect
+                # to it.
+                if not self._wait_for_socket():
+                    break
 
     def main_quit(self):
+        self._quitting = True
         self.event_socket_teardown()
 
 
