@@ -377,7 +377,8 @@ class Connection(object):
                 pass
 
         if not socket_path:
-                raise Exception('Failed to retrieve the i3 or sway IPC socket path')
+            raise Exception(
+                'Failed to retrieve the i3 or sway IPC socket path')
 
         self._pubsub = _PubSub(self)
         self.props = _PropsObject(self)
@@ -456,10 +457,14 @@ class Connection(object):
         ``i3-msg`` or an ``exec`` block in your i3 config to control the
         window manager.
 
-        :rtype: List of :class:`CommandReply`.
+        :rtype: List of :class:`CommandReply` or None if the command causes i3
+        to restart or exit and does not give a reply.
         """
         data = self.message(MessageType.COMMAND, payload)
-        return json.loads(data, object_hook=CommandReply)
+        if data:
+            return json.loads(data, object_hook=CommandReply)
+        else:
+            return None
 
     def get_version(self):
         """
