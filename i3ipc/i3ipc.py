@@ -33,7 +33,7 @@ class Event(object):
     WINDOW = (1 << 3)
     BARCONFIG_UPDATE = (1 << 4)
     BINDING = (1 << 5)
-    # 1 << 6 is shutdown
+    SHUTDOWN = (1 << 6)
     TICK = (1 << 7)
 
 
@@ -620,6 +620,8 @@ class Connection(object):
             events_obj.append("barconfig_update")
         if events & Event.BINDING:
             events_obj.append("binding")
+        if events & Event.SHUTDOWN:
+            events_obj.append("shutdown")
         if events & Event.TICK:
             events_obj.append("tick")
 
@@ -656,6 +658,8 @@ class Connection(object):
             event_type = Event.BARCONFIG_UPDATE
         elif event == "binding":
             event_type = Event.BINDING
+        elif event == "shutdown":
+            event_type = Event.SHUTDOWN
         elif event == "tick":
             event_type = Event.TICK
 
@@ -711,6 +715,9 @@ class Connection(object):
         elif msg_type == Event.BINDING:
             event_name = 'binding'
             event = BindingEvent(data)
+        elif msg_type == Event.SHUTDOWN:
+            event_name = 'shutdown'
+            event = GenericEvent(data)
         elif msg_type == Event.TICK:
             event_name = 'tick'
             event = TickEvent(data)
