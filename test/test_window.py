@@ -14,7 +14,7 @@ class TestWindow(IpcTest):
         workspaces = i3.get_workspaces()
         i3.on('window', self.on_window)
         self.open_window()
-        self.main()
+        i3.main(timeout=1)
         assert self.event
 
     def test_marks(self, i3):

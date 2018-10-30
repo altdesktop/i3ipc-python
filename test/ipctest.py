@@ -1,13 +1,6 @@
 from subprocess import Popen
-try:
-    from subprocess import run
-except ImportError:
-    from subprocess import call as run
 import pytest
-import time
 import i3ipc
-import threading
-from threading import Thread, Condition
 import math
 from random import random
 
@@ -35,30 +28,10 @@ class IpcTest:
         process.kill()
         IpcTest.i3_conn = None
 
-    def main(self):
-        """Start the main thread and wait for events with a timeout"""
-
-        i3 = IpcTest.i3_conn
-        assert i3
-
-        def timeout_function(Condition):
-            with quit_cv:
-                quit_cv.wait(3)
-                i3.main_quit()
-
-        quit_cv = Condition()
-        self.timeout_thread = Thread(target=timeout_function, args=(quit_cv, ))
-        self.timeout_thread.start()
-        i3.main()
-
-        with quit_cv:
-            quit_cv.notify()
-
     def open_window(self):
         i3 = IpcTest.i3_conn
         assert i3
 
-        # TODO: use gtk to open windows
         result = i3.command('open')
         return result[0].id
 
