@@ -47,7 +47,7 @@ if not hasattr(Popen, '__enter__'):
 PYTEST = 'pytest'
 XVFB = 'Xvfb'
 I3_BINARY = 'i3'
-LOCKDIR = '/tmp'
+SOCKETDIR = '/tmp/.X11-unix'
 
 
 def check_dependencies():
@@ -69,10 +69,15 @@ def check_dependencies():
 
 
 def get_open_display():
-    # TODO find the general lock directory
-    lock_re = re.compile(r'^\.X([0-9]+)-lock$')
-    lock_files = [f for f in listdir(LOCKDIR) if lock_re.match(f)]
-    displays = [int(lock_re.search(f).group(1)) for f in lock_files]
+    if not os.path.isdir(SOCKETDIR):
+        sys.stderr.write(
+            'warning: could not find the X11 socket directory at {}. Using display 0.\n'
+            .format(SOCKETDIR))
+        sys.stderr.flush()
+        return 0
+    socket_re = re.compile(r'^X([0-9]+)$')
+    socket_files = [f for f in listdir(SOCKETDIR) if socket_re.match(f)]
+    displays = [int(socket_re.search(f).group(1)) for f in socket_files]
     open_display = min(
         [i for i in range(0,
                           max(displays or [0]) + 2) if i not in displays])
@@ -81,11 +86,11 @@ def get_open_display():
 
 def start_server(display):
     xvfb = Popen([XVFB, ':%d' % display])
-    # wait for the lock file to make sure the server is running
-    lockfile = path.join(LOCKDIR, '.X%d-lock' % display)
+    # wait for the socket to make sure the server is running
+    socketfile = path.join(SOCKETDIR, 'X%d' % display)
     tries = 0
     while True:
-        if path.exists(lockfile):
+        if path.exists(socketfile):
             break
         else:
             tries += 1
