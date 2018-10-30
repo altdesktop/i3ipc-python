@@ -11,12 +11,14 @@ import time
 try:
     from shutil import which
 except ImportError:
+
     def which(cmd):
         path = os.getenv('PATH')
         for p in path.split(os.path.pathsep):
             p = os.path.join(p, cmd)
             if os.path.exists(p) and os.access(p, os.X_OK):
                 return p
+
 
 if not hasattr(subprocess, 'run'):
     subprocess.run = subprocess.call
@@ -47,6 +49,7 @@ XVFB = 'Xvfb'
 I3_BINARY = 'i3'
 LOCKDIR = '/tmp'
 
+
 def check_dependencies():
     if not which(XVFB):
         # TODO make this optional
@@ -64,13 +67,17 @@ def check_dependencies():
         print('Command %s not found in PATH' % PYTEST)
         sys.exit(127)
 
+
 def get_open_display():
     # TODO find the general lock directory
     lock_re = re.compile(r'^\.X([0-9]+)-lock$')
     lock_files = [f for f in listdir(LOCKDIR) if lock_re.match(f)]
     displays = [int(lock_re.search(f).group(1)) for f in lock_files]
-    open_display = min([i for i in range(0, max(displays or [0]) + 2) if i not in displays])
+    open_display = min(
+        [i for i in range(0,
+                          max(displays or [0]) + 2) if i not in displays])
     return open_display
+
 
 def start_server(display):
     xvfb = Popen([XVFB, ':%d' % display])
@@ -92,11 +99,13 @@ def start_server(display):
 
     return xvfb
 
+
 def run_pytest(display):
     env = os.environ.copy()
     env['DISPLAY'] = ':%d' % display
     env['PYTHONPATH'] = './i3ipc'
     subprocess.run([PYTEST], env=env)
+
 
 def main():
     check_dependencies()
@@ -105,6 +114,7 @@ def main():
     with start_server(display) as server:
         run_pytest(display)
         server.terminate()
+
 
 if __name__ == '__main__':
     main()
