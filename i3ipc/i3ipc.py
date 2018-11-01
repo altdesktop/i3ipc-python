@@ -9,7 +9,7 @@ import re
 import subprocess
 from enum import Enum
 from collections import deque
-from threading import Timer
+from threading import Timer, Lock
 import time
 
 
@@ -391,7 +391,9 @@ class Connection(object):
         self.socket_path = socket_path
         self.cmd_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.cmd_socket.connect(self.socket_path)
+        self.cmd_lock = Lock()
         self.sub_socket = None
+        self.sub_lock = Lock()
         self.auto_reconnect = auto_reconnect
         self._restarting = False
         self._quitting = False
@@ -449,6 +451,10 @@ class Connection(object):
         return self._unpack(data), msg_type
 
     def _ipc_send(self, sock, message_type, payload):
+        '''
+        Send and receive a message from the ipc.
+        NOTE: this is not thread safe
+        '''
         sock.sendall(self._pack(message_type, payload))
         data, msg_type = self._ipc_recv(sock)
         return data
@@ -466,6 +472,7 @@ class Connection(object):
 
     def message(self, message_type, payload):
         try:
+            self.cmd_lock.acquire()
             return self._ipc_send(self.cmd_socket, message_type, payload)
         except BrokenPipeError as e:
             if not self.auto_reconnect:
@@ -477,6 +484,8 @@ class Connection(object):
             self.cmd_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             self.cmd_socket.connect(self.socket_path)
             return self._ipc_send(self.cmd_socket, message_type, payload)
+        finally:
+            self.cmd_lock.release()
 
     def command(self, payload):
         """
@@ -655,8 +664,12 @@ class Connection(object):
         if events & Event.TICK:
             events_obj.append("tick")
 
-        data = self._ipc_send(self.sub_socket, MessageType.SUBSCRIBE,
-                              json.dumps(events_obj))
+        try:
+            self.sub_lock.acquire()
+            data = self._ipc_send(self.sub_socket, MessageType.SUBSCRIBE,
+                                  json.dumps(events_obj))
+        finally:
+            self.sub_lock.release()
         result = json.loads(data, object_hook=CommandReply)
         self.subscriptions |= events
         return result
