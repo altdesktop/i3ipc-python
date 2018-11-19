@@ -102,7 +102,7 @@ object. Some examples:
     Returns the window_class window property of the current container
 :attr:`~Con.type`
     Returns the window type of the current container. This is one of 
-:attr:`~Con.title`
+:attr:`~Con.window_title`
     Returns the window title.
 
 
