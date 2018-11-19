@@ -844,7 +844,7 @@ class Con(object):
         The type of the container. Can be one of ``root``, ``output``, ``con``,
         ``floating_con``, ``workspace`` or ``dockarea``.
 
-    .. attribute:: title
+    .. attribute:: window_title
 
         The window title.
 
@@ -1033,7 +1033,7 @@ class Con(object):
         self.window_class = None
         self.window_instance = None
         self.window_role = None
-        self.title = None
+        self.window_title = None
         if 'window_properties' in data:
             if 'class' in data['window_properties']:
                 self.window_class = data['window_properties']['class']
@@ -1042,7 +1042,7 @@ class Con(object):
             if 'window_role' in data['window_properties']:
                 self.window_role = data['window_properties']['window_role']
             if 'title' in data['window_properties']:
-                self.title = data['window_properties']['title']
+                self.window_title = data['window_properties']['title']
 
         self.rect = Rect(data['rect'])
         if 'window_rect' in data:
@@ -1185,7 +1185,7 @@ class Con(object):
         return [c for c in self if c.name and re.search(pattern, c.name)]
 
     def find_titled(self, pattern):
-        return [c for c in self if c.title and re.search(pattern, c.title)]
+        return [c for c in self if c.window_title and re.search(pattern, c.window_title)]
 
     def find_classed(self, pattern):
         return [
