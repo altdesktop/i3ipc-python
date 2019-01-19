@@ -109,6 +109,7 @@ def run_pytest(display):
     env = os.environ.copy()
     env['DISPLAY'] = ':%d' % display
     env['PYTHONPATH'] = './i3ipc'
+    env['_I3IPC_TEST'] = '1'
     subprocess.run([PYTEST], env=env)
 
 

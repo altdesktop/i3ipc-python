@@ -353,7 +353,7 @@ class Connection(object):
     _struct_header_size = struct.calcsize(_struct_header)
 
     def __init__(self, socket_path=None, auto_reconnect=False):
-        if not socket_path:
+        if not socket_path and os.environ.get("_I3IPC_TEST") is None:
             socket_path = os.environ.get("I3SOCK")
 
         if not socket_path:
