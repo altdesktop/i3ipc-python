@@ -944,6 +944,10 @@ class Con(object):
         Whether the container is floating or not. Possible values are
         "auto_on", "auto_off", "user_on" and "user_off"
 
+    .. attribute:: pid
+
+        The id of the process who owns the client window
+        sway only, version >= 1.0-alpha.6
 
     ..
         command <-- method
@@ -992,7 +996,7 @@ class Con(object):
             'border', 'current_border_width', 'floating', 'focus', 'focused',
             'fullscreen_mode', 'id', 'layout', 'marks', 'name', 'num',
             'orientation', 'percent', 'scratchpad_state', 'sticky', 'type',
-            'urgent', 'window'
+            'urgent', 'window', 'pid'
         ]
         for attr in ipc_properties:
             if attr in data:
