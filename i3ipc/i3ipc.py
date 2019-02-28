@@ -945,7 +945,9 @@ class Con(object):
         "auto_on", "auto_off", "user_on" and "user_off"
 
     .. attribute:: pid
+
         The id of the process who owns the client window
+        sway only, version >= 1.0-alpha.6
 
     ..
         command <-- method
