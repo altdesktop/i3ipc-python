@@ -49,24 +49,24 @@ def main(workspace_name, get_index, visibility='invisible', to_mode='default', *
 
     workspace = workspace_by_name(conn, workspace_name)  # Find workspace.
     if workspace == None:
-        print("Workspace not found")
-        exit(1)
+        print("Workspace not found, making it.")
+        conn.command("workspace " + workspace_name)
 
-    windows =  workspace.leaves()  # Find windows in there.
-    if visibility=='visible':
-        windows = filter(window_is_visible, windows)
-    elif visibility!='invisible':
-        print("WARN: currently only support invisible and visible as selectors.")
-
-    window = pick_from_list(list(windows), get_index)  # Pick correct window from there.
-
-#    conn.command("workspace " + workspace_name)  # It already goes there.
-
-    if window!=None:
-        print("Focussing %d" % window.window)
-        conn.command('[id="%d"] focus' % window.window)
     else:
-        print("Did not find window(%d)"%get_index)
+        windows =  workspace.leaves()  # Find windows in there.
+        if visibility=='visible':
+            windows = filter(window_is_visible, windows)
+        elif visibility!='invisible':
+            print("WARN: currently only support invisible and visible as selectors.")
+
+        window = pick_from_list(list(windows), get_index)  # Pick correct window from there.
+
+        if window != None:
+            print("Focussing %d" % window.window)
+            conn.command('[id="%d"] focus' % window.window)
+        else:
+            print("Did not find window(%d) going to workspace anyway."%get_index)
+            conn.command("workspace " + workspace_name)
 
     if to_mode != 'no':
         conn.command("mode " + to_mode)
