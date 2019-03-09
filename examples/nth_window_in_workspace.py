@@ -3,10 +3,13 @@
 """
 nth_window_in_workspace.py go to workspace name, index of window in there.
 
-Arguments: workspace_name, index, [visible]
-If visible is the word "visible" it will ignore invisible ones. For i.e. stacked
+Arguments: workspace_name, index, [visible] [to_mode]
+If `visible` is the word "visible" it will ignore invisible ones. For i.e. stacked
 windows, the non-visible one in the stack are.. not visible for this.
 (probably you dont want to use "visible"?)
+
+`to_mode` is whether to change to another mode, if "no" it will stay in the same mode.
+Defaultly it is "default".(possibly returning to it)
 
 - requires the `xprop` utility (for `window_is_visible`)
 
@@ -38,7 +41,7 @@ def pick_from_list(lst, n, alt=None):
     return lst[max(0, min(n, cnt-1))] if cnt>0 else alt
 
 
-def main(workspace_name, get_index, visibility='invisible', *drek):
+def main(workspace_name, get_index, visibility='invisible', to_mode='default', *drek):
 
     get_index = int(get_index)
 
@@ -64,6 +67,9 @@ def main(workspace_name, get_index, visibility='invisible', *drek):
         conn.command('[id="%d"] focus' % window.window)
     else:
         print("Did not find window(%d)"%get_index)
+
+    if to_mode != 'no':
+        conn.command("mode " + to_mode)
 
 if __name__ == '__main__':
     main(*argv[1:])
