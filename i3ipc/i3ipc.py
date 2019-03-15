@@ -253,9 +253,9 @@ class BarconfigUpdateEvent(object):
 class BindingInfo(object):
     def __init__(self, data):
         self.command = data['command']
-        self.mods = data['mods']
+        self.mods = data['event_state_mask']
         self.input_code = data['input_code']
-        self.symbol = data['symbol']
+        self.symbols = data['symbols']
         self.input_type = data['input_type']
 
 
