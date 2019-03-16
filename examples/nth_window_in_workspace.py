@@ -1,23 +1,6 @@
 #!/usr/bin/env python3
 
-"""
-nth_window_in_workspace.py go to workspace name, index of window in there.
-
-Arguments: workspace_name, index, [visible] [to_mode]
-If `visible` is the word "visible" it will ignore invisible ones. For i.e. stacked
-windows, the non-visible one in the stack are.. not visible for this.
-(probably you dont want to use "visible"?)
-
-`to_mode` is whether to change to another mode, if "no" it will stay in the same mode.
-Defaultly it is "default".(possibly returning to it)
-
-- requires the `xprop` utility (for `window_is_visible`)
-
-"""
-
-from sys import argv
 from subprocess import check_output
-
 import i3ipc
 
 def get_windows_on_ws(conn):
@@ -40,36 +23,47 @@ def pick_from_list(lst, n, alt=None):
     cnt = len(lst)
     return lst[max(0, min(n, cnt-1))] if cnt>0 else alt
 
-
-def main(workspace_name, get_index, visibility='invisible', to_mode='default', *drek):
-
-    get_index = int(get_index)
-
+def main(args):
     conn = i3ipc.Connection()
 
-    workspace = workspace_by_name(conn, workspace_name)  # Find workspace.
+    workspace = workspace_by_name(conn, args.workspace)  # Find workspace.
     if workspace == None:
         print("Workspace not found, making it.")
-        conn.command("workspace " + workspace_name)
+        conn.command("workspace " + args.workspace)
 
     else:
         windows =  workspace.leaves()  # Find windows in there.
-        if visibility=='visible':
+        if args.filter=='visible':
             windows = filter(window_is_visible, windows)
-        elif visibility!='invisible':
-            print("WARN: currently only support invisible and visible as selectors.")
+        elif args.filter!='none':
+            print("WARN: currently only support `visible` as window filter.")
 
-        window = pick_from_list(list(windows), get_index)  # Pick correct window from there.
+        window = pick_from_list(list(windows), args.nth)  # Pick correct window from there.
 
         if window != None:
             print("Focussing %d" % window.window)
             conn.command('[id="%d"] focus' % window.window)
         else:
-            print("Did not find window(%d) going to workspace anyway."%get_index)
-            conn.command("workspace " + workspace_name)
+            print("Did not find window(%d) going to workspace anyway."%args.nth)
+            conn.command("workspace " + args.workspace)
 
-    if to_mode != 'no':
-        conn.command("mode " + to_mode)
+    if args.mode != 'no':
+        conn.command("mode " + args.mode)
 
 if __name__ == '__main__':
-    main(*argv[1:])
+
+    from argparse import ArgumentParser
+
+    parser = ArgumentParser(prog='nth_window_in_workspace.py',
+        description="Program using i3ipc to select the nth window from a workspace.")
+
+    parser.add_argument('workspace', help="Name of workspace to go to.")
+    parser.add_argument('nth', type=int, default=0, help="""Nth window in that workspace.
+If integer too high it will go to the last one, if no windows in there, goes to the workspace.""")
+    parser.add_argument("--filter", default='none',
+                        help="filters to apply, i.e. `visible` or `none`(default)")
+    parser.add_argument("--mode", default='default',help="""Convenience feature;
+what to change the i3-mode to afterwards. So you can exit the mode after you're done.
+Defaultly it goes back to `default`, can set it to `no` to not change mode at all.""")
+
+    main(parser.parse_args())
