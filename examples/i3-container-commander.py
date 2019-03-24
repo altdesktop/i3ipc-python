@@ -31,6 +31,10 @@ parser.add_argument('--group-by', metavar='PROPERTY',
         type string. See <http://i3wm.org/docs/ipc.html#_tree_reply> for a list
         of properties. (default: "window_class")''')
 
+parser.add_argument('--filter', metavar='FILTER',
+        default='',
+        help='''Filter applied to group_by containers''')
+
 parser.add_argument('--command', metavar='COMMAND',
         default='focus',
         help='''The command to execute on the container that you end up
@@ -91,8 +95,11 @@ if args.group_by:
         g = find_group(c)
         if g:
             groups[g] = groups[g] + 1 if g in groups else 1
-            
-    if len(groups) > 1:
+
+    if args.filter:
+        chosen_group = args.filter
+        containers = list(filter(lambda c: find_group(c) == chosen_group, containers))
+    elif len(groups) > 1:
         chosen_group = show_menu(['{} ({})'.format(k, v) for k,v in groups.items()], args.group_by)
         chosen_group = chosen_group[:chosen_group.rindex(' ')]
         containers = list(filter(lambda c: find_group(c) == chosen_group, containers))
