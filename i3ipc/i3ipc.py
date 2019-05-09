@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import sys
 import errno
 import struct
 import json
@@ -11,6 +12,8 @@ from enum import Enum
 from collections import deque
 from threading import Timer, Lock
 import time
+
+python2 = sys.version_info[0] < 3
 
 
 class MessageType(Enum):
@@ -471,10 +474,15 @@ class Connection(object):
         return socket_path_exists
 
     def message(self, message_type, payload):
+        if python2:
+            ErrorType = IOError
+        else:
+            ErrorType = ConnectionError
+
         try:
             self.cmd_lock.acquire()
             return self._ipc_send(self.cmd_socket, message_type, payload)
-        except BrokenPipeError as e:
+        except ErrorType as e:
             if not self.auto_reconnect:
                 raise (e)
 
