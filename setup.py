@@ -9,7 +9,7 @@ install_requires = ['enum-compat']
 
 setup(
     name='i3ipc',
-    version='1.6.0',
+    version='1.7.1',
     description='An improved Python library for i3wm extensions',
     long_description=long_description,
     url='https://github.com/acrisci/i3ipc-python',
@@ -25,6 +25,9 @@ setup(
         'Programming Language :: Python :: 3.2',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
     keywords='i3 i3wm extensions add-ons',
     packages=['i3ipc'],

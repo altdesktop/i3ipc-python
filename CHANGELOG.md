@@ -1,5 +1,17 @@
 # Changelog
 
+## Version 1.7.1
+
+Version 1.7.1 adds some bugfixes and features.
+
+* Add support to get socketpath from the `sway` binary (93a8f0c).
+* Return empty list on commands that don't return a result (cf55812).
+* Implement the `SHUTDOWN` event (d338889).
+* Implement the autoreconnect feature (fa3a813).
+* Make sending commands thread safe (e9fcefa).
+* Add `title` attribute to `Con` class (34ea24e).
+* Add `pid` attribute to `Con` class for sway (bd0224e).
+
 ## Version 1.6.0
 
 Version 1.6.0 adds the following bugfixes and features:
