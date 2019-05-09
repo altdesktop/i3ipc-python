@@ -1,4 +1,4 @@
-.PHONY: test format lint all clean publish docs coverage
+.PHONY: test format lint all clean publish docs coverage docker-test
 .DEFAULT_GOAL := all
 
 source_dirs = i3ipc test examples
@@ -11,6 +11,10 @@ format:
 
 test:
 	./run-tests.py
+
+docker-test:
+	docker build -t i3ipc-python-test .
+	docker run -it i3ipc-python-test
 
 clean:
 	rm -rf dist i3ipc.egg-info build docs/_build
@@ -26,4 +30,4 @@ docs:
 livedocs:
 	sphinx-autobuild docs docs/_build/html --watch i3ipc -i '*swp' -i '*~'
 
-all: format lint test
+all: format lint docker-test

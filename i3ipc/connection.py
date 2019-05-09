@@ -168,6 +168,7 @@ class Connection(object):
             if not self.auto_reconnect:
                 raise (e)
 
+            # XXX: can the socket path change between restarts?
             if not self._wait_for_socket():
                 raise (e)
 

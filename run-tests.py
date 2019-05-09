@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import subprocess
 from subprocess import Popen
@@ -8,6 +8,7 @@ from os.path import isfile, join
 import sys
 import re
 import time
+import random
 
 try:
     from shutil import which
@@ -112,6 +113,7 @@ def run_pytest(display):
     env['DISPLAY'] = ':%d' % display
     env['PYTHONPATH'] = here
     env['_I3IPC_TEST'] = '1'
+    env['I3SOCK'] = f'/tmp/i3ipc-test-sock-{display}'
     subprocess.run([PYTEST], env=env)
 
 
