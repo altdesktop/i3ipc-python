@@ -1,6 +1,5 @@
 from threading import Timer
 from ipctest import IpcTest
-import i3ipc
 
 
 class TestShutdownEvent(IpcTest):

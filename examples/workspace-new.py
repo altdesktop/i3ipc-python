@@ -4,6 +4,7 @@ import i3ipc
 import re
 from argparse import ArgumentParser
 
+
 def main():
     parser = ArgumentParser(description='''
     Simple script to go to a new workspace. It will switch to a workspace with the lowest available number.
@@ -14,7 +15,8 @@ def main():
 
     workspaces = i3.get_workspaces()
     numbered_workspaces = filter(lambda w: w.name[0].isdigit(), workspaces)
-    numbers = list(map(lambda w: int(re.search(r'^([0-9]+)', w.name).group(0)), numbered_workspaces))
+    numbers = list(map(lambda w: int(re.search(r'^([0-9]+)', w.name).group(0)),
+                       numbered_workspaces))
 
     new = 0
 
@@ -24,6 +26,7 @@ def main():
             break
 
     i3.command("workspace %s" % new)
+
 
 if __name__ == '__main__':
     main()

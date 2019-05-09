@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 """
 focus-next-visible.py - cycles input focus between visible windows on workspace
 
@@ -26,19 +25,17 @@ import i3ipc
 
 
 def get_windows_on_ws(conn):
-    return filter(lambda x: x.window,
-                  conn.get_tree().find_focused().workspace().descendents())
+    return filter(lambda x: x.window, conn.get_tree().find_focused().workspace().descendents())
 
 
 def find_visible_windows(windows_on_workspace):
     visible_windows = []
     for w in windows_on_workspace:
-     
+
         try:
             xprop = check_output(['xprop', '-id', str(w.window)]).decode()
         except FileNotFoundError:
-            raise SystemExit("The `xprop` utility is not found!"
-                             " Please install it and retry.")
+            raise SystemExit("The `xprop` utility is not found!" " Please install it and retry.")
 
         if '_NET_WM_STATE_HIDDEN' not in xprop:
             visible_windows.append(w)

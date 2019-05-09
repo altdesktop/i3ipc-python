@@ -292,15 +292,10 @@ class _PubSub(object):
         if detailed_event.count('::') > 0:
             [event, detail] = detailed_event.split('::')
 
-        self._subscriptions.append({
-            'event': event,
-            'detail': detail,
-            'handler': handler
-        })
+        self._subscriptions.append({'event': event, 'detail': detail, 'handler': handler})
 
     def unsubscribe(self, handler):
-        self._subscriptions = list(
-            filter(lambda s: s['handler'] != handler, self._subscriptions))
+        self._subscriptions = list(filter(lambda s: s['handler'] != handler, self._subscriptions))
 
     def emit(self, event, data):
         detail = ''
@@ -364,25 +359,22 @@ class Connection(object):
 
         if not socket_path:
             try:
-                socket_path = subprocess.check_output(
-                    ['i3', '--get-socketpath'],
-                    close_fds=True,
-                    universal_newlines=True).strip()
+                socket_path = subprocess.check_output(['i3', '--get-socketpath'],
+                                                      close_fds=True,
+                                                      universal_newlines=True).strip()
             except Exception:
                 pass
 
         if not socket_path:
             try:
-                socket_path = subprocess.check_output(
-                    ['sway', '--get-socketpath'],
-                    close_fds=True,
-                    universal_newlines=True).strip()
+                socket_path = subprocess.check_output(['sway', '--get-socketpath'],
+                                                      close_fds=True,
+                                                      universal_newlines=True).strip()
             except Exception:
                 pass
 
         if not socket_path:
-            raise Exception(
-                'Failed to retrieve the i3 or sway IPC socket path')
+            raise Exception('Failed to retrieve the i3 or sway IPC socket path')
 
         if auto_reconnect:
             self.subscriptions = Event.SHUTDOWN
@@ -425,8 +417,7 @@ class Connection(object):
         """
         Unpacks the header of given byte string.
         """
-        return struct.unpack(self._struct_header,
-                             data[:self._struct_header_size])
+        return struct.unpack(self._struct_header, data[:self._struct_header_size])
 
     def _recv_robust(self, sock, size):
         """
@@ -673,8 +664,7 @@ class Connection(object):
 
         try:
             self.sub_lock.acquire()
-            data = self._ipc_send(self.sub_socket, MessageType.SUBSCRIBE,
-                                  json.dumps(events_obj))
+            data = self._ipc_send(self.sub_socket, MessageType.SUBSCRIBE, json.dumps(events_obj))
         finally:
             self.sub_lock.release()
         result = json.loads(data, object_hook=CommandReply)
@@ -1000,10 +990,9 @@ class Con(object):
 
         # set simple properties
         ipc_properties = [
-            'border', 'current_border_width', 'floating', 'focus', 'focused',
-            'fullscreen_mode', 'id', 'layout', 'marks', 'name', 'num',
-            'orientation', 'percent', 'scratchpad_state', 'sticky', 'type',
-            'urgent', 'window', 'pid'
+            'border', 'current_border_width', 'floating', 'focus', 'focused', 'fullscreen_mode',
+            'id', 'layout', 'marks', 'name', 'num', 'orientation', 'percent', 'scratchpad_state',
+            'sticky', 'type', 'urgent', 'window', 'pid'
         ]
         for attr in ipc_properties:
             if attr in data:
@@ -1187,10 +1176,7 @@ class Con(object):
             return None
 
     def find_by_role(self, pattern):
-        return [
-            c for c in self
-            if c.window_role and re.search(pattern, c.window_role)
-        ]
+        return [c for c in self if c.window_role and re.search(pattern, c.window_role)]
 
     def find_named(self, pattern):
         return [c for c in self if c.name and re.search(pattern, c.name)]
@@ -1199,22 +1185,14 @@ class Con(object):
         return [c for c in self if c.window_title and re.search(pattern, c.window_title)]
 
     def find_classed(self, pattern):
-        return [
-            c for c in self
-            if c.window_class and re.search(pattern, c.window_class)
-        ]
+        return [c for c in self if c.window_class and re.search(pattern, c.window_class)]
 
     def find_instanced(self, pattern):
-        return [
-            c for c in self
-            if c.window_instance and re.search(pattern, c.window_instance)
-        ]
+        return [c for c in self if c.window_instance and re.search(pattern, c.window_instance)]
 
     def find_marked(self, pattern=".*"):
         pattern = re.compile(pattern)
-        return [
-            c for c in self if any(pattern.search(mark) for mark in c.marks)
-        ]
+        return [c for c in self if any(pattern.search(mark) for mark in c.marks)]
 
     def find_fullscreen(self):
         return [c for c in self if c.type == 'con' and c.fullscreen_mode]

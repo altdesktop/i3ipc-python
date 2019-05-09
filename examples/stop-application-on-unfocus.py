@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 """
 Stop an application when unfocused using SIGSTOP
 Restart it when focused again using SIGCONT

@@ -2,6 +2,7 @@ from ipctest import IpcTest
 import i3ipc
 import io
 
+
 class TestGetConfig(IpcTest):
     def test_get_config(self, i3):
         config = i3.get_config()
