@@ -504,14 +504,13 @@ class Connection(object):
         ``i3-msg`` or an ``exec`` block in your i3 config to control the
         window manager.
 
-        :rtype: List of :class:`CommandReply` or None if the command causes i3
-        to restart or exit and does not give a reply.
+        :rtype: List of :class:`CommandReply`.
         """
         data = self.message(MessageType.COMMAND, payload)
         if data:
             return json.loads(data, object_hook=CommandReply)
         else:
-            return None
+            return []
 
     def get_version(self):
         """
