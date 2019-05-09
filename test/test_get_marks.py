@@ -2,7 +2,6 @@
 from __future__ import unicode_literals
 
 from ipctest import IpcTest
-import i3ipc
 
 
 class TestGetMarks(IpcTest):

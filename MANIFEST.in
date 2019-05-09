@@ -1,0 +1,2 @@
+include README.rst LICENSE CHANGELOG.md pytest.ini requirements.txt .flake8 .style.yapf
+recursive-include test *.py

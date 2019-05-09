@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import subprocess
 from subprocess import Popen
@@ -8,6 +8,8 @@ from os.path import isfile, join
 import sys
 import re
 import time
+import random
+
 try:
     from shutil import which
 except ImportError:
@@ -19,6 +21,7 @@ except ImportError:
             if os.path.exists(p) and os.access(p, os.X_OK):
                 return p
 
+here = os.path.abspath(os.path.dirname(__file__))
 
 if not hasattr(subprocess, 'run'):
     subprocess.run = subprocess.call
@@ -108,8 +111,9 @@ def start_server(display):
 def run_pytest(display):
     env = os.environ.copy()
     env['DISPLAY'] = ':%d' % display
-    env['PYTHONPATH'] = './i3ipc'
+    env['PYTHONPATH'] = here
     env['_I3IPC_TEST'] = '1'
+    env['I3SOCK'] = f'/tmp/i3ipc-test-sock-{display}'
     subprocess.run([PYTEST], env=env)
 
 

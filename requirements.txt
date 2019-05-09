@@ -1,0 +1,6 @@
+pytest
+pytest-timeout
+enum-compat
+yapf
+flake8
+sphinx

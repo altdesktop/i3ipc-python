@@ -12,12 +12,10 @@ MAX_WIN_HISTORY = 15
 
 
 class FocusWatcher:
-
     def __init__(self):
         self.i3 = i3ipc.Connection()
         self.i3.on('window::focus', self.on_window_focus)
-        self.listening_socket = socket.socket(socket.AF_UNIX,
-            socket.SOCK_STREAM)
+        self.listening_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         if os.path.exists(SOCKET_FILE):
             os.remove(SOCKET_FILE)
         self.listening_socket.bind(SOCKET_FILE)
@@ -73,9 +71,10 @@ class FocusWatcher:
         for t in (t_i3, t_server):
             t.start()
 
+
 if __name__ == '__main__':
     parser = ArgumentParser(prog='focus-last.py',
-        description='''
+                            description='''
         Focus last focused window.
 
         This script should be launch from the .xsessionrc without argument.
@@ -83,8 +82,11 @@ if __name__ == '__main__':
         Then you can bind this script with the `--switch` option to one of your
         i3 keybinding.
         ''')
-    parser.add_argument('--switch', dest='switch', action='store_true',
-        help='Switch to the previous window', default=False)
+    parser.add_argument('--switch',
+                        dest='switch',
+                        action='store_true',
+                        help='Switch to the previous window',
+                        default=False)
     args = parser.parse_args()
 
     if not args.switch:

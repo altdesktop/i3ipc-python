@@ -2,7 +2,7 @@
 
 import i3ipc
 from argparse import ArgumentParser
-from subprocess import check_output, Popen, PIPE, CalledProcessError
+from subprocess import check_output, Popen, CalledProcessError
 from sys import exit
 from os.path import basename
 
@@ -42,8 +42,8 @@ elif basename(args.menu) == 'rofi':
 cmd = ''
 
 try:
-    cmd = check_output([ args.menu ] + menu_args,
-            input=bytes('\n'.join(history), 'UTF-8')).decode('UTF-8').strip()
+    cmd = check_output([args.menu] + menu_args, input=bytes('\n'.join(history),
+                                                            'UTF-8')).decode('UTF-8').strip()
 except CalledProcessError as e:
     exit(e.returncode)
 

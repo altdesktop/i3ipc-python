@@ -1,5 +1,4 @@
 from ipctest import IpcTest
-import i3ipc
 
 
 class TestRestart(IpcTest):

@@ -1,22 +1,60 @@
-from setuptools import setup
-from os import path
-from io import open
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
-readme_path = path.join(path.abspath(path.dirname(__file__)), 'README.rst')
-long_description = open(readme_path, encoding='utf-8').read()
+import io
+import os
 
-install_requires = ['enum-compat']
+from setuptools import setup, find_packages
 
+# Package meta-data.
+NAME = 'i3ipc'
+DESCRIPTION = 'An improved Python library for i3wm extensions'
+URL = 'https://github.com/acrisci/i3ipc-python'
+EMAIL = 'tony@dubstepdish.com'
+AUTHOR = 'Tony Crisci'
+REQUIRES_PYTHON = '>=2.7.0'
+VERSION = '1.7.1'
+
+REQUIRED = ['enum-compat']
+EXTRAS = {}
+
+here = os.path.abspath(os.path.dirname(__file__))
+
+try:
+    with io.open(os.path.join(here, 'README.rst'), encoding='utf-8') as f:
+        long_description = '\n' + f.read()
+except FileNotFoundError:
+    long_description = DESCRIPTION
+
+# Load the package's __version__.py module as a dictionary.
+about = {}
+if not VERSION:
+    project_slug = NAME.lower().replace('-', '_').replace(' ', '_')
+    with open(os.path.join(here, project_slug, '__version__.py')) as f:
+        exec(f.read(), about)
+else:
+    about['__version__'] = VERSION
+
+
+# Where the magic happens:
 setup(
-    name='i3ipc',
-    version='1.7.1',
-    description='An improved Python library for i3wm extensions',
+    name=NAME,
+    version=about['__version__'],
+    description=DESCRIPTION,
     long_description=long_description,
-    url='https://github.com/acrisci/i3ipc-python',
-    author='Tony Crisci',
-    author_email='tony@dubstepdish.com',
+    author=AUTHOR,
+    author_email=EMAIL,
+    python_requires=REQUIRES_PYTHON,
+    url=URL,
+    packages=find_packages(exclude=['test', '*.test', '*.test.*', 'test.*']),
+    install_requires=REQUIRED,
+    extras_require=EXTRAS,
+    include_package_data=True,
     license='BSD',
+    keywords='i3 i3wm extensions add-ons',
     classifiers=[
+        # Trove classifiers
+        # Full list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
@@ -28,8 +66,6 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
-    ],
-    keywords='i3 i3wm extensions add-ons',
-    packages=['i3ipc'],
-    install_requires=install_requires,
+
+    ]
 )

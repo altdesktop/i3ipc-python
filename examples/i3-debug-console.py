@@ -2,7 +2,7 @@
 
 import i3ipc
 from curses import wrapper
-from threading import Timer
+
 
 def con_type_to_text(con):
     if con.type != 'con':
@@ -12,6 +12,7 @@ def con_type_to_text(con):
     else:
         return 'view'
 
+
 def layout_txt(con):
     if con.layout == 'splith':
         return 'HORIZ'
@@ -19,6 +20,7 @@ def layout_txt(con):
         return 'VERT'
     else:
         return ''
+
 
 def container_to_text(con, indent):
     t = con_type_to_text(con)
@@ -41,7 +43,9 @@ def container_to_text(con, indent):
 
     return txt
 
+
 last_txt = ''
+
 
 def main(stdscr):
     ipc = i3ipc.Connection()
@@ -71,5 +75,6 @@ def main(stdscr):
     ipc.on('workspace', on_event)
 
     ipc.main()
+
 
 wrapper(main)
