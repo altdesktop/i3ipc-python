@@ -52,13 +52,18 @@ def _unpack_header(data: bytes) -> Tuple[bytes, int, int]:
 async def _find_socket_path() -> Optional[str]:
     socket_path = None
 
+    def exists(path):
+        if not path:
+            return False
+        return os.path.exists(path)
+
     # first try environment variables
     socket_path = os.environ.get('I3SOCK')
-    if socket_path:
+    if exists(socket_path):
         return socket_path
 
     socket_path = os.environ.get('SWAYSOCK')
-    if socket_path:
+    if exists(socket_path):
         return socket_path
 
     # next try the root window property
@@ -72,7 +77,7 @@ async def _find_socket_path() -> Optional[str]:
     except DisplayError:
         pass
 
-    if socket_path:
+    if exists(socket_path):
         return socket_path
 
     # finally try the binaries
@@ -88,7 +93,9 @@ async def _find_socket_path() -> Optional[str]:
         stdout, stderr = await process.communicate()
 
         if process.returncode == 0 and stdout:
-            return stdout.decode().strip()
+            socket_path = stdout.decode().strip()
+            if exists(socket_path):
+                return socket_path
 
     # could not find the socket path
     return None
@@ -169,14 +176,10 @@ class Connection:
         self._pubsub.emit(event_type.to_string(), event)
 
     async def connect(self) -> Connection:
-        if not self.socket_path:
-            self._socket_path = await _find_socket_path()
+        self._socket_path = await _find_socket_path()
 
         if not self.socket_path:
             raise Exception('Failed to retrieve the i3 or sway IPC socket path')
-
-        if not os.path.exists(self.socket_path):
-            raise FileNotFoundError(f'socket path does not exist: {self.socket_path}')
 
         self._cmd_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self._cmd_socket.connect(self.socket_path)
