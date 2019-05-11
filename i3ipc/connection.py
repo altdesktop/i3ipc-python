@@ -4,8 +4,7 @@ from .con import Con
 from .model import (Event, MessageType, CommandReply, VersionReply, BarConfigReply, OutputReply,
                     WorkspaceReply, ConfigReply, TickEvent, TickReply, WorkspaceEvent, GenericEvent,
                     WindowEvent, BarconfigUpdateEvent, BindingEvent)
-from ._private import PubSub
-from ._private import PropsObject
+from ._private import PubSub, PropsObject
 
 import sys
 import errno

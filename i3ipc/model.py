@@ -1,6 +1,6 @@
 from . import con
 
-from enum import Enum
+from enum import Enum, IntFlag
 
 
 class MessageType(Enum):
@@ -17,7 +17,21 @@ class MessageType(Enum):
     SEND_TICK = 10
 
 
-class Event(object):
+class ReplyType(Enum):
+    COMMAND = 0
+    WORKSPACES = 1
+    SUBSCRIBE = 2
+    OUTPUTS = 3
+    TREE = 4
+    MARKS = 5
+    BAR_CONFIG = 6
+    VERSION = 7
+    BINDING_MODES = 8
+    GET_CONFIG = 9
+    TICK = 10
+
+
+class Event(IntFlag):
     WORKSPACE = (1 << 0)
     OUTPUT = (1 << 1)
     MODE = (1 << 2)
@@ -26,6 +40,39 @@ class Event(object):
     BINDING = (1 << 5)
     SHUTDOWN = (1 << 6)
     TICK = (1 << 7)
+
+    def to_string(self):
+        return str.lower(self.name)
+
+    @staticmethod
+    def from_string(val):
+        match = [e for e in Event if e.to_string() == val]
+
+        if not match:
+            raise ValueError('event not implemented: ' + val)
+
+        return match[0]
+
+    def to_list(self):
+        events_list = []
+        if self & Event.WORKSPACE:
+            events_list.append(Event.WORKSPACE.to_string())
+        if self & Event.OUTPUT:
+            events_list.append(Event.OUTPUT.to_string())
+        if self & Event.MODE:
+            events_list.append(Event.MODE.to_string())
+        if self & Event.WINDOW:
+            events_list.append(Event.WINDOW.to_string())
+        if self & Event.BARCONFIG_UPDATE:
+            events_list.append(Event.BARCONFIG_UPDATE.to_string())
+        if self & Event.BINDING:
+            events_list.append(Event.BINDING.to_string())
+        if self & Event.SHUTDOWN:
+            events_list.append(Event.SHUTDOWN.to_string())
+        if self & Event.TICK:
+            events_list.append(Event.TICK.to_string())
+
+        return events_list
 
 
 class _ReplyType(dict):
@@ -210,16 +257,16 @@ class TickReply(_ReplyType):
 
 
 class WorkspaceEvent(object):
-    def __init__(self, data, conn):
+    def __init__(self, data, conn, _Con=con.Con):
         self.change = data['change']
         self.current = None
         self.old = None
 
         if 'current' in data and data['current']:
-            self.current = con.Con(data['current'], None, conn)
+            self.current = _Con(data['current'], None, conn)
 
         if 'old' in data and data['old']:
-            self.old = con.Con(data['old'], None, conn)
+            self.old = _Con(data['old'], None, conn)
 
 
 class GenericEvent(object):
@@ -228,9 +275,9 @@ class GenericEvent(object):
 
 
 class WindowEvent(object):
-    def __init__(self, data, conn):
+    def __init__(self, data, conn, _Con=con.Con):
         self.change = data['change']
-        self.container = con.Con(data['container'], None, conn)
+        self.container = _Con(data['container'], None, conn)
 
 
 class BarconfigUpdateEvent(object):

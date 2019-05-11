@@ -93,6 +93,33 @@ Example
     # Start the main loop and wait for events to come in.
     i3.main()
 
+Asyncio Support
+---------------
+
+Experimental support for asyncio is included in the ``i3ipc.aio`` package. The interface is similar to the blocking interface but the methods that interact with the socket are coroutines.
+
+There will be some other subtle changes in the connection that will be documented at a future time. Asyncio support is unstable and subject to change.
+
+.. code:: python3
+
+    from i3ipc.aio import Connection
+
+    import asyncio
+
+    async def main():
+        def on_window(self, e):
+            print(e)
+
+        c = await Connection(auto_reconnect=True).connect()
+
+        workspaces = await c.get_workspaces()
+
+        c.on('workspace', on_window)
+
+        await c.main()
+
+    asyncio.get_event_loop().run_until_complete(main())
+
 Contributing
 ------------
 
