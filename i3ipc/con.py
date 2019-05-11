@@ -230,6 +230,9 @@ class Con(object):
             if 'title' in data['window_properties']:
                 self.window_title = data['window_properties']['title']
 
+        if 'app_id' in data:
+            self.app_id = data['app_id']
+
         self.rect = model.Rect(data['rect'])
         if 'window_rect' in data:
             self.window_rect = model.Rect(data['window_rect'])
