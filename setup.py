@@ -15,7 +15,7 @@ AUTHOR = 'Tony Crisci'
 REQUIRES_PYTHON = '>=2.7.0'
 VERSION = '1.7.1'
 
-REQUIRED = ['enum-compat']
+REQUIRED = ['enum-compat', 'python-xlib']
 EXTRAS = {}
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -36,7 +36,6 @@ else:
     about['__version__'] = VERSION
 
 
-# Where the magic happens:
 setup(
     name=NAME,
     version=about['__version__'],
