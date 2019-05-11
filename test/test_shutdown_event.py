@@ -12,7 +12,7 @@ class TestShutdownEvent(IpcTest):
         self.events.append(e)
         assert i3._wait_for_socket()
         if len(self.events) == 1:
-            Timer(0.001, self.restart_func, args=(i3, )).start()
+            Timer(0.1, self.restart_func, args=(i3, )).start()
         elif len(self.events) == 2:
             i3.main_quit()
 
@@ -20,6 +20,6 @@ class TestShutdownEvent(IpcTest):
         i3.auto_reconnect = True
         self.events = []
         i3.on('shutdown::restart', self.on_shutdown)
-        Timer(0.001, self.restart_func, args=(i3, )).start()
+        Timer(0.1, self.restart_func, args=(i3, )).start()
         i3.main(timeout=1)
         assert len(self.events) == 2

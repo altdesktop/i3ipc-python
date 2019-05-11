@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from .._private import PubSub
-from ..model import (MessageType, ReplyType, CommandReply, Event, GenericEvent, WorkspaceEvent,
-                     WindowEvent, BarconfigUpdateEvent, BindingEvent, TickEvent, VersionReply,
-                     BarConfigReply, OutputReply, WorkspaceReply, ConfigReply, TickReply)
+from ..model import (MessageType, CommandReply, Event, GenericEvent, WorkspaceEvent, WindowEvent,
+                     BarconfigUpdateEvent, BindingEvent, TickEvent, VersionReply, BarConfigReply,
+                     OutputReply, WorkspaceReply, ConfigReply, TickReply)
 from .. import con
 import os
 import json
@@ -15,6 +15,7 @@ import socket
 
 import asyncio
 from asyncio.subprocess import PIPE
+from asyncio import Future
 
 _MAGIC = b'i3-ipc'  # safety string for i3-ipc
 _chunk_size = 1024  # in bytes
@@ -95,12 +96,16 @@ async def _find_socket_path() -> Optional[str]:
 
 class Connection:
     def __init__(self, socket_path: Optional[str] = None, auto_reconnect: bool = False):
-        self.socket_path = socket_path
+        self._socket_path = socket_path
         self._auto_reconnect = auto_reconnect
         self._pubsub = PubSub(self)
         self._subscriptions = 0
-        self._restarting = False
         self._main_future = None
+        self._reconnect_future = None
+
+    @property
+    def socket_path(self) -> str:
+        return self._socket_path
 
     def _message_reader(self):
         try:
@@ -109,13 +114,24 @@ class Connection:
             self.main_quit(_error=e)
 
     def _read_message(self):
-        buf = self._sub_socket.recv(_struct_header_size)
 
-        if not buf:
+        error = None
+        buf = b''
+        try:
+            buf = self._sub_socket.recv(_struct_header_size)
+        except ConnectionError as e:
+            error = e
+
+        if not buf or error is not None:
             self._loop.remove_reader(self._sub_fd)
 
             if self._auto_reconnect:
                 asyncio.ensure_future(self._reconnect())
+            else:
+                if error is not None:
+                    raise error
+                else:
+                    raise EOFError()
 
             return
 
@@ -144,8 +160,6 @@ class Connection:
             event = BindingEvent(message)
         elif event_type == Event.SHUTDOWN:
             event = GenericEvent(message)
-            if event.change == 'restart':
-                self._restarting = True
         elif event_type == Event.TICK:
             event = TickEvent(message)
         else:
@@ -156,12 +170,16 @@ class Connection:
 
     async def connect(self) -> Connection:
         if not self.socket_path:
-            self.socket_path = await _find_socket_path()
+            self._socket_path = await _find_socket_path()
 
         if not self.socket_path:
             raise Exception('Failed to retrieve the i3 or sway IPC socket path')
 
-        (cmd_reader, cmd_writer) = await asyncio.open_unix_connection(self.socket_path)
+        if not os.path.exists(self.socket_path):
+            raise FileNotFoundError(f'socket path does not exist: {self.socket_path}')
+
+        self._cmd_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self._cmd_socket.connect(self.socket_path)
 
         self._sub_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self._sub_socket.connect(self.socket_path)
@@ -170,36 +188,68 @@ class Connection:
         self._sub_fd = self._sub_socket.fileno()
         self._loop.add_reader(self._sub_fd, self._message_reader)
 
-        self._cmd_reader = cmd_reader
-        self._cmd_writer = cmd_writer
-
-        if self._auto_reconnect:
-            await self.subscribe(Event.SHUTDOWN)
+        await self._subscribe(self._subscriptions, force=True)
 
         return self
 
-    async def _reconnect(self):
-        for tries in range(0, 500):
-            try:
-                await self.connect()
-                await self.subscribe(self._subscriptions)
-                break
-            except FileNotFoundError:
-                await asyncio.sleep(0.001)
+    def _reconnect(self) -> Future:
+        if self._reconnect_future is not None:
+            return self._reconnect_future
 
-    async def message(self, message_type: MessageType, payload: str) -> Tuple[ReplyType, bytes]:
+        self._reconnect_future = self._loop.create_future()
+
+        async def do_reconnect():
+            error = None
+
+            for tries in range(0, 1000):
+                try:
+                    await self.connect()
+                    error = None
+                    break
+                except Exception as e:
+                    error = e
+                    await asyncio.sleep(0.001)
+
+            if error:
+                self._reconnect_future.set_exception(error)
+            else:
+                self._reconnect_future.set_result(None)
+
+            self._reconnect_future = None
+
+        asyncio.ensure_future(do_reconnect())
+
+        return self._reconnect_future
+
+    async def message(self, message_type: MessageType, payload: str) -> bytes:
         if message_type is MessageType.SUBSCRIBE:
             raise Exception('cannot subscribe on the command socket')
 
-        self._cmd_writer.write(_pack(message_type, payload))
-        buf = await self._cmd_reader.read(_struct_header_size)
-        magic, message_length, reply_type = _unpack_header(buf)
-        assert magic == _MAGIC
-        message = await self._cmd_reader.read(message_length)
-        return (ReplyType(reply_type), message)
+        try:
+            await self._loop.sock_sendall(self._cmd_socket, _pack(message_type, payload))
+            buf = await self._loop.sock_recv(self._cmd_socket, _struct_header_size)
+        except ConnectionError as e:
+            if not self._auto_reconnect:
+                raise e
 
-    async def subscribe(self, events: Event):
-        new_subscriptions = self._subscriptions ^ events
+            await self._reconnect()
+            await self._loop.sock_sendall(self._cmd_socket, _pack(message_type, payload))
+            buf = await self._loop.sock_recv(self._cmd_socket, _struct_header_size)
+
+        if not buf:
+            return b''
+
+        magic, message_length, reply_type = _unpack_header(buf)
+        assert reply_type == message_type.value
+        assert magic == _MAGIC
+        message = await self._loop.sock_recv(self._cmd_socket, message_length)
+        return message
+
+    async def _subscribe(self, events: Event, force=False):
+        if not force:
+            new_subscriptions = self._subscriptions ^ events
+        else:
+            new_subscriptions = events
 
         if not new_subscriptions:
             return
@@ -217,14 +267,13 @@ class Connection:
 
         event_type = Event.from_string(event)
         self._pubsub.subscribe(detailed_event, handler)
-        asyncio.ensure_future(self.subscribe(event_type))
+        asyncio.ensure_future(self._subscribe(event_type))
 
     def off(self, handler: Callable):
         self._pubsub.unsubscribe(handler)
 
     async def command(self, cmd: str) -> List[CommandReply]:
-        reply_type, data = await self.message(MessageType.COMMAND, cmd)
-        assert reply_type is ReplyType.COMMAND
+        data = await self.message(MessageType.COMMAND, cmd)
 
         if data:
             return json.loads(data, object_hook=CommandReply)
@@ -232,14 +281,11 @@ class Connection:
             return []
 
     async def get_version(self) -> VersionReply:
-        reply_type, data = await self.message(MessageType.GET_VERSION, '')
-        assert reply_type is ReplyType.VERSION
-
+        data = await self.message(MessageType.GET_VERSION, '')
         return json.loads(data, object_hook=VersionReply)
 
     async def get_bar_config_list(self) -> List[str]:
-        reply_type, data = await self.message(MessageType.GET_BAR_CONFIG, '')
-        assert reply_type is ReplyType.BAR_CONFIG
+        data = await self.message(MessageType.GET_BAR_CONFIG, '')
         return json.loads(data)
 
     async def get_bar_config(self, bar_id=None) -> BarConfigReply:
@@ -249,51 +295,35 @@ class Connection:
                 return None
             bar_id = bar_config_list[0]
 
-        reply_type, data = await self.message(MessageType.GET_BAR_CONFIG, bar_id)
-        assert reply_type is ReplyType.BAR_CONFIG
-
+        data = await self.message(MessageType.GET_BAR_CONFIG, bar_id)
         return json.loads(data, object_hook=BarConfigReply)
 
     async def get_outputs(self) -> List[OutputReply]:
-        reply_type, data = await self.message(MessageType.GET_OUTPUTS, '')
-        assert reply_type is ReplyType.OUTPUTS
-
+        data = await self.message(MessageType.GET_OUTPUTS, '')
         return json.loads(data, object_hook=OutputReply)
 
     async def get_workspaces(self) -> List[WorkspaceReply]:
-        reply_type, data = await self.message(MessageType.GET_WORKSPACES, '')
-        assert reply_type is ReplyType.WORKSPACES
-
+        data = await self.message(MessageType.GET_WORKSPACES, '')
         return json.loads(data, object_hook=WorkspaceReply)
 
     async def get_tree(self) -> Con:
-        reply_type, data = await self.message(MessageType.GET_TREE, '')
-        assert reply_type is ReplyType.TREE
-
+        data = await self.message(MessageType.GET_TREE, '')
         return Con(json.loads(data), None, self)
 
     async def get_marks(self) -> List[str]:
-        reply_type, data = await self.message(MessageType.GET_MARKS, '')
-        assert reply_type is ReplyType.MARKS
-
+        data = await self.message(MessageType.GET_MARKS, '')
         return json.loads(data)
 
     async def get_binding_modes(self) -> List[str]:
-        reply_type, data = await self.message(MessageType.GET_BINDING_MODES, '')
-        assert reply_type is ReplyType.BINDING_MODES
-
+        data = await self.message(MessageType.GET_BINDING_MODES, '')
         return json.loads(data)
 
     async def get_config(self) -> ConfigReply:
-        reply_type, data = await self.message(MessageType.GET_CONFIG, '')
-        assert reply_type is ReplyType.GET_CONFIG
-
+        data = await self.message(MessageType.GET_CONFIG, '')
         return json.loads(data, object_hook=ConfigReply)
 
     async def send_tick(self, payload: str = "") -> TickReply:
-        reply_type, data = await self.message(MessageType.SEND_TICK, payload)
-        assert reply_type is ReplyType.TICK
-
+        data = await self.message(MessageType.SEND_TICK, payload)
         return json.loads(data, object_hook=TickReply)
 
     def main_quit(self, _error=None):

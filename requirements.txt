@@ -1,4 +1,6 @@
+python-xlib
 pytest
+pytest-asyncio
 pytest-timeout
 enum-compat
 yapf
