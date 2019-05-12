@@ -114,7 +114,7 @@ def run_pytest(display):
     env['PYTHONPATH'] = here
     env['_I3IPC_TEST'] = '1'
     env['I3SOCK'] = f'/tmp/i3ipc-test-sock-{display}'
-    subprocess.run([PYTEST], env=env)
+    subprocess.run([PYTEST] + sys.argv[1:], env=env)
 
 
 def main():
