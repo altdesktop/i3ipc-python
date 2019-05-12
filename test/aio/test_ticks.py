@@ -16,8 +16,11 @@ class TestTicks(IpcTest):
     async def test_tick_event(self, i3):
         i3.on('tick', self.on_tick)
 
-        asyncio.ensure_future(i3.send_tick())
-        asyncio.ensure_future(i3.send_tick('hello world'))
+        def send_ticks():
+            asyncio.ensure_future(i3.send_tick())
+            asyncio.ensure_future(i3.send_tick('hello world'))
+
+        i3._loop.call_later(0.1, send_ticks)
 
         await i3.main()
 

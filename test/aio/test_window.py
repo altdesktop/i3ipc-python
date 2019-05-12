@@ -15,8 +15,14 @@ class TestWindow(IpcTest):
     async def test_window_event(self, i3):
         await self.fresh_workspace()
         i3.on('window', self.on_window)
-        asyncio.ensure_future(self.open_window())
+
+        def open_window():
+            asyncio.ensure_future(self.open_window())
+
+        i3._loop.call_later(0.1, open_window)
+
         await i3.main()
+
         assert self.event
 
     @pytest.mark.asyncio

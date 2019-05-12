@@ -102,7 +102,7 @@ async def _find_socket_path() -> Optional[str]:
 
 
 class Connection:
-    def __init__(self, socket_path: Optional[str] = None, auto_reconnect: bool = False):
+    def __init__(self, socket_path: Optional[str] = None, auto_reconnect: bool = True):
         self._socket_path = socket_path
         self._auto_reconnect = auto_reconnect
         self._pubsub = PubSub(self)
@@ -113,6 +113,9 @@ class Connection:
     @property
     def socket_path(self) -> str:
         return self._socket_path
+
+    async def _ipc_recv(self, sock):
+        pass
 
     def _message_reader(self):
         try:
@@ -228,16 +231,16 @@ class Connection:
         if message_type is MessageType.SUBSCRIBE:
             raise Exception('cannot subscribe on the command socket')
 
-        try:
-            await self._loop.sock_sendall(self._cmd_socket, _pack(message_type, payload))
-            buf = await self._loop.sock_recv(self._cmd_socket, _struct_header_size)
-        except ConnectionError as e:
-            if not self._auto_reconnect:
-                raise e
+        for tries in range(0, 5):
+            try:
+                await self._loop.sock_sendall(self._cmd_socket, _pack(message_type, payload))
+                buf = await self._loop.sock_recv(self._cmd_socket, _struct_header_size)
+                break
+            except ConnectionError as e:
+                if not self._auto_reconnect:
+                    raise e
 
-            await self._reconnect()
-            await self._loop.sock_sendall(self._cmd_socket, _pack(message_type, payload))
-            buf = await self._loop.sock_recv(self._cmd_socket, _struct_header_size)
+                await self._reconnect()
 
         if not buf:
             return b''
@@ -245,7 +248,14 @@ class Connection:
         magic, message_length, reply_type = _unpack_header(buf)
         assert reply_type == message_type.value
         assert magic == _MAGIC
-        message = await self._loop.sock_recv(self._cmd_socket, message_length)
+
+        try:
+            message = await self._loop.sock_recv(self._cmd_socket, message_length)
+        except ConnectionError as e:
+            if self._auto_reconnect:
+                asyncio.ensure_future(self._reconnect())
+            raise e
+
         return message
 
     async def _subscribe(self, events: Event, force=False):
