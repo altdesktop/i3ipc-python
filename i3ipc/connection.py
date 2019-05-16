@@ -15,6 +15,8 @@ import os
 import subprocess
 from threading import Timer, Lock
 import time
+import Xlib
+import Xlib.display
 
 python2 = sys.version_info[0] < 3
 
@@ -49,17 +51,10 @@ class Connection(object):
 
         if not socket_path:
             try:
-                socket_path = subprocess.check_output(['i3', '--get-socketpath'],
-                                                      close_fds=True,
-                                                      universal_newlines=True).strip()
-            except Exception:
-                pass
-
-        if not socket_path:
-            try:
-                socket_path = subprocess.check_output(['sway', '--get-socketpath'],
-                                                      close_fds=True,
-                                                      universal_newlines=True).strip()
+                disp = Xlib.display.Display()
+                root = disp.screen().root
+                i3atom = disp.intern_atom("I3_SOCKET_PATH")
+                socket_path = root.get_full_property(i3atom, Xlib.X.AnyPropertyType).value.decode()
             except Exception:
                 pass
 
