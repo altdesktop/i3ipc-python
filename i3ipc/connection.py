@@ -2,8 +2,8 @@
 
 from .con import Con
 from .model import (Event, MessageType, CommandReply, VersionReply, BarConfigReply, OutputReply,
-                    WorkspaceReply, ConfigReply, TickEvent, TickReply, WorkspaceEvent, GenericEvent,
-                    WindowEvent, BarconfigUpdateEvent, BindingEvent)
+                    InputReply, SeatReply, WorkspaceReply, ConfigReply, TickEvent, TickReply,
+                    WorkspaceEvent, GenericEvent, WindowEvent, BarconfigUpdateEvent, BindingEvent)
 from ._private import PubSub, PropsObject
 
 import sys
@@ -266,6 +266,28 @@ class Connection(object):
         """
         data = self.message(MessageType.GET_OUTPUTS, '')
         return json.loads(data, object_hook=OutputReply)
+
+    def get_inputs(self):
+        """
+        Get a list of sway inputs. The equivalent of
+        :command:`swaymsg -t get_inputs`.
+
+        :rtype: List of :class:`InputReply`.
+
+        """
+        data = self.message(MessageType.GET_INPUTS, '')
+        return json.loads(data, object_hook=InputReply)
+
+    def get_seats(self):
+        """
+        Get a list of sway seats. The equivalent of
+        :command:`swaymsg -t get_seats`.
+
+        :rtype: List of :class:`SeatReply`.
+
+        """
+        data = self.message(MessageType.GET_SEATS, '')
+        return json.loads(data, object_hook=SeatReply)
 
     def get_workspaces(self):
         """

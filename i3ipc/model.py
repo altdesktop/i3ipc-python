@@ -15,6 +15,9 @@ class MessageType(Enum):
     GET_BINDING_MODES = 8
     GET_CONFIG = 9
     SEND_TICK = 10
+    # sway-specific command types
+    GET_INPUTS = 100
+    GET_SEATS = 101
 
 
 class ReplyType(Enum):
@@ -245,6 +248,14 @@ class BarConfigReply(_ReplyType):
 
 
 class OutputReply(_ReplyType):
+    pass
+
+
+class InputReply(_ReplyType):
+    pass
+
+
+class SeatReply(_ReplyType):
     pass
 
 
