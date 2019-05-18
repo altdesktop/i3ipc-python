@@ -9,43 +9,9 @@ import sys
 import re
 import time
 import random
-
-try:
-    from shutil import which
-except ImportError:
-
-    def which(cmd):
-        path = os.getenv('PATH')
-        for p in path.split(os.path.pathsep):
-            p = os.path.join(p, cmd)
-            if os.path.exists(p) and os.access(p, os.X_OK):
-                return p
+from shutil import which
 
 here = os.path.abspath(os.path.dirname(__file__))
-
-if not hasattr(subprocess, 'run'):
-    subprocess.run = subprocess.call
-
-if not hasattr(Popen, '__enter__'):
-
-    def backported_enter(self):
-        return self
-
-    def backported_exit(self, type, value, traceback):
-        if self.stdout:
-            self.stdout.close()
-        if self.stderr:
-            self.stderr.close()
-        try:  # Flushing a BufferedWriter may raise an error
-            if self.stdin:
-                self.stdin.close()
-        finally:
-            # Wait for the process to terminate, to avoid zombies.
-            return
-            self.wait()
-
-    Popen.__enter__ = backported_enter
-    Popen.__exit__ = backported_exit
 
 PYTEST = 'pytest'
 XVFB = 'Xvfb'
@@ -112,9 +78,8 @@ def run_pytest(display):
     env = os.environ.copy()
     env['DISPLAY'] = ':%d' % display
     env['PYTHONPATH'] = here
-    env['_I3IPC_TEST'] = '1'
     env['I3SOCK'] = f'/tmp/i3ipc-test-sock-{display}'
-    subprocess.run([PYTEST] + sys.argv[1:], env=env)
+    return subprocess.run([PYTEST] + sys.argv[1:], env=env)
 
 
 def main():
@@ -122,8 +87,10 @@ def main():
     display = get_open_display()
 
     with start_server(display) as server:
-        run_pytest(display)
+        result = run_pytest(display)
         server.terminate()
+
+    sys.exit(result.returncode)
 
 
 if __name__ == '__main__':

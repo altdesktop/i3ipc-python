@@ -12,7 +12,6 @@ import struct
 import json
 import socket
 import os
-import subprocess
 from threading import Timer, Lock
 import time
 import Xlib
@@ -43,7 +42,7 @@ class Connection(object):
     _struct_header_size = struct.calcsize(_struct_header)
 
     def __init__(self, socket_path=None, auto_reconnect=False):
-        if not socket_path and os.environ.get("_I3IPC_TEST") is None:
+        if not socket_path:
             socket_path = os.environ.get("I3SOCK")
 
         if not socket_path:
@@ -160,11 +159,11 @@ class Connection(object):
             return self._ipc_send(self.cmd_socket, message_type, payload)
         except ErrorType as e:
             if not self.auto_reconnect:
-                raise (e)
+                raise e
 
             # XXX: can the socket path change between restarts?
             if not self._wait_for_socket():
-                raise (e)
+                raise e
 
             self.cmd_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             self.cmd_socket.connect(self.socket_path)

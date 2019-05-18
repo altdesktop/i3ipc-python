@@ -17,6 +17,7 @@ class TestShutdownEvent(IpcTest):
             i3.main_quit()
 
     def test_shutdown_event_reconnect(self, i3):
+        i3.auto_reconnect = True
         self.events = []
         i3.on('shutdown::restart', self.on_shutdown)
         Timer(0.1, self.restart_func, args=(i3, )).start()
