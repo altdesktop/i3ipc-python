@@ -24,6 +24,39 @@ _struct_header = f'={len(_MAGIC)}sII'
 _struct_header_size = struct.calcsize(_struct_header)
 
 
+class _AIOPubSub(PubSub):
+    def queue_handler(self, handler, data=None):
+        conn = self.conn
+
+        async def handler_coroutine():
+            try:
+                if data:
+                    if asyncio.iscoroutinefunction(handler):
+                        await handler(conn, data)
+                    else:
+                        handler(conn, data)
+                else:
+                    if asyncio.iscoroutinefunction(handler):
+                        await handler(conn)
+                    else:
+                        handler(conn)
+            except Exception as e:
+                conn.main_quit(_error=e)
+
+        asyncio.ensure_future(handler_coroutine())
+
+    def emit(self, event, data):
+        detail = ''
+
+        if data and hasattr(data, 'change'):
+            detail = data.change
+
+        for s in self._subscriptions:
+            if s['event'] == event:
+                if not s['detail'] or s['detail'] == detail:
+                    self.queue_handler(s['handler'], data)
+
+
 class Con(con.Con):
     async def command(self, command: str) -> List[CommandReply]:
         return await self._conn.command('[con_id="{}"] {}'.format(self.id, command))
@@ -105,7 +138,7 @@ class Connection:
     def __init__(self, socket_path: Optional[str] = None, auto_reconnect: bool = True):
         self._socket_path = socket_path
         self._auto_reconnect = auto_reconnect
-        self._pubsub = PubSub(self)
+        self._pubsub = _AIOPubSub(self)
         self._subscriptions = 0
         self._main_future = None
         self._reconnect_future = None

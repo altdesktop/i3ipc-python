@@ -7,7 +7,7 @@ import asyncio
 class TestTicks(IpcTest):
     events = []
 
-    def on_tick(self, i3, e):
+    async def on_tick(self, i3, e):
         self.events.append(e)
         if len(self.events) == 3:
             i3.main_quit()
