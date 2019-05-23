@@ -7,7 +7,6 @@ import time
 
 
 class IpcTest:
-    timeout_thread = None
     i3_conn = None
 
     @pytest.fixture(scope='class')
@@ -26,7 +25,7 @@ class IpcTest:
                 if tries > 1000:
                     raise Exception('could not start i3')
 
-                time.sleep(0.005)
+                time.sleep(0.01)
 
         yield IpcTest.i3_conn
         process.kill()

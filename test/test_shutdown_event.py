@@ -5,7 +5,7 @@ from ipctest import IpcTest
 class TestShutdownEvent(IpcTest):
     events = []
 
-    def restart_func(t, i3):
+    def restart_func(self, i3):
         i3.command('restart')
 
     def on_shutdown(self, i3, e):
@@ -20,6 +20,6 @@ class TestShutdownEvent(IpcTest):
         i3.auto_reconnect = True
         self.events = []
         i3.on('shutdown::restart', self.on_shutdown)
-        Timer(0.1, self.restart_func, args=(i3, )).start()
+        Timer(0.2, self.restart_func, args=(i3, )).start()
         i3.main(timeout=1)
         assert len(self.events) == 2
