@@ -301,9 +301,13 @@ class BarconfigUpdateEvent(object):
 class BindingInfo(object):
     def __init__(self, data):
         self.command = data['command']
-        self.mods = data['mods']
+        # not included in sway
+        self.mods = data.get('mods', [])
+        self.event_state_mask = data.get('event_state_mask', [])
         self.input_code = data['input_code']
         self.symbol = data['symbol']
+        # sway only
+        self.symbols = data.get('symbols', [])
         self.input_type = data['input_type']
 
 
