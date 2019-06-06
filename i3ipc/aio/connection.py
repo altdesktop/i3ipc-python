@@ -135,7 +135,7 @@ async def _find_socket_path() -> Optional[str]:
 
 
 class Connection:
-    def __init__(self, socket_path: Optional[str] = None, auto_reconnect: bool = True):
+    def __init__(self, socket_path: Optional[str] = None, auto_reconnect: bool = False):
         self._socket_path = socket_path
         self._auto_reconnect = auto_reconnect
         self._pubsub = _AIOPubSub(self)
