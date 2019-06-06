@@ -13,7 +13,6 @@ from shutil import which
 
 here = os.path.abspath(os.path.dirname(__file__))
 
-PYTEST = 'pytest'
 XVFB = 'Xvfb'
 I3_BINARY = 'i3'
 SOCKETDIR = '/tmp/.X11-unix'
@@ -29,11 +28,6 @@ def check_dependencies():
     if not which(I3_BINARY):
         print('i3 binary is required to run tests')
         print('Command "%s" not found in PATH' % I3_BINARY)
-        sys.exit(127)
-
-    if not which(PYTEST):
-        print('pytest is required to run tests')
-        print('Command %s not found in PATH' % PYTEST)
         sys.exit(127)
 
 
@@ -79,7 +73,7 @@ def run_pytest(display):
     env['DISPLAY'] = ':%d' % display
     env['PYTHONPATH'] = here
     env['I3SOCK'] = f'/tmp/i3ipc-test-sock-{display}'
-    return subprocess.run([PYTEST] + sys.argv[1:], env=env)
+    return subprocess.run(['python3', '-m', 'pytest', '-s'] + sys.argv[1:], env=env)
 
 
 def main():
