@@ -212,7 +212,8 @@ class Connection:
         self._pubsub.emit(event_type.to_string(), event)
 
     async def connect(self) -> Connection:
-        self._socket_path = await _find_socket_path()
+        if not self._socket_path:
+            self._socket_path = await _find_socket_path()
 
         if not self.socket_path:
             raise Exception('Failed to retrieve the i3 or sway IPC socket path')
