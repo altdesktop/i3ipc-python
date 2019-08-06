@@ -15,7 +15,7 @@ class TestWindow(IpcTest):
         i3.on('window', self.on_window)
         Timer(0.1, self.open_window).start()
         i3.main(timeout=2)
-        assert self.event
+        assert self.event is not None
 
     def test_marks(self, i3):
         self.fresh_workspace()

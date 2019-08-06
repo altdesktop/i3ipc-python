@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import subprocess
-from subprocess import Popen
+from subprocess import Popen, call
 import os
 from os import listdir, path
 from os.path import isfile, join
@@ -69,15 +69,26 @@ def start_server(display):
 
 
 def run_pytest(display):
+    version_info = sys.version_info
+
+    if version_info[0] < 3:
+        raise NotImplementedError('tests are not implemented for python < 3')
+
+    cmd = ['python3', '-m', 'pytest', '-s']
+
+    if version_info[1] < 6:
+        cmd += ['--ignore', 'test/aio']
+
     env = os.environ.copy()
     env['DISPLAY'] = ':%d' % display
     env['PYTHONPATH'] = here
-    env['I3SOCK'] = f'/tmp/i3ipc-test-sock-{display}'
-    return subprocess.run(['python3', '-m', 'pytest', '-s'] + sys.argv[1:], env=env)
+    env['I3SOCK'] = '/tmp/i3ipc-test-sock-{display}'.format(display=display)
+    return subprocess.run(cmd + sys.argv[1:], env=env)
 
 
 def main():
     check_dependencies()
+    call([I3_BINARY, '--version'])
     display = get_open_display()
 
     with start_server(display) as server:
