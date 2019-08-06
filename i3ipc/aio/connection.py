@@ -7,7 +7,7 @@ from ..model import (MessageType, CommandReply, Event, GenericEvent, WorkspaceEv
 from .. import con
 import os
 import json
-from typing import Optional, List, Tuple, Callable
+from typing import Optional, List, Tuple, Callable, Union
 from Xlib import display, X
 from Xlib.error import DisplayError
 import struct
@@ -292,16 +292,22 @@ class Connection:
 
         return message
 
-    async def _subscribe(self, events: Event, force=False):
+    async def _subscribe(self, events: Union[Event, int], force=False):
+        if not events:
+            return
+
+        if type(events) is int:
+            events = Event(events)
+
         if not force:
-            new_subscriptions = self._subscriptions ^ events
+            new_subscriptions = Event(self._subscriptions ^ events.value)
         else:
             new_subscriptions = events
 
         if not new_subscriptions:
             return
 
-        self._subscriptions |= new_subscriptions
+        self._subscriptions |= new_subscriptions.value
         event_list = new_subscriptions.to_list()
         await self._loop.sock_sendall(self._sub_socket,
                                       _pack(MessageType.SUBSCRIBE, json.dumps(event_list)))

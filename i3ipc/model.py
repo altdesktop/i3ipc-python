@@ -1,6 +1,6 @@
 from . import con
 
-from enum import Enum, IntFlag
+from enum import Enum
 
 
 class MessageType(Enum):
@@ -34,7 +34,7 @@ class ReplyType(Enum):
     TICK = 10
 
 
-class Event(IntFlag):
+class Event(Enum):
     WORKSPACE = (1 << 0)
     OUTPUT = (1 << 1)
     MODE = (1 << 2)
@@ -58,21 +58,21 @@ class Event(IntFlag):
 
     def to_list(self):
         events_list = []
-        if self & Event.WORKSPACE:
+        if self.value & Event.WORKSPACE.value:
             events_list.append(Event.WORKSPACE.to_string())
-        if self & Event.OUTPUT:
+        if self.value & Event.OUTPUT.value:
             events_list.append(Event.OUTPUT.to_string())
-        if self & Event.MODE:
+        if self.value & Event.MODE.value:
             events_list.append(Event.MODE.to_string())
-        if self & Event.WINDOW:
+        if self.value & Event.WINDOW.value:
             events_list.append(Event.WINDOW.to_string())
-        if self & Event.BARCONFIG_UPDATE:
+        if self.value & Event.BARCONFIG_UPDATE.value:
             events_list.append(Event.BARCONFIG_UPDATE.to_string())
-        if self & Event.BINDING:
+        if self.value & Event.BINDING.value:
             events_list.append(Event.BINDING.to_string())
-        if self & Event.SHUTDOWN:
+        if self.value & Event.SHUTDOWN.value:
             events_list.append(Event.SHUTDOWN.to_string())
-        if self & Event.TICK:
+        if self.value & Event.TICK.value:
             events_list.append(Event.TICK.to_string())
 
         return events_list

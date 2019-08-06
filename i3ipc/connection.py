@@ -352,21 +352,21 @@ class Connection(object):
 
     def subscribe(self, events):
         events_obj = []
-        if events & Event.WORKSPACE:
+        if events & Event.WORKSPACE.value:
             events_obj.append("workspace")
-        if events & Event.OUTPUT:
+        if events & Event.OUTPUT.value:
             events_obj.append("output")
-        if events & Event.MODE:
+        if events & Event.MODE.value:
             events_obj.append("mode")
-        if events & Event.WINDOW:
+        if events & Event.WINDOW.value:
             events_obj.append("window")
-        if events & Event.BARCONFIG_UPDATE:
+        if events & Event.BARCONFIG_UPDATE.value:
             events_obj.append("barconfig_update")
-        if events & Event.BINDING:
+        if events & Event.BINDING.value:
             events_obj.append("binding")
-        if events & Event.SHUTDOWN:
+        if events & Event.SHUTDOWN.value:
             events_obj.append("shutdown")
-        if events & Event.TICK:
+        if events & Event.TICK.value:
             events_obj.append("tick")
 
         try:
@@ -414,7 +414,7 @@ class Connection(object):
         if not event_type:
             raise Exception('event not implemented')
 
-        self.subscriptions |= event_type
+        self.subscriptions |= event_type.value
 
         self._pubsub.subscribe(detailed_event, handler)
 
