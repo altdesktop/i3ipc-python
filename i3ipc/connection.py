@@ -445,30 +445,30 @@ class Connection(object):
         event_name = ''
         event = None
 
-        if msg_type == Event.WORKSPACE:
+        if msg_type == Event.WORKSPACE.value:
             event_name = 'workspace'
             event = WorkspaceEvent(data, self)
-        elif msg_type == Event.OUTPUT:
+        elif msg_type == Event.OUTPUT.value:
             event_name = 'output'
             event = GenericEvent(data)
-        elif msg_type == Event.MODE:
+        elif msg_type == Event.MODE.value:
             event_name = 'mode'
             event = GenericEvent(data)
-        elif msg_type == Event.WINDOW:
+        elif msg_type == Event.WINDOW.value:
             event_name = 'window'
             event = WindowEvent(data, self)
-        elif msg_type == Event.BARCONFIG_UPDATE:
+        elif msg_type == Event.BARCONFIG_UPDATE.value:
             event_name = 'barconfig_update'
             event = BarconfigUpdateEvent(data)
-        elif msg_type == Event.BINDING:
+        elif msg_type == Event.BINDING.value:
             event_name = 'binding'
             event = BindingEvent(data)
-        elif msg_type == Event.SHUTDOWN:
+        elif msg_type == Event.SHUTDOWN.value:
             event_name = 'shutdown'
             event = GenericEvent(data)
             if event.change == 'restart':
                 self._restarting = True
-        elif msg_type == Event.TICK:
+        elif msg_type == Event.TICK.value:
             event_name = 'tick'
             event = TickEvent(data)
         else:
