@@ -8,6 +8,9 @@ import math
 from random import random
 import asyncio
 
+from Xlib import display
+from .window import Window
+
 
 class IpcTest:
     timeout_thread = None
@@ -53,11 +56,10 @@ class IpcTest:
         return result
 
     async def open_window(self):
-        i3 = IpcTest.i3_conn
-        assert i3
-
-        result = await i3.command('open')
-        return result[0].id
+        d = display.Display()
+        window = Window(d)
+        await self.i3_conn.command('nop')
+        return window.window.id
 
     async def fresh_workspace(self):
         i3 = IpcTest.i3_conn

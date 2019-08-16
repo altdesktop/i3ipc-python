@@ -4,6 +4,8 @@ import i3ipc
 import math
 from random import random
 import time
+from aio.window import Window
+from Xlib import display
 
 
 class IpcTest:
@@ -32,11 +34,10 @@ class IpcTest:
         IpcTest.i3_conn = None
 
     def open_window(self):
-        i3 = IpcTest.i3_conn
-        assert i3
-
-        result = i3.command('open')
-        return result[0].id
+        d = display.Display()
+        window = Window(d)
+        self.i3_conn.command('nop')
+        return window.window.id
 
     def fresh_workspace(self):
         i3 = IpcTest.i3_conn
