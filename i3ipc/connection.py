@@ -61,7 +61,7 @@ class Connection(object):
             raise Exception('Failed to retrieve the i3 or sway IPC socket path')
 
         if auto_reconnect:
-            self.subscriptions = Event.SHUTDOWN
+            self.subscriptions = Event.SHUTDOWN.value
         else:
             self.subscriptions = 0
 
