@@ -12,7 +12,7 @@ DESCRIPTION = 'An improved Python library for i3wm extensions'
 URL = 'https://github.com/acrisci/i3ipc-python'
 EMAIL = 'tony@dubstepdish.com'
 AUTHOR = 'Tony Crisci'
-REQUIRES_PYTHON = '>=2.7.0'
+REQUIRES_PYTHON = '>=3.4.0'
 VERSION = '1.7.1'
 
 REQUIRED = ['enum-compat', 'python-xlib']
@@ -57,14 +57,9 @@ setup(
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.2',
-        'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
-
     ]
 )

@@ -6,8 +6,6 @@ from .model import (Event, MessageType, CommandReply, VersionReply, BarConfigRep
                     WorkspaceEvent, GenericEvent, WindowEvent, BarconfigUpdateEvent, BindingEvent)
 from ._private import PubSub, PropsObject
 
-import sys
-import errno
 import struct
 import json
 import socket
@@ -16,8 +14,6 @@ from threading import Timer, Lock
 import time
 import Xlib
 import Xlib.display
-
-python2 = sys.version_info[0] < 3
 
 
 class Connection(object):
@@ -107,20 +103,8 @@ class Connection(object):
         """
         return struct.unpack(self._struct_header, data[:self._struct_header_size])
 
-    def _recv_robust(self, sock, size):
-        """
-        Receive size from sock, and retry if the recv() call was interrupted.
-        (this is only required for python2 compatability)
-        """
-        while True:
-            try:
-                return sock.recv(size)
-            except socket.error as e:
-                if e.errno != errno.EINTR:
-                    raise
-
     def _ipc_recv(self, sock):
-        data = self._recv_robust(sock, 14)
+        data = sock.recv(14)
 
         if len(data) == 0:
             # EOF
@@ -129,7 +113,7 @@ class Connection(object):
         msg_magic, msg_length, msg_type = self._unpack_header(data)
         msg_size = self._struct_header_size + msg_length
         while len(data) < msg_size:
-            data += self._recv_robust(sock, msg_length)
+            data += sock.recv(msg_length)
         return self._unpack(data), msg_type
 
     def _ipc_send(self, sock, message_type, payload):
@@ -153,15 +137,10 @@ class Connection(object):
         return socket_path_exists
 
     def message(self, message_type, payload):
-        if python2:
-            ErrorType = IOError
-        else:
-            ErrorType = ConnectionError
-
         try:
             self._cmd_lock.acquire()
             return self._ipc_send(self._cmd_socket, message_type, payload)
-        except ErrorType as e:
+        except ConnectionError as e:
             if not self.auto_reconnect:
                 raise e
 
