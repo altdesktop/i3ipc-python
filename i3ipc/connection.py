@@ -67,15 +67,19 @@ class Connection(object):
 
         self._pubsub = PubSub(self)
         self.props = PropsObject(self)
-        self.socket_path = socket_path
+        self._socket_path = socket_path
         self._cmd_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self._cmd_socket.connect(self.socket_path)
+        self._cmd_socket.connect(self._socket_path)
         self._cmd_lock = Lock()
         self._sub_socket = None
         self._sub_lock = Lock()
         self.auto_reconnect = auto_reconnect
         self._restarting = False
         self._quitting = False
+
+    @property
+    def socket_path(self):
+        return self._socket_path
 
     def _pack(self, msg_type, payload):
         """
@@ -141,7 +145,7 @@ class Connection(object):
         # for the auto_reconnect feature only
         socket_path_exists = False
         for tries in range(0, 500):
-            socket_path_exists = os.path.exists(self.socket_path)
+            socket_path_exists = os.path.exists(self._socket_path)
             if socket_path_exists:
                 break
             time.sleep(0.001)
@@ -166,7 +170,7 @@ class Connection(object):
                 raise e
 
             self._cmd_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            self._cmd_socket.connect(self.socket_path)
+            self._cmd_socket.connect(self._socket_path)
             return self._ipc_send(self._cmd_socket, message_type, payload)
         finally:
             self._cmd_lock.release()
@@ -350,7 +354,7 @@ class Connection(object):
         data = self.message(MessageType.SEND_TICK, payload)
         return json.loads(data, object_hook=TickReply)
 
-    def subscribe(self, events):
+    def _subscribe(self, events):
         events_obj = []
         if events & Event.WORKSPACE.value:
             events_obj.append("workspace")
@@ -420,9 +424,9 @@ class Connection(object):
 
     def _event_socket_setup(self):
         self._sub_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self._sub_socket.connect(self.socket_path)
+        self._sub_socket.connect(self._socket_path)
 
-        self.subscribe(self.subscriptions)
+        self._subscribe(self.subscriptions)
 
     def _event_socket_teardown(self):
         if self._sub_socket:
