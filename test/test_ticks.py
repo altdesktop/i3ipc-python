@@ -11,12 +11,12 @@ class TestTicks(IpcTest):
 
     def test_tick_event(self, i3):
         i3.on('tick', self.on_tick)
-        i3.event_socket_setup()
+        i3._event_socket_setup()
         i3.send_tick()
         i3.send_tick('hello world')
-        while not i3.event_socket_poll():
+        while not i3._event_socket_poll():
             pass
-        i3.event_socket_teardown()
+        i3._event_socket_teardown()
 
         assert len(self.events) == 3
         assert self.events[0].first

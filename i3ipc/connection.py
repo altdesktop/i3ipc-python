@@ -35,10 +35,10 @@ class Connection(object):
     :raises Exception: If the connection to ``i3`` cannot be established, or when
         the connection terminates.
     """
-    MAGIC = 'i3-ipc'  # safety string for i3-ipc
+    _MAGIC = 'i3-ipc'  # safety string for i3-ipc
     _chunk_size = 1024  # in bytes
     _timeout = 0.5  # in seconds
-    _struct_header = '=%dsII' % len(MAGIC.encode('utf-8'))
+    _struct_header = '=%dsII' % len(_MAGIC.encode('utf-8'))
     _struct_header_size = struct.calcsize(_struct_header)
 
     def __init__(self, socket_path=None, auto_reconnect=False):
@@ -68,11 +68,11 @@ class Connection(object):
         self._pubsub = PubSub(self)
         self.props = PropsObject(self)
         self.socket_path = socket_path
-        self.cmd_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.cmd_socket.connect(self.socket_path)
-        self.cmd_lock = Lock()
-        self.sub_socket = None
-        self.sub_lock = Lock()
+        self._cmd_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self._cmd_socket.connect(self.socket_path)
+        self._cmd_lock = Lock()
+        self._sub_socket = None
+        self._sub_lock = Lock()
         self.auto_reconnect = auto_reconnect
         self._restarting = False
         self._quitting = False
@@ -84,7 +84,7 @@ class Connection(object):
         """
         pb = payload.encode('utf-8')
         s = struct.pack('=II', len(pb), msg_type.value)
-        return self.MAGIC.encode('utf-8') + s + pb
+        return self._MAGIC.encode('utf-8') + s + pb
 
     def _unpack(self, data):
         """
@@ -155,8 +155,8 @@ class Connection(object):
             ErrorType = ConnectionError
 
         try:
-            self.cmd_lock.acquire()
-            return self._ipc_send(self.cmd_socket, message_type, payload)
+            self._cmd_lock.acquire()
+            return self._ipc_send(self._cmd_socket, message_type, payload)
         except ErrorType as e:
             if not self.auto_reconnect:
                 raise e
@@ -165,11 +165,11 @@ class Connection(object):
             if not self._wait_for_socket():
                 raise e
 
-            self.cmd_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            self.cmd_socket.connect(self.socket_path)
-            return self._ipc_send(self.cmd_socket, message_type, payload)
+            self._cmd_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            self._cmd_socket.connect(self.socket_path)
+            return self._ipc_send(self._cmd_socket, message_type, payload)
         finally:
-            self.cmd_lock.release()
+            self._cmd_lock.release()
 
     def command(self, payload):
         """
@@ -370,10 +370,10 @@ class Connection(object):
             events_obj.append("tick")
 
         try:
-            self.sub_lock.acquire()
-            data = self._ipc_send(self.sub_socket, MessageType.SUBSCRIBE, json.dumps(events_obj))
+            self._sub_lock.acquire()
+            data = self._ipc_send(self._sub_socket, MessageType.SUBSCRIBE, json.dumps(events_obj))
         finally:
-            self.sub_lock.release()
+            self._sub_lock.release()
         result = json.loads(data, object_hook=CommandReply)
         self.subscriptions |= events
         return result
@@ -418,22 +418,22 @@ class Connection(object):
 
         self._pubsub.subscribe(detailed_event, handler)
 
-    def event_socket_setup(self):
-        self.sub_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.sub_socket.connect(self.socket_path)
+    def _event_socket_setup(self):
+        self._sub_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self._sub_socket.connect(self.socket_path)
 
         self.subscribe(self.subscriptions)
 
-    def event_socket_teardown(self):
-        if self.sub_socket:
-            self.sub_socket.shutdown(socket.SHUT_RDWR)
-        self.sub_socket = None
+    def _event_socket_teardown(self):
+        if self._sub_socket:
+            self._sub_socket.shutdown(socket.SHUT_RDWR)
+        self._sub_socket = None
 
-    def event_socket_poll(self):
-        if self.sub_socket is None:
+    def _event_socket_poll(self):
+        if self._sub_socket is None:
             return True
 
-        data, msg_type = self._ipc_recv(self.sub_socket)
+        data, msg_type = self._ipc_recv(self._sub_socket)
 
         if len(data) == 0:
             # EOF
@@ -481,7 +481,7 @@ class Connection(object):
         self._quitting = False
         while True:
             try:
-                self.event_socket_setup()
+                self._event_socket_setup()
 
                 timer = None
 
@@ -489,13 +489,13 @@ class Connection(object):
                     timer = Timer(timeout, self.main_quit)
                     timer.start()
 
-                while not self.event_socket_poll():
+                while not self._event_socket_poll():
                     pass
 
                 if timer:
                     timer.cancel()
             finally:
-                self.event_socket_teardown()
+                self._event_socket_teardown()
 
                 if self._quitting or not self._restarting or not self.auto_reconnect:
                     return
@@ -509,4 +509,4 @@ class Connection(object):
 
     def main_quit(self):
         self._quitting = True
-        self.event_socket_teardown()
+        self._event_socket_teardown()
