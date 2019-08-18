@@ -1,8 +1,13 @@
 from Xlib import X, Xutil
+from Xlib.display import Display
+from threading import Thread
 
 
 class Window(object):
-    def __init__(self, display):
+    def __init__(self, display=None):
+        if display is None:
+            display = Display()
+
         self.d = display
         self.screen = self.d.screen()
         bgsize = 20
@@ -45,15 +50,20 @@ class Window(object):
         self.window.map()
         display.flush()
 
-    def loop(self):
-        while True:
-            e = self.d.next_event()
+    def run(self):
+        def loop():
+            while True:
+                e = self.d.next_event()
 
-            if e.type == X.DestroyNotify:
-                break
+                if e.type == X.DestroyNotify:
+                    break
 
-            elif e.type == X.ClientMessage:
-                if e.client_type == self.WM_PROTOCOLS:
-                    fmt, data = e.data
-                    if fmt == 32 and data[0] == self.WM_DELETE_WINDOW:
-                        break
+                elif e.type == X.ClientMessage:
+                    if e.client_type == self.WM_PROTOCOLS:
+                        fmt, data = e.data
+                        if fmt == 32 and data[0] == self.WM_DELETE_WINDOW:
+                            self.window.destroy()
+                            self.d.flush()
+                            break
+
+        Thread(target=loop).start()

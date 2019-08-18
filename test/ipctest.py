@@ -5,7 +5,6 @@ import math
 from random import random
 import time
 from aio.window import Window
-from Xlib import display
 
 
 class IpcTest:
@@ -30,12 +29,21 @@ class IpcTest:
                 time.sleep(0.01)
 
         yield IpcTest.i3_conn
+
+        try:
+            tree = IpcTest.i3_conn.get_tree()
+            for l in tree.leaves():
+                l.command('kill')
+            IpcTest.i3_conn.command('exit')
+        except OSError:
+            pass
+
         process.kill()
         IpcTest.i3_conn = None
 
     def open_window(self):
-        d = display.Display()
-        window = Window(d)
+        window = Window()
+        window.run()
         self.i3_conn.command('nop')
         return window.window.id
 

@@ -38,6 +38,15 @@ class IpcTest:
                 await asyncio.sleep(0.001)
 
         yield IpcTest.i3_conn
+
+        try:
+            tree = await IpcTest.i3_conn.get_tree()
+            for l in tree.leaves():
+                await l.command('kill')
+            await IpcTest.i3_conn.command('exit')
+        except OSError:
+            pass
+
         process.kill()
         IpcTest.i3_conn = None
 
@@ -58,6 +67,7 @@ class IpcTest:
     async def open_window(self):
         d = display.Display()
         window = Window(d)
+        window.run()
         await self.i3_conn.command('nop')
         return window.window.id
 
