@@ -1,4 +1,4 @@
-class _ReplyType(dict):
+class _BaseReply(dict):
     def __getattr__(self, name):
         try:
             return self[name]
@@ -12,7 +12,7 @@ class _ReplyType(dict):
         del self[name]
 
 
-class CommandReply(_ReplyType):
+class CommandReply(_BaseReply):
     """
     Info about a command that was executed with :func:`Connection.command`.
     """
@@ -39,7 +39,7 @@ class CommandReply(_ReplyType):
         return self.__getattr__('success')
 
 
-class VersionReply(_ReplyType):
+class VersionReply(_BaseReply):
     """
     Info about the version of the running i3 instance.
     """
@@ -94,7 +94,7 @@ class VersionReply(_ReplyType):
         return self.__getattr__('loaded_config_file_name')
 
 
-class BarConfigReply(_ReplyType):
+class BarConfigReply(_BaseReply):
     """
     This can be used by third-party workspace bars (especially i3bar, but
     others are free to implement compatible alternatives) to get the bar block
@@ -167,26 +167,25 @@ class BarConfigReply(_ReplyType):
         return self.__getattr__('font')
 
 
-class OutputReply(_ReplyType):
+class OutputReply(_BaseReply):
     pass
 
 
-class InputReply(_ReplyType):
+class InputReply(_BaseReply):
     pass
 
 
-class SeatReply(_ReplyType):
+class SeatReply(_BaseReply):
     pass
 
 
-class WorkspaceReply(_ReplyType):
+class WorkspaceReply(_BaseReply):
     pass
 
 
-class TickReply(_ReplyType):
+class TickReply(_BaseReply):
     pass
 
 
-class ConfigReply:
-    def __init__(self, data):
-        self.config = data['config']
+class ConfigReply(_BaseReply):
+    pass
