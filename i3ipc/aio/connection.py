@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from .._private import PubSub, MessageType, Event
 from ..replies import (BarConfigReply, CommandReply, ConfigReply, OutputReply, TickReply,
-                       VersionReply, WorkspaceReply)
+                       VersionReply, WorkspaceReply, SeatReply, InputReply)
 from ..events import (BarconfigUpdateEvent, BindingEvent, OutputEvent, ShutdownEvent, WindowEvent,
                       TickEvent, ModeEvent, WorkspaceEvent)
 from .. import con
@@ -262,7 +262,7 @@ class Connection:
 
         return self._reconnect_future
 
-    async def _message(self, message_type: MessageType, payload: str) -> bytes:
+    async def _message(self, message_type: MessageType, payload: str = '') -> bytes:
         if message_type is MessageType.SUBSCRIBE:
             raise Exception('cannot subscribe on the command socket')
 
@@ -335,11 +335,11 @@ class Connection:
             return []
 
     async def get_version(self) -> VersionReply:
-        data = await self._message(MessageType.GET_VERSION, '')
+        data = await self._message(MessageType.GET_VERSION)
         return json.loads(data, object_hook=VersionReply)
 
     async def get_bar_config_list(self) -> List[str]:
-        data = await self._message(MessageType.GET_BAR_CONFIG, '')
+        data = await self._message(MessageType.GET_BAR_CONFIG)
         return json.loads(data)
 
     async def get_bar_config(self, bar_id=None) -> BarConfigReply:
@@ -353,32 +353,40 @@ class Connection:
         return json.loads(data, object_hook=BarConfigReply)
 
     async def get_outputs(self) -> List[OutputReply]:
-        data = await self._message(MessageType.GET_OUTPUTS, '')
+        data = await self._message(MessageType.GET_OUTPUTS)
         return json.loads(data, object_hook=OutputReply)
 
     async def get_workspaces(self) -> List[WorkspaceReply]:
-        data = await self._message(MessageType.GET_WORKSPACES, '')
+        data = await self._message(MessageType.GET_WORKSPACES)
         return json.loads(data, object_hook=WorkspaceReply)
 
     async def get_tree(self) -> Con:
-        data = await self._message(MessageType.GET_TREE, '')
+        data = await self._message(MessageType.GET_TREE)
         return Con(json.loads(data), None, self)
 
     async def get_marks(self) -> List[str]:
-        data = await self._message(MessageType.GET_MARKS, '')
+        data = await self._message(MessageType.GET_MARKS)
         return json.loads(data)
 
     async def get_binding_modes(self) -> List[str]:
-        data = await self._message(MessageType.GET_BINDING_MODES, '')
+        data = await self._message(MessageType.GET_BINDING_MODES)
         return json.loads(data)
 
     async def get_config(self) -> ConfigReply:
-        data = await self._message(MessageType.GET_CONFIG, '')
+        data = await self._message(MessageType.GET_CONFIG)
         return json.loads(data, object_hook=ConfigReply)
 
     async def send_tick(self, payload: str = "") -> TickReply:
         data = await self._message(MessageType.SEND_TICK, payload)
         return json.loads(data, object_hook=TickReply)
+
+    async def get_inputs(self) -> InputReply:
+        data = await self._message(MessageType.GET_INPUTS)
+        return json.loads(data, object_hook=InputReply)
+
+    async def get_seats(self) -> SeatReply:
+        data = await self._message(MessageType.GET_SEATS)
+        return json.loads(data, object_hook=SeatReply)
 
     def main_quit(self, _error=None):
         if self._main_future is not None:
