@@ -7,6 +7,12 @@ Welcome to i3ipc-python's documentation!
 
 .. toctree::
    :maxdepth: 2
+   :caption: Reference:
+
+   connection
+   con
+   aio-connection
+   aio-con
 
 
 .. codeauthor:: acrisci
@@ -235,86 +241,10 @@ The listen event loop is started in line 25. Then, when new windows appear, the
 function :func:`mark_when_new_browser_window` is executed.  If it is not a browser,
 listening will continue. If the new window *is* a browser, 
 
-
-
 Development and bugs
 --------------------
 
-Yes. Bugs. And development. Gimme fixes.
-
-
-Detailed documentation
-======================
-
-Here, all about everything is documented.
-
-
-The :obj:`Connection` object
-++++++++++++++++++++++++++++
-
-
-A connection needs to be established to ``i3`` to do anything. The
-:class:`Connection` establishes this connection, and interfaces directly with
-the i3 session.  
-
-It exposes some informational methods (:meth:`get_outputs`
-:meth:`get_version`).  One informational method is important, as it opens the door
-to :class:`Con`, with which one can really do stuff.  Also, it exposed the :meth:`command`
-method, which allows for arbitrary ``i3``-commands.
-
-.. autoclass:: Connection
-
-Inspecting the tree
--------------------
-
-The :meth:`get_tree` deserves its own section.  This method returns a snapshot of all
-the current state of the management of windows.  This is the starting point for
-selecting containers and windows.
-
-.. automethod:: Connection.get_tree
-
-
-Informational methods of :class:`Connection`
---------------------------------------------
-
-These methods do return a JSON like object.  Most likely, you are looking for the
-:meth:`get_tree` method when looking for information.
-
-.. automethod:: Connection.get_version
-
-.. automethod:: Connection.get_outputs
-
-.. automethod:: Connection.get_workspaces
-
-.. automethod:: Connection.get_bar_config_list
-
-.. automethod:: Connection.get_bar_config
-
-Do stuff to windows and containers
-----------------------------------
-
-
-
-.. automethod:: Connection.command
-
-
-React on changes
-----------------
-
-.. automethod:: Connection.on
-
-.. automethod:: Connection.main
-
-
-
-Exploring the tree
-------------------
-
-.. autoclass:: Con
-
-.. automethod:: Con.find_focused
-
-
+Development happens on `github <https://github.com/acrisci/i3ipc-python>`_.
 
 Indices and tables
 ==================

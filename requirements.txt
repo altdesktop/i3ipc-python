@@ -2,7 +2,11 @@ python-xlib
 pytest
 pytest-asyncio
 pytest-timeout
+
 enum-compat
 yapf
 flake8
+
 sphinx
+sphinxcontrib-asyncio
+sphinxcontrib-fulltoc
