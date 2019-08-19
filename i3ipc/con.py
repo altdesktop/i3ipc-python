@@ -1,5 +1,3 @@
-from ._private import PropsObject
-
 import re
 from collections import deque
 
@@ -183,7 +181,6 @@ class Con(object):
     """
 
     def __init__(self, data, parent, conn):
-        self.props = PropsObject(self)
         self._conn = conn
         self.parent = parent
 

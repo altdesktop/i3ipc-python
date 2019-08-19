@@ -5,7 +5,7 @@ from .replies import (BarConfigReply, CommandReply, ConfigReply, OutputReply, Ti
                       VersionReply, WorkspaceReply, SeatReply, InputReply)
 from .events import (BarconfigUpdateEvent, BindingEvent, OutputEvent, ShutdownEvent, WindowEvent,
                      TickEvent, ModeEvent, WorkspaceEvent)
-from ._private import PubSub, PropsObject, MessageType, Event
+from ._private import PubSub, MessageType, Event
 
 import struct
 import json
@@ -63,7 +63,6 @@ class Connection(object):
             self.subscriptions = 0
 
         self._pubsub = PubSub(self)
-        self.props = PropsObject(self)
         self._socket_path = socket_path
         self._cmd_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self._cmd_socket.connect(self._socket_path)
