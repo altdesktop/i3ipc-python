@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from .._private import PubSub
-from ..model import (MessageType, CommandReply, Event, GenericEvent, WorkspaceEvent, WindowEvent,
-                     BarconfigUpdateEvent, BindingEvent, TickEvent, VersionReply, BarConfigReply,
-                     OutputReply, WorkspaceReply, ConfigReply, TickReply)
+from ..model import (MessageType, CommandReply, Event, OutputEvent, ModeEvent, ShutdownEvent,
+                     WorkspaceEvent, WindowEvent, BarconfigUpdateEvent, BindingEvent, TickEvent,
+                     VersionReply, BarConfigReply, OutputReply, WorkspaceReply, ConfigReply,
+                     TickReply)
 from .. import con
 import os
 import json
@@ -192,9 +193,9 @@ class Connection:
         if event_type == Event.WORKSPACE:
             event = WorkspaceEvent(message, self, _Con=Con)
         elif event_type == Event.OUTPUT:
-            event = GenericEvent(message)
+            event = OutputEvent(message)
         elif event_type == Event.MODE:
-            event = GenericEvent(message)
+            event = ModeEvent(message)
         elif event_type == Event.WINDOW:
             event = WindowEvent(message, self, _Con=Con)
         elif event_type == Event.BARCONFIG_UPDATE:
@@ -202,7 +203,7 @@ class Connection:
         elif event_type == Event.BINDING:
             event = BindingEvent(message)
         elif event_type == Event.SHUTDOWN:
-            event = GenericEvent(message)
+            event = ShutdownEvent(message)
         elif event_type == Event.TICK:
             event = TickEvent(message)
         else:

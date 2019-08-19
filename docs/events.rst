@@ -20,3 +20,15 @@ Events
 .. autoclass:: i3ipc.TickEvent
    :members:
    :undoc-members:
+
+.. autoclass:: i3ipc.ModeEvent
+   :members:
+   :undoc-members:
+
+.. autoclass:: i3ipc.OutputEvent
+   :members:
+   :undoc-members:
+
+.. autoclass:: i3ipc.ShutdownEvent
+   :members:
+   :undoc-members:

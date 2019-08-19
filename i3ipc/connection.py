@@ -3,7 +3,8 @@
 from .con import Con
 from .model import (Event, MessageType, CommandReply, VersionReply, BarConfigReply, OutputReply,
                     InputReply, SeatReply, WorkspaceReply, ConfigReply, TickEvent, TickReply,
-                    WorkspaceEvent, GenericEvent, WindowEvent, BarconfigUpdateEvent, BindingEvent)
+                    WorkspaceEvent, WindowEvent, BarconfigUpdateEvent, BindingEvent, OutputEvent,
+                    ModeEvent, ShutdownEvent)
 from ._private import PubSub, PropsObject
 
 import struct
@@ -433,10 +434,10 @@ class Connection(object):
             event = WorkspaceEvent(data, self)
         elif msg_type == Event.OUTPUT.value:
             event_name = 'output'
-            event = GenericEvent(data)
+            event = OutputEvent(data)
         elif msg_type == Event.MODE.value:
             event_name = 'mode'
-            event = GenericEvent(data)
+            event = ModeEvent(data)
         elif msg_type == Event.WINDOW.value:
             event_name = 'window'
             event = WindowEvent(data, self)
@@ -448,7 +449,7 @@ class Connection(object):
             event = BindingEvent(data)
         elif msg_type == Event.SHUTDOWN.value:
             event_name = 'shutdown'
-            event = GenericEvent(data)
+            event = ShutdownEvent(data)
             if event.change == 'restart':
                 self._restarting = True
         elif msg_type == Event.TICK.value:

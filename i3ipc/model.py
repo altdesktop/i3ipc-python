@@ -280,7 +280,17 @@ class WorkspaceEvent:
             self.old = _Con(data['old'], None, conn)
 
 
-class GenericEvent:
+class OutputEvent:
+    def __init__(self, data):
+        self.change = data['change']
+
+
+class ModeEvent:
+    def __init__(self, data):
+        self.change = data['change']
+
+
+class ShutdownEvent:
     def __init__(self, data):
         self.change = data['change']
 
