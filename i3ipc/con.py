@@ -1,8 +1,21 @@
 from ._private import PropsObject
-from . import model
 
 import re
 from collections import deque
+
+
+class Rect:
+    def __init__(self, data):
+        self.x = data['x']
+        self.y = data['y']
+        self.height = data['height']
+        self.width = data['width']
+
+
+class Gaps:
+    def __init__(self, data):
+        self.inner = data['inner']
+        self.outer = data['outer']
 
 
 class Con(object):
@@ -233,15 +246,15 @@ class Con(object):
         if 'app_id' in data:
             self.app_id = data['app_id']
 
-        self.rect = model.Rect(data['rect'])
+        self.rect = Rect(data['rect'])
         if 'window_rect' in data:
-            self.window_rect = model.Rect(data['window_rect'])
+            self.window_rect = Rect(data['window_rect'])
         if 'deco_rect' in data:
-            self.deco_rect = model.Rect(data['deco_rect'])
+            self.deco_rect = Rect(data['deco_rect'])
 
         self.gaps = None
         if 'gaps' in data:
-            self.gaps = model.Gaps(data['gaps'])
+            self.gaps = Gaps(data['gaps'])
 
     def __iter__(self):
         """

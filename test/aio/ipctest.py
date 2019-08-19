@@ -2,7 +2,7 @@ from subprocess import Popen
 import pytest
 
 from i3ipc.aio import Connection
-from i3ipc.model import CommandReply
+from i3ipc import CommandReply
 
 import math
 from random import random

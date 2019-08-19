@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from .._private import PubSub
-from ..model import (MessageType, CommandReply, Event, OutputEvent, ModeEvent, ShutdownEvent,
-                     WorkspaceEvent, WindowEvent, BarconfigUpdateEvent, BindingEvent, TickEvent,
-                     VersionReply, BarConfigReply, OutputReply, WorkspaceReply, ConfigReply,
-                     TickReply)
+from .._private import PubSub, MessageType, Event
+from ..replies import (BarConfigReply, CommandReply, ConfigReply, OutputReply, TickReply,
+                       VersionReply, WorkspaceReply)
+from ..events import (BarconfigUpdateEvent, BindingEvent, OutputEvent, ShutdownEvent, WindowEvent,
+                      TickEvent, ModeEvent, WorkspaceEvent)
 from .. import con
 import os
 import json

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
 from .con import Con
-from .model import (Event, MessageType, CommandReply, VersionReply, BarConfigReply, OutputReply,
-                    InputReply, SeatReply, WorkspaceReply, ConfigReply, TickEvent, TickReply,
-                    WorkspaceEvent, WindowEvent, BarconfigUpdateEvent, BindingEvent, OutputEvent,
-                    ModeEvent, ShutdownEvent)
-from ._private import PubSub, PropsObject
+from .replies import (BarConfigReply, CommandReply, ConfigReply, OutputReply, TickReply,
+                      VersionReply, WorkspaceReply, SeatReply, InputReply)
+from .events import (BarconfigUpdateEvent, BindingEvent, OutputEvent, ShutdownEvent, WindowEvent,
+                     TickEvent, ModeEvent, WorkspaceEvent)
+from ._private import PubSub, PropsObject, MessageType, Event
 
 import struct
 import json

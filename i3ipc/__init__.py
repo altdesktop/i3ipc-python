@@ -1,6 +1,6 @@
-from .model import (BarConfigReply, BarconfigUpdateEvent, BindingEvent, BindingInfo, CommandReply,
-                    ConfigReply, Gaps, OutputEvent, ModeEvent, ShutdownEvent, MessageType,
-                    OutputReply, Rect, TickEvent, TickReply, VersionReply, WindowEvent,
-                    WorkspaceEvent, WorkspaceReply, SeatReply, InputReply)
-from .con import Con
+from .replies import (BarConfigReply, CommandReply, ConfigReply, OutputReply, TickReply,
+                      VersionReply, WorkspaceReply, SeatReply, InputReply)
+from .events import (BarconfigUpdateEvent, BindingEvent, BindingInfo, OutputEvent, ShutdownEvent,
+                     WindowEvent, TickEvent, ModeEvent, WorkspaceEvent)
+from .con import Con, Rect, Gaps
 from .connection import Connection
