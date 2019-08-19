@@ -13,6 +13,8 @@ Welcome to i3ipc-python's documentation!
    con
    aio-connection
    aio-con
+   events
+   replies
 
 
 .. codeauthor:: acrisci

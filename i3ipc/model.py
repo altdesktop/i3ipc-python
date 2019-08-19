@@ -267,7 +267,7 @@ class TickReply(_ReplyType):
     pass
 
 
-class WorkspaceEvent(object):
+class WorkspaceEvent:
     def __init__(self, data, conn, _Con=con.Con):
         self.change = data['change']
         self.current = None
@@ -280,25 +280,25 @@ class WorkspaceEvent(object):
             self.old = _Con(data['old'], None, conn)
 
 
-class GenericEvent(object):
+class GenericEvent:
     def __init__(self, data):
         self.change = data['change']
 
 
-class WindowEvent(object):
+class WindowEvent:
     def __init__(self, data, conn, _Con=con.Con):
         self.change = data['change']
         self.container = _Con(data['container'], None, conn)
 
 
-class BarconfigUpdateEvent(object):
+class BarconfigUpdateEvent:
     def __init__(self, data):
         self.id = data['id']
         self.hidden_state = data['hidden_state']
         self.mode = data['mode']
 
 
-class BindingInfo(object):
+class BindingInfo:
     def __init__(self, data):
         self.command = data['command']
         # not included in sway
@@ -311,25 +311,25 @@ class BindingInfo(object):
         self.input_type = data['input_type']
 
 
-class BindingEvent(object):
+class BindingEvent:
     def __init__(self, data):
         self.change = data['change']
         self.binding = BindingInfo(data['binding'])
 
 
-class ConfigReply(object):
+class ConfigReply:
     def __init__(self, data):
         self.config = data['config']
 
 
-class TickEvent(object):
+class TickEvent:
     def __init__(self, data):
         # i3 didn't include the 'first' field in 4.15. See i3/i3#3271.
         self.first = ('first' in data) and data['first']
         self.payload = data['payload']
 
 
-class Rect(object):
+class Rect:
     def __init__(self, data):
         self.x = data['x']
         self.y = data['y']
@@ -337,7 +337,7 @@ class Rect(object):
         self.width = data['width']
 
 
-class Gaps(object):
+class Gaps:
     def __init__(self, data):
         self.inner = data['inner']
         self.outer = data['outer']
