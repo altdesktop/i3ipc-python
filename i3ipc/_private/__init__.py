@@ -1,2 +1,2 @@
 from .pubsub import PubSub
-from .types import MessageType, ReplyType, Event
+from .types import MessageType, ReplyType, EventType

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .._private import PubSub, MessageType, Event
+from .._private import PubSub, MessageType, EventType
 from ..replies import (BarConfigReply, CommandReply, ConfigReply, OutputReply, TickReply,
                        VersionReply, WorkspaceReply, SeatReply, InputReply)
 from ..events import (BarconfigUpdateEvent, BindingEvent, OutputEvent, ShutdownEvent, WindowEvent,
@@ -188,23 +188,23 @@ class Connection:
             # a reply
             return
 
-        event_type = Event(1 << (event_type & 0x7f))
+        event_type = EventType(1 << (event_type & 0x7f))
 
-        if event_type == Event.WORKSPACE:
+        if event_type == EventType.WORKSPACE:
             event = WorkspaceEvent(message, self, _Con=Con)
-        elif event_type == Event.OUTPUT:
+        elif event_type == EventType.OUTPUT:
             event = OutputEvent(message)
-        elif event_type == Event.MODE:
+        elif event_type == EventType.MODE:
             event = ModeEvent(message)
-        elif event_type == Event.WINDOW:
+        elif event_type == EventType.WINDOW:
             event = WindowEvent(message, self, _Con=Con)
-        elif event_type == Event.BARCONFIG_UPDATE:
+        elif event_type == EventType.BARCONFIG_UPDATE:
             event = BarconfigUpdateEvent(message)
-        elif event_type == Event.BINDING:
+        elif event_type == EventType.BINDING:
             event = BindingEvent(message)
-        elif event_type == Event.SHUTDOWN:
+        elif event_type == EventType.SHUTDOWN:
             event = ShutdownEvent(message)
-        elif event_type == Event.TICK:
+        elif event_type == EventType.TICK:
             event = TickEvent(message)
         else:
             # we have not implemented this event
@@ -293,15 +293,15 @@ class Connection:
 
         return message
 
-    async def _subscribe(self, events: Union[Event, int], force=False):
+    async def _subscribe(self, events: Union[EventType, int], force=False):
         if not events:
             return
 
         if type(events) is int:
-            events = Event(events)
+            events = EventType(events)
 
         if not force:
-            new_subscriptions = Event(self._subscriptions ^ events.value)
+            new_subscriptions = EventType(self._subscriptions ^ events.value)
         else:
             new_subscriptions = events
 
@@ -319,7 +319,7 @@ class Connection:
         if detailed_event.count('::') > 0:
             [event, __] = detailed_event.split('::')
 
-        event_type = Event.from_string(event)
+        event_type = EventType.from_string(event)
         self._pubsub.subscribe(detailed_event, handler)
         asyncio.ensure_future(self._subscribe(event_type))
 

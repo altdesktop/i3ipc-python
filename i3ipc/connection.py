@@ -5,7 +5,7 @@ from .replies import (BarConfigReply, CommandReply, ConfigReply, OutputReply, Ti
                       VersionReply, WorkspaceReply, SeatReply, InputReply)
 from .events import (BarconfigUpdateEvent, BindingEvent, OutputEvent, ShutdownEvent, WindowEvent,
                      TickEvent, ModeEvent, WorkspaceEvent)
-from ._private import PubSub, MessageType, Event
+from ._private import PubSub, MessageType, EventType
 
 import struct
 import json
@@ -58,7 +58,7 @@ class Connection(object):
             raise Exception('Failed to retrieve the i3 or sway IPC socket path')
 
         if auto_reconnect:
-            self.subscriptions = Event.SHUTDOWN.value
+            self.subscriptions = EventType.SHUTDOWN.value
         else:
             self.subscriptions = 0
 
@@ -335,21 +335,21 @@ class Connection(object):
 
     def _subscribe(self, events):
         events_obj = []
-        if events & Event.WORKSPACE.value:
+        if events & EventType.WORKSPACE.value:
             events_obj.append("workspace")
-        if events & Event.OUTPUT.value:
+        if events & EventType.OUTPUT.value:
             events_obj.append("output")
-        if events & Event.MODE.value:
+        if events & EventType.MODE.value:
             events_obj.append("mode")
-        if events & Event.WINDOW.value:
+        if events & EventType.WINDOW.value:
             events_obj.append("window")
-        if events & Event.BARCONFIG_UPDATE.value:
+        if events & EventType.BARCONFIG_UPDATE.value:
             events_obj.append("barconfig_update")
-        if events & Event.BINDING.value:
+        if events & EventType.BINDING.value:
             events_obj.append("binding")
-        if events & Event.SHUTDOWN.value:
+        if events & EventType.SHUTDOWN.value:
             events_obj.append("shutdown")
-        if events & Event.TICK.value:
+        if events & EventType.TICK.value:
             events_obj.append("tick")
 
         try:
@@ -378,21 +378,21 @@ class Connection(object):
 
         event_type = 0
         if event == "workspace":
-            event_type = Event.WORKSPACE
+            event_type = EventType.WORKSPACE
         elif event == "output":
-            event_type = Event.OUTPUT
+            event_type = EventType.OUTPUT
         elif event == "mode":
-            event_type = Event.MODE
+            event_type = EventType.MODE
         elif event == "window":
-            event_type = Event.WINDOW
+            event_type = EventType.WINDOW
         elif event == "barconfig_update":
-            event_type = Event.BARCONFIG_UPDATE
+            event_type = EventType.BARCONFIG_UPDATE
         elif event == "binding":
-            event_type = Event.BINDING
+            event_type = EventType.BINDING
         elif event == "shutdown":
-            event_type = Event.SHUTDOWN
+            event_type = EventType.SHUTDOWN
         elif event == "tick":
-            event_type = Event.TICK
+            event_type = EventType.TICK
 
         if not event_type:
             raise Exception('event not implemented')
@@ -428,30 +428,30 @@ class Connection(object):
         event_name = ''
         event = None
 
-        if msg_type == Event.WORKSPACE.value:
+        if msg_type == EventType.WORKSPACE.value:
             event_name = 'workspace'
             event = WorkspaceEvent(data, self)
-        elif msg_type == Event.OUTPUT.value:
+        elif msg_type == EventType.OUTPUT.value:
             event_name = 'output'
             event = OutputEvent(data)
-        elif msg_type == Event.MODE.value:
+        elif msg_type == EventType.MODE.value:
             event_name = 'mode'
             event = ModeEvent(data)
-        elif msg_type == Event.WINDOW.value:
+        elif msg_type == EventType.WINDOW.value:
             event_name = 'window'
             event = WindowEvent(data, self)
-        elif msg_type == Event.BARCONFIG_UPDATE.value:
+        elif msg_type == EventType.BARCONFIG_UPDATE.value:
             event_name = 'barconfig_update'
             event = BarconfigUpdateEvent(data)
-        elif msg_type == Event.BINDING.value:
+        elif msg_type == EventType.BINDING.value:
             event_name = 'binding'
             event = BindingEvent(data)
-        elif msg_type == Event.SHUTDOWN.value:
+        elif msg_type == EventType.SHUTDOWN.value:
             event_name = 'shutdown'
             event = ShutdownEvent(data)
             if event.change == 'restart':
                 self._restarting = True
-        elif msg_type == Event.TICK.value:
+        elif msg_type == EventType.TICK.value:
             event_name = 'tick'
             event = TickEvent(data)
         else:
