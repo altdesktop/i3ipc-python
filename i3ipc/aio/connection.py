@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from .._private import PubSub, MessageType, EventType
 from ..replies import (BarConfigReply, CommandReply, ConfigReply, OutputReply, TickReply,
                        VersionReply, WorkspaceReply, SeatReply, InputReply)
@@ -136,6 +134,29 @@ async def _find_socket_path() -> Optional[str]:
 
 
 class Connection:
+    """A connection to the i3 ipc used for querying window manager state and
+    listening to events.
+
+    The ``Connection`` class is the entry point into all features of the
+    library.  You must call :func:`connect() <i3ipc.aio.Connection.connect>`
+    before using this ``Connection``.
+
+    :Example:
+
+    .. code-block:: python3
+
+        i3 = await Connection().connect()
+        workspaces = await i3.get_workspaces()
+        await i3.command('focus left')
+
+    :param socket_path: A path to the i3 ipc socket path to connect to. If not
+        given, find the socket path through the default search path.
+    :type socket_path: str
+    :param auto_reconnect: Whether to attempt to reconnect if the connection to
+        the socket is broken when i3 restarts.
+    :type auto_reconnect: bool
+    """
+
     def __init__(self, socket_path: Optional[str] = None, auto_reconnect: bool = False):
         self._socket_path = socket_path
         self._auto_reconnect = auto_reconnect
@@ -146,7 +167,20 @@ class Connection:
 
     @property
     def socket_path(self) -> str:
+        """The path of the socket this ``Connection`` is connected to.
+
+        :rtype: str
+        """
         return self._socket_path
+
+    @property
+    def auto_reconect(self) -> bool:
+        """Whether this ``Connection`` will attempt to reconnect when the
+        connection to the socket is broken.
+
+        :rtype: bool
+        """
+        return self._auto_reconnect
 
     async def _ipc_recv(self, sock):
         pass
@@ -212,7 +246,13 @@ class Connection:
 
         self._pubsub.emit(event_type.to_string(), event)
 
-    async def connect(self) -> Connection:
+    async def connect(self) -> 'Connection':
+        """Connects to the i3 ipc socket. You must await this method to use this
+        Connection.
+
+        :returns: The ``Connection``.
+        :rtype: :class:`~.Connection`
+        """
         if not self._socket_path:
             self._socket_path = await _find_socket_path()
 
@@ -314,6 +354,14 @@ class Connection:
                                       _pack(MessageType.SUBSCRIBE, json.dumps(event_list)))
 
     def on(self, event: Union[Event, str], handler: Callable):
+        """Subscribe to the event and call the handler when it is emitted by
+        the i3 ipc.
+
+        :param event: The event to subscribe to.
+        :type event: :class:`Event <i3ipc.Event>` or str
+        :param handler: The event handler to call.
+        :type handler: :class:`Callable`
+        """
         if type(event) is Event:
             event = event.value
 
@@ -327,9 +375,25 @@ class Connection:
         asyncio.ensure_future(self._subscribe(event_type))
 
     def off(self, handler: Callable):
+        """Unsubscribe the handler from being called on ipc events.
+
+        :param handler: The handler that was previously attached with
+            :func:`on()`.
+        :type handler: :class:`Callable`
+        """
         self._pubsub.unsubscribe(handler)
 
     async def command(self, cmd: str) -> List[CommandReply]:
+        """Sends a command to i3.
+
+        .. seealso:: https://i3wm.org/docs/userguide.html#list_of_commands
+
+        :param cmd: The command to send to i3.
+        :type cmd: str
+        :returns: A list of replies that contain info for the result of each
+            command given.
+        :rtype: list(:class:`CommandReply <i3ipc.CommandReply>`)
+        """
         data = await self._message(MessageType.COMMAND, cmd)
 
         if data:
@@ -338,14 +402,34 @@ class Connection:
             return []
 
     async def get_version(self) -> VersionReply:
+        """Gets the i3 version.
+
+        :returns: The i3 version.
+        :rtype: :class:`i3ipc.VersionReply`
+        """
         data = await self._message(MessageType.GET_VERSION)
         return json.loads(data, object_hook=VersionReply)
 
     async def get_bar_config_list(self) -> List[str]:
+        """Gets the names of all bar configurations.
+
+        :returns: A list of all bar configurations.
+        :rtype: list(str)
+        """
         data = await self._message(MessageType.GET_BAR_CONFIG)
         return json.loads(data)
 
-    async def get_bar_config(self, bar_id=None) -> BarConfigReply:
+    async def get_bar_config(self, bar_id=None) -> Optional[BarConfigReply]:
+        """Gets the bar configuration specified by the id.
+
+        :param bar_id: The bar id to get the configuration for. If not given,
+            get the configuration for the first bar id.
+        :type bar_id: str
+
+        :returns: The bar configuration for the bar id.
+        :rtype: :class:`BarConfigReply <i3ipc.BarConfigReply>` or :class:`None`
+            if no bar configuration is found.
+        """
         if not bar_id:
             bar_config_list = await self.get_bar_config_list()
             if not bar_config_list:
@@ -356,42 +440,88 @@ class Connection:
         return json.loads(data, object_hook=BarConfigReply)
 
     async def get_outputs(self) -> List[OutputReply]:
+        """Gets the list of current outputs.
+
+        :returns: A list of current outputs.
+        :rtype: list(:class:`i3ipc.OutputReply`)
+        """
         data = await self._message(MessageType.GET_OUTPUTS)
         return json.loads(data, object_hook=OutputReply)
 
     async def get_workspaces(self) -> List[WorkspaceReply]:
+        """Gets the list of current workspaces.
+
+        :returns: A list of current workspaces
+        :rtype: list(:class:`i3ipc.WorkspaceReply`)
+        """
         data = await self._message(MessageType.GET_WORKSPACES)
         return json.loads(data, object_hook=WorkspaceReply)
 
     async def get_tree(self) -> Con:
+        """Gets the root container of the i3 layout tree.
+
+        :returns: The root container of the i3 layout tree.
+        :rtype: :class:`i3ipc.Con`
+        """
         data = await self._message(MessageType.GET_TREE)
         return Con(json.loads(data), None, self)
 
     async def get_marks(self) -> List[str]:
+        """Gets the names of all currently set marks.
+
+        :returns: A list of currently set marks.
+        :rtype: list(str)
+        """
         data = await self._message(MessageType.GET_MARKS)
         return json.loads(data)
 
     async def get_binding_modes(self) -> List[str]:
+        """Gets the names of all currently configured binding modes
+
+        :returns: A list of binding modes
+        :rtype: list(str)
+        """
         data = await self._message(MessageType.GET_BINDING_MODES)
         return json.loads(data)
 
     async def get_config(self) -> ConfigReply:
+        """Returns the last loaded i3 config.
+
+        :returns: A class containing the config.
+        :rtype: :class:`i3ipc.ConfigReply`
+        """
         data = await self._message(MessageType.GET_CONFIG)
         return json.loads(data, object_hook=ConfigReply)
 
     async def send_tick(self, payload: str = "") -> TickReply:
+        """Sends a tick with the specified payload.
+
+        :returns: The reply to the tick command
+        :rtype: :class:`i3ipc.TickReply`
+        """
         data = await self._message(MessageType.SEND_TICK, payload)
         return json.loads(data, object_hook=TickReply)
 
     async def get_inputs(self) -> InputReply:
+        """(sway only) Gets the inputs connected to the compositor.
+
+        :returns: The reply to the inputs command
+        :rtype: :class:`i3ipc.InputReply`
+        """
         data = await self._message(MessageType.GET_INPUTS)
         return json.loads(data, object_hook=InputReply)
 
     async def get_seats(self) -> SeatReply:
+        """(sway only) Gets the seats configured on the compositor
+
+        :returns: The reply to the seats command
+        :rtype: :class:`i3ipc.SeatReply`
+        """
         data = await self._message(MessageType.GET_SEATS)
         return json.loads(data, object_hook=SeatReply)
 
     def main_quit(self, _error=None):
+        """Quits the running main loop for this connection."""
         if self._main_future is not None:
             if _error:
                 self._main_future.set_exception(_error)
@@ -401,6 +531,7 @@ class Connection:
             self._main_future = None
 
     async def main(self):
+        """Starts the main loop for this connection to start handling events."""
         if self._main_future is not None:
             raise Exception('the main loop is already running')
         self._main_future = self._loop.create_future()
