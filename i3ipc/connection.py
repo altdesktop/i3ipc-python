@@ -4,7 +4,7 @@ from .con import Con
 from .replies import (BarConfigReply, CommandReply, ConfigReply, OutputReply, TickReply,
                       VersionReply, WorkspaceReply, SeatReply, InputReply)
 from .events import (BarconfigUpdateEvent, BindingEvent, OutputEvent, ShutdownEvent, WindowEvent,
-                     TickEvent, ModeEvent, WorkspaceEvent)
+                     TickEvent, ModeEvent, WorkspaceEvent, Event)
 from ._private import PubSub, MessageType, EventType
 
 import struct
@@ -364,11 +364,14 @@ class Connection(object):
     def off(self, handler):
         self._pubsub.unsubscribe(handler)
 
-    def on(self, detailed_event, handler):
-        event = detailed_event.replace('-', '_')
+    def on(self, event, handler):
+        if type(event) is Event:
+            event = event.value
 
-        if detailed_event.count('::') > 0:
-            [event, __] = detailed_event.split('::')
+        event = event.replace('-', '_')
+
+        if event.count('::') > 0:
+            [event, __] = event.split('::')
 
         # special case: ipc-shutdown is not in the protocol
         if event == 'ipc_shutdown':
@@ -399,7 +402,7 @@ class Connection(object):
 
         self.subscriptions |= event_type.value
 
-        self._pubsub.subscribe(detailed_event, handler)
+        self._pubsub.subscribe(event, handler)
 
     def _event_socket_setup(self):
         self._sub_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)

@@ -1,6 +1,10 @@
 Events
 ======
 
+.. autoclass:: i3ipc.Event
+   :members:
+   :undoc-members:
+
 .. autoclass:: i3ipc.WorkspaceEvent
    :members:
    :undoc-members:

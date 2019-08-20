@@ -4,7 +4,7 @@ from .._private import PubSub, MessageType, EventType
 from ..replies import (BarConfigReply, CommandReply, ConfigReply, OutputReply, TickReply,
                        VersionReply, WorkspaceReply, SeatReply, InputReply)
 from ..events import (BarconfigUpdateEvent, BindingEvent, OutputEvent, ShutdownEvent, WindowEvent,
-                      TickEvent, ModeEvent, WorkspaceEvent)
+                      TickEvent, ModeEvent, WorkspaceEvent, Event)
 from .. import con
 import os
 import json
@@ -313,14 +313,17 @@ class Connection:
         await self._loop.sock_sendall(self._sub_socket,
                                       _pack(MessageType.SUBSCRIBE, json.dumps(event_list)))
 
-    def on(self, detailed_event: str, handler: Callable):
-        event = detailed_event.replace('-', '_')
+    def on(self, event: Union[Event, str], handler: Callable):
+        if type(event) is Event:
+            event = event.value
 
-        if detailed_event.count('::') > 0:
-            [event, __] = detailed_event.split('::')
+        event = event.replace('-', '_')
+
+        if event.count('::') > 0:
+            [event, __] = event.split('::')
 
         event_type = EventType.from_string(event)
-        self._pubsub.subscribe(detailed_event, handler)
+        self._pubsub.subscribe(event, handler)
         asyncio.ensure_future(self._subscribe(event_type))
 
     def off(self, handler: Callable):

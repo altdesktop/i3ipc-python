@@ -1,4 +1,34 @@
 from . import con
+from enum import Enum
+
+
+class Event(Enum):
+    WORKSPACE = 'workspace'
+    WORKSPACE_FOCUS = 'workspace::focus'
+    WORKSPACE_INIT = 'workspace::init'
+    WORKSPACE_EMPTY = 'workspace::empty'
+    WORKSPACE_URGENT = 'workspace::urgent'
+    WORKSPACE_RELOAD = 'workspace::reload'
+    WORKSPACE_RENAME = 'workspace::rename'
+    WORKSPACE_RESTORED = 'workspace::restored'
+    WORKSPACE_MOVE = 'workspace::move'
+    OUTPUT = 'output'
+    MODE = 'mode'
+    WINDOW = 'window'
+    WINDOW_NEW = 'window::new'
+    WINDOW_CLOSE = 'window::close'
+    WINDOW_FOCUS = 'window::focus'
+    WINDOW_TITLE = 'window::title'
+    WINDOW_FULLSCREEN_MODE = 'window::fullscreen_mode'
+    WINDOW_MOVE = 'window::move'
+    WINDOW_FLOATING = 'window::floating'
+    WINDOW_URGENT = 'window::urgent'
+    WINDOW_MARK = 'window::mark'
+    BINDING = 'binding'
+    SHUTDOWN = 'shutdown'
+    SHUTDOWN_RESTART = 'shutdown::restart'
+    SHUTDOWN_EXIT = 'shutdown::exit'
+    TICK = 'tick'
 
 
 class WorkspaceEvent:
