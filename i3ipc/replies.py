@@ -1,191 +1,239 @@
-class _BaseReply(dict):
-    def __getattr__(self, name):
-        try:
-            return self[name]
-        except KeyError:
-            raise AttributeError(name)
-
-    def __setattr__(self, name, value):
-        self[name] = value
-
-    def __delattr__(self, name):
-        del self[name]
+from .con import Rect
 
 
-class CommandReply(_BaseReply):
-    """
-    Info about a command that was executed with :func:`Connection.command`.
-    """
-
+class _I3Reply:
     def __init__(self, data):
-        super(CommandReply, self).__init__(data)
-
-    @property
-    def error(self):
-        """
-        A human-readable error message
-
-        :type: str
-        """
-        return self.__getattr__('error')
-
-    @property
-    def success(self):
-        """
-        Whether the command executed successfully
-
-        :type: bool
-        """
-        return self.__getattr__('success')
+        for member in self.__class__._members:
+            if member[0] in data:
+                setattr(self, member[0], member[1](data[member[0]]))
+            else:
+                setattr(self, member[0], None)
 
 
-class VersionReply(_BaseReply):
+class CommandReply(_I3Reply):
+    """A reply to the ``RUN_COMMAND`` message.
+
+    .. seealso:: https://i3wm.org/docs/ipc.html#_command_reply
+
+    :ivar success: Whether the command succeeded.
+    :vartype success: bool
+    :ivar error: A human-readable error message.
+    :vartype error: str or :class:`None` if no error message was set.
     """
-    Info about the version of the running i3 instance.
+    _members = [
+        ('success', bool),
+        ('error', str),
+    ]
+
+
+class WorkspaceReply(_I3Reply):
+    """A reply to the ``GET_WORKSPACES`` message.
+
+    .. seealso:: https://i3wm.org/docs/ipc.html#_workspaces_reply
+
+    :ivar num: The logical number of the workspace. Corresponds to the command
+        to switch to this workspace. For named workspaces, this will be -1.
+    :vartype num: int
+    :ivar name: The name of this workspace (by default num+1), as changed by
+        the user.
+    :vartype name: str
+    :ivar visible: Whether this workspace is currently visible on an output
+        (multiple workspaces can be visible at the same time).
+    :vartype visible: bool
+    :ivar focused: Whether this workspace currently has the focus (only one
+        workspace can have the focus at the same time).
+    :vartype focused: bool
+    :ivar urgent: Whether a window on this workspace has the "urgent" flag set.
+    :vartype urgent: bool
+    :ivar rect: The rectangle of this workspace (equals the rect of the output
+        it is on)
+    :vartype rect: :class:`Rect`
+    :ivar output: The video output this workspace is on (LVDS1, VGA1, ...).
+    :vartype output: str
     """
-
-    def __init__(self, data):
-        super(VersionReply, self).__init__(data)
-
-    @property
-    def major(self):
-        """
-        The major version of i3.
-
-        :type: int
-        """
-        return self.__getattr__('major')
-
-    @property
-    def minor(self):
-        """
-        The minor version of i3.
-
-        :type: int
-        """
-        return self.__getattr__('minor')
-
-    @property
-    def patch(self):
-        """
-        The patch version of i3.
-
-        :type: int
-        """
-        return self.__getattr__('patch')
-
-    @property
-    def human_readable(self):
-        """
-        A human-readable version of i3 containing the precise git version,
-        build date, and branch name.
-
-        :type: str
-        """
-        return self.__getattr__('human_readable')
-
-    @property
-    def loaded_config_file_name(self):
-        """
-        The current config path.
-
-        :type: str
-        """
-        return self.__getattr__('loaded_config_file_name')
+    _members = [
+        ('num', int),
+        ('name', str),
+        ('visible', bool),
+        ('focused', bool),
+        ('urgent', bool),
+        ('rect', Rect),
+        ('output', str),
+    ]
 
 
-class BarConfigReply(_BaseReply):
+class OutputReply(_I3Reply):
+    """A reply to the ``GET_OUTPUTS`` message.
+
+    .. seealso:: https://i3wm.org/docs/ipc.html#_outputs_reply
+
+    :ivar name: The name of this output (as seen in xrandr(1)).
+    :vartype name: str
+    :ivar active: Whether this output is currently active (has a valid mode).
+    :vartype active: bool
+    :ivar primary: Whether this output is currently the primary output.
+    :vartype primary: bool
+    :ivar current_workspace: The name of the current workspace that is visible
+        on this output. null if the output is not active.
+    :vartype current_workspace: str
+    :ivar rect: The rectangle of this output (equals the rect of the output it
+        is on).
+    :vartype rect: :class:`Rect`
     """
-    This can be used by third-party workspace bars (especially i3bar, but
-    others are free to implement compatible alternatives) to get the bar block
-    configuration from i3.
+    _members = [
+        ('name', str),
+        ('active', bool),
+        ('primary', bool),
+        ('current_workspace', str),
+        ('rect', Rect),
+    ]
 
-    Not all properties are documented here. A complete list of properties of
-    this reply type can be found `here
-    <http://i3wm.org/docs/ipc.html#_bar_config_reply>`_.
-    """
 
-    def __init__(self, data):
-        super(BarConfigReply, self).__init__(data)
+class BarConfigReply(_I3Reply):
+    """A reply to the ``GET_BAR_CONFIG`` message with a specified bar id.
 
-    @property
-    def colors(self):
-        """
-        Contains key/value pairs of colors. Each value is a color code in hex,
-        formatted #rrggbb (like in HTML).
+    .. seealso:: https://i3wm.org/docs/ipc.html#_bar_config_reply
 
-        :type: dict
-        """
-        return self.__getattr__('colors')
-
-    @property
-    def id(self):
-        """
-        The ID for this bar.
-
-        :type: str
-        """
-        return self.__getattr__('id')
-
-    @property
-    def mode(self):
-        """
-        Either ``dock`` (the bar sets the dock window type) or ``hide`` (the
+    :ivar id: The ID for this bar.
+    :vartype id: str
+    :ivar mode: Either dock (the bar sets the dock window type) or hide (the
         bar does not show unless a specific key is pressed).
-
-        :type: str
-        """
-        return self.__getattr__('mode')
-
-    @property
-    def position(self):
-        """
-        Either ``bottom`` or ``top``.
-
-        :type: str
-        """
-        return self.__getattr__('position')
-
-    @property
-    def status_command(self):
-        """
-        Command which will be run to generate a statusline. Each line on
-        stdout of this command will be displayed in the bar. At the moment, no
-        formatting is supported.
-
-        :type: str
-        """
-        return self.__getattr__('status_command')
-
-    @property
-    def font(self):
-        """
-        The font to use for text on the bar.
-
-        :type: str
-        """
-        return self.__getattr__('font')
+    :vartype mode: str
+    :ivar position: Either bottom or top at the moment.
+    :vartype position: str
+    :ivar status_command: Command which will be run to generate a statusline.
+    :vartype status_command: str
+    :ivar font: The font to use for text on the bar.
+    :vartype font: str
+    :ivar workspace_buttons: Display workspace buttons or not.
+    :vartype workspace_buttons: bool
+    :ivar binding_mode_indicator: Display the mode indicator or not.
+    :vartype binding_mode_indicator: bool
+    :ivar verbose: Should the bar enable verbose output for debugging.
+    :vartype verbose: bool
+    :ivar colors: Contains key/value pairs of colors. Each value is a color
+        code in hex, formatted #rrggbb (like in HTML).
+    :vartype colors: dict
+    """
+    _members = [
+        ('id', str),
+        ('mode', str),
+        ('position', str),
+        ('status_command', str),
+        ('font', str),
+        ('workspace_buttons', bool),
+        ('binding_mode_indicator', bool),
+        ('verbose', bool),
+        ('colors', dict),
+    ]
 
 
-class OutputReply(_BaseReply):
-    pass
+class VersionReply(_I3Reply):
+    """A reply to the ``GET_VERSION`` message.
+
+    .. seealso:: https://i3wm.org/docs/ipc.html#_version_reply
+
+    :ivar major: The major version of i3.
+    :vartype major: int
+    :ivar minor: The minor version of i3.
+    :vartype minor: int
+    :ivar patch: The patch version of i3.
+    :vartype patch: int
+    :ivar human_readable: A human-readable version of i3 containing the precise
+        git version, build date and branch name.
+    :vartype human_readable: str
+    :ivar loaded_config_file_name: The current config path.
+    :vartype loaded_config_file_name: str
+    """
+    _members = [
+        ('major', int),
+        ('minor', int),
+        ('patch', int),
+        ('human_readable', str),
+        ('loaded_config_file_name', str),
+    ]
 
 
-class InputReply(_BaseReply):
-    pass
+class ConfigReply(_I3Reply):
+    """A reply to the ``GET_CONFIG`` message.
+
+    .. seealso:: https://i3wm.org/docs/ipc.html#_config_reply
+
+    :ivar config: A string containing the config file as loaded by i3 most
+        recently.
+    :vartype config: str
+    """
+    _members = [
+        ('config', str),
+    ]
 
 
-class SeatReply(_BaseReply):
-    pass
+class TickReply(_I3Reply):
+    """A reply to the ``SEND_TICK`` message.
+
+    .. seealso:: https://i3wm.org/docs/ipc.html#_tick_reply
+
+    :ivar success: Whether the tick succeeded.
+    :vartype success: bool
+    """
+    _members = [
+        ('success', bool),
+    ]
 
 
-class WorkspaceReply(_BaseReply):
-    pass
+class InputReply(_I3Reply):
+    """(sway only) A reply to ``GET_INPUTS`` message.
+
+    .. seealso:: https://github.com/swaywm/sway/blob/master/sway/sway-ipc.7.scd
+
+    :ivar identifier: The identifier for the input device.
+    :vartype identifier: str
+    :ivar name: The human readable name for the device
+    :vartype name: str
+    :ivar vendor: The vendor code for the input device
+    :vartype vendor: int
+    :ivar product: The product code for the input device
+    :vartype product: int
+    :ivar type: The device type. Currently this can be keyboard, pointer,
+        touch, tablet_tool, tablet_pad, or switch
+    :vartype type: str
+    :ivar xkb_active_layout_name: (Only keyboards) The name of the active keyboard layout in use
+    :vartype xkb_active_layout_name: str
+    :ivar xkb_layout_names: (Only keyboards) A list a layout names configured for the keyboard
+    :vartype xkb_layout_names: list(str)
+    :ivar xkb_active_layout_index: (Only keyboards) The index of the active keyboard layout in use
+    :vartype xkb_active_layout_index: int
+    :ivar libinput: (Only libinput devices) An object describing the current device settings.
+    :vartype libinput: dict
+    """
+    _members = [
+        ('identifier', str),
+        ('name', str),
+        ('vendor', int),
+        ('product', int),
+        ('type', str),
+        ('xkb_active_layout_name', str),
+        ('xkb_layout_names', list),
+        ('xkb_active_layout_index', int),
+        ('libinput', dict),
+    ]
 
 
-class TickReply(_BaseReply):
-    pass
+class SeatReply(_I3Reply):
+    """(sway only) A reply to the ``GET_SEATS`` message.
 
+    .. seealso:: https://github.com/swaywm/sway/blob/master/sway/sway-ipc.7.scd
 
-class ConfigReply(_BaseReply):
-    pass
+    :ivar name: The unique name for the seat.
+    :vartype name: str
+    :ivar capabilities: The number of capabilities the seat has.
+    :vartype capabilities: int
+    :ivar focus: The id of the node currently focused by the seat or _0_ when
+        the seat is not currently focused by a node (i.e. a surface layer or
+        xwayland unmanaged has focus)
+    :vartype focus: int
+    :ivar devices: An array of input devices that are attached to the seat.
+    :vartype devices: list(:class:`InputReply`)
+    """
+    _members = [('name', str), ('capabilities', int), ('focus', int),
+                ('devices', lambda replies: [InputReply(r) for r in replies])]

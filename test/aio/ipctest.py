@@ -78,6 +78,6 @@ class IpcTest:
         workspaces = await i3.get_workspaces()
         while True:
             new_name = str(math.floor(random() * 100000))
-            if not any(w for w in workspaces if w['name'] == new_name):
+            if not any(w for w in workspaces if w.name == new_name):
                 await i3.command('workspace %s' % new_name)
                 return new_name

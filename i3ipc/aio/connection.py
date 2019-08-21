@@ -483,7 +483,8 @@ class Connection:
         data = await self._message(MessageType.COMMAND, cmd)
 
         if data:
-            return json.loads(data, object_hook=CommandReply)
+            data = json.loads(data)
+            return [CommandReply(d) for d in data]
         else:
             return []
 
@@ -494,7 +495,8 @@ class Connection:
         :rtype: :class:`i3ipc.VersionReply`
         """
         data = await self._message(MessageType.GET_VERSION)
-        return json.loads(data, object_hook=VersionReply)
+        data = json.loads(data)
+        return VersionReply(data)
 
     async def get_bar_config_list(self) -> List[str]:
         """Gets the names of all bar configurations.
@@ -523,7 +525,8 @@ class Connection:
             bar_id = bar_config_list[0]
 
         data = await self._message(MessageType.GET_BAR_CONFIG, bar_id)
-        return json.loads(data, object_hook=BarConfigReply)
+        data = json.loads(data)
+        return BarConfigReply(data)
 
     async def get_outputs(self) -> List[OutputReply]:
         """Gets the list of current outputs.
@@ -532,7 +535,8 @@ class Connection:
         :rtype: list(:class:`i3ipc.OutputReply`)
         """
         data = await self._message(MessageType.GET_OUTPUTS)
-        return json.loads(data, object_hook=OutputReply)
+        data = json.loads(data)
+        return [OutputReply(d) for d in data]
 
     async def get_workspaces(self) -> List[WorkspaceReply]:
         """Gets the list of current workspaces.
@@ -541,7 +545,8 @@ class Connection:
         :rtype: list(:class:`i3ipc.WorkspaceReply`)
         """
         data = await self._message(MessageType.GET_WORKSPACES)
-        return json.loads(data, object_hook=WorkspaceReply)
+        data = json.loads(data)
+        return [WorkspaceReply(d) for d in data]
 
     async def get_tree(self) -> Con:
         """Gets the root container of the i3 layout tree.
@@ -577,7 +582,8 @@ class Connection:
         :rtype: :class:`i3ipc.ConfigReply`
         """
         data = await self._message(MessageType.GET_CONFIG)
-        return json.loads(data, object_hook=ConfigReply)
+        data = json.loads(data)
+        return ConfigReply(data)
 
     async def send_tick(self, payload: str = "") -> TickReply:
         """Sends a tick with the specified payload.
@@ -586,7 +592,8 @@ class Connection:
         :rtype: :class:`i3ipc.TickReply`
         """
         data = await self._message(MessageType.SEND_TICK, payload)
-        return json.loads(data, object_hook=TickReply)
+        data = json.loads(data)
+        return TickReply(data)
 
     async def get_inputs(self) -> InputReply:
         """(sway only) Gets the inputs connected to the compositor.
@@ -595,7 +602,8 @@ class Connection:
         :rtype: :class:`i3ipc.InputReply`
         """
         data = await self._message(MessageType.GET_INPUTS)
-        return json.loads(data, object_hook=InputReply)
+        data = json.loads(data)
+        return [InputReply(d) for d in data]
 
     async def get_seats(self) -> SeatReply:
         """(sway only) Gets the seats configured on the compositor
@@ -604,7 +612,8 @@ class Connection:
         :rtype: :class:`i3ipc.SeatReply`
         """
         data = await self._message(MessageType.GET_SEATS)
-        return json.loads(data, object_hook=SeatReply)
+        data = json.loads(data)
+        return [SeatReply(d) for d in data]
 
     def main_quit(self, _error=None):
         """Quits the running main loop for this connection."""
