@@ -1,4 +1,5 @@
 import re
+import sys
 from collections import deque
 
 
@@ -16,168 +17,73 @@ class Gaps:
         self.outer = data['outer']
 
 
-class Con(object):
-    """
-    The container class. Has all internal information about the windows,
-    outputs, workspaces and containers that :command:`i3` manages.
+class Con:
+    """A container of a window and child containers gotten from :func:`i3ipc.Connection.get_tree()` or events.
 
-    .. attribute:: id
+    .. seealso:: https://i3wm.org/docs/ipc.html#_tree_reply
 
-        The internal ID (actually a C pointer value within i3) of the container.
-        You can use it to (re-)identify and address containers when talking to
-        i3.
-
-    .. attribute:: name
-
-        The internal name of the container.  ``None`` for containers which
-        are not leaves.  The string `_NET_WM_NAME <://specifications.freedesktop.org/wm-spec/1.3/ar01s05.html#idm140238712347280>`_
-        for windows. Read-only value.
-
-    .. attribute:: type
-
-        The type of the container. Can be one of ``root``, ``output``, ``con``,
-        ``floating_con``, ``workspace`` or ``dockarea``.
-
-    .. attribute:: window_title
-
-        The window title.
-
-    .. attribute:: window_class
-
-        The window class.
-
-    .. attribute:: instance
-
-        The instance name of the window class.
-
-    .. attribute:: gaps
-
-        The inner and outer gaps devation from default values.
-
-    .. attribute:: border
-
-        The type of border style for the selected container. Can be either
-        ``normal``, ``none`` or ``1pixel``.
-
-    .. attribute:: current_border_width
-
-       Returns amount of pixels for the border. Readonly value. See `i3's user
-       manual <https://i3wm.org/docs/userguide.html#_border_style_for_new_windows>_
-       for more info.
-
-    .. attribute:: layout
-
-        Can be either ``splith``, ``splitv``, ``stacked``, ``tabbed``, ``dockarea`` or
-        ``output``.
-        :rtype: string
-
-    .. attribute:: percent
-
-        The percentage which this container takes in its parent. A value of
-        null means that the percent property does not make sense for this
-        container, for example for the root container.
-        :rtype: float
-
-    .. attribute:: rect
-
-        The absolute display coordinates for this container. Display
-        coordinates means that when you have two 1600x1200 monitors on a single
-        X11 Display (the standard way), the coordinates of the first window on
-        the second monitor are ``{ "x": 1600, "y": 0, "width": 1600, "height":
-        1200 }``.
-
-    .. attribute:: window_rect
-
-        The coordinates of the *actual client window* inside the container,
-        without the window decorations that may also occupy space.
-
-    .. attribute:: deco_rect
-
-        The coordinates of the window decorations within a container. The
-        coordinates are relative to the container and do not include the client
-        window.
-
-    .. attribute:: geometry
-
-        The original geometry the window specified when i3 mapped it. Used when
-        switching a window to floating mode, for example.
-
-    .. attribute:: window
-
-        The X11 window ID of the client window.
-
-    .. attribute:: focus
-
-        A list of container ids describing the focus situation within the current
-        container. The first element refers to the container with (in)active focus.
-
-    .. attribute:: focused
-
-        Whether or not the current container is focused. There is only
-        one focused container.
-
-    .. attribute:: visible
-
-        Whether or not the current container is visible.
-
-    .. attribute:: num
-
-        Optional attribute that only makes sense for workspaces. This allows
-        for arbitrary and changeable names, even though the keyboard
-        shortcuts remain the same.  See `the i3wm docs <https://i3wm.org/docs/userguide.html#_named_workspaces>`_
-        for more information
-
-    .. attribute:: urgent
-
-        Whether the window or workspace has the `urgent` state.
-
-        :returns: :bool:`True` or :bool:`False`.
-
-    .. attribute:: floating
-
-        Whether the container is floating or not. Possible values are
-        "auto_on", "auto_off", "user_on" and "user_off"
-
-    .. attribute:: pid
-
-        The id of the process who owns the client window
-        sway only, version >= 1.0-alpha.6
-
-    ..
-        command <-- method
-        command_children <-- method
-        deco_rect IPC
-        descendents
-        find_by_id
-        find_by_role
-        find_by_window
-        find_classed
-        find_focused
-        find_fullscreen
-        find_marked
-        find_named
-        find_titled
-        floating
-        floating_nodes
-        fullscreen_mode
-        gaps
-        leaves
-        marks
-        nodes
-        orientation
-        parent
-        props
-        root
-        scratchpad
-        scratchpad_state
-        window_class
-        window_instance
-        window_rect
-        window_role
-        workspace
-        workspaces
-
-
+    :ivar border:
+    :vartype border: str
+    :ivar current_border_width:
+    :vartype current_border_with: int
+    :ivar floating:
+    :vartype floating: bool
+    :ivar focus: The focus stack for this container as a list of container ids.
+        The "focused inactive" is at the top of the list which is the container
+        that would be focused if this container recieves focus.
+    :vartype focus: list(int)
+    :ivar focused:
+    :vartype focused: bool
+    :ivar fullscreen_mode:
+    :vartype fullscreen_mode: int
+    :ivar ~.id:
+    :vartype ~.id: int
+    :ivar layout:
+    :vartype layout: str
+    :ivar marks:
+    :vartype marks: list(str)
+    :ivar name:
+    :vartype name: str
+    :ivar num:
+    :vartype num: int
+    :ivar orientation:
+    :vartype orientation: str
+    :ivar percent:
+    :vartype percent: float
+    :ivar scratchpad_state:
+    :vartype scratchpad_state: str
+    :ivar sticky:
+    :vartype sticky: bool
+    :ivar type:
+    :vartype type: str
+    :ivar urgent:
+    :vartype urgent: bool
+    :ivar window:
+    :vartype window: int
+    :ivar nodes:
+    :vartype nodes: list(:class:`Con <i3ipc.Con>`)
+    :ivar floating_nodes:
+    :vartype floating_nodes: list(:class:`Con <i3ipc.Con>`)
+    :ivar window_class:
+    :vartype window_class: str
+    :ivar window_instance:
+    :vartype window_instance: str
+    :ivar window_role:
+    :vartype window_role: str
+    :ivar window_title:
+    :vartype window_title: str
+    :ivar rect:
+    :vartype rect: :class:`Rect <i3ipc.Rect>`
+    :ivar window_rect:
+    :vartype window_rect: :class:`Rect <i3ipc.Rect>`
+    :ivar deco_rect:
+    :vartype deco_rect: :class:`Rect <i3ipc.Rect>`
+    :ivar app_id: (sway only)
+    :vartype app_id: str
+    :ivar pid: (sway only)
+    :vartype pid: int
+    :ivar gaps: (gaps only)
+    :vartype gaps: :class:`Gaps <i3ipc.Gaps>`
     """
 
     def __init__(self, data, parent, conn):
@@ -254,8 +160,7 @@ class Con(object):
             self.gaps = Gaps(data['gaps'])
 
     def __iter__(self):
-        """
-        Iterate through the descendents of this node (breadth-first tree traversal)
+        """Iterate through the descendents of this node (breadth-first tree traversal)
         """
         queue = deque(self.nodes)
         queue.extend(self.floating_nodes)
@@ -267,10 +172,10 @@ class Con(object):
             queue.extend(con.floating_nodes)
 
     def root(self):
-        """
-        Retrieves the root container.
+        """Gets the root container.
 
-        :rtype: :class:`Con`.
+        :returns: The root container.
+        :rtype: :class:`Con`
         """
 
         if not self.parent:
@@ -283,22 +188,35 @@ class Con(object):
 
         return con
 
-    def descendents(self):
-        """
-        Retrieve a list of all containers that delineate from the currently
-        selected container.  Includes any kind of container.
+    def descendants(self):
+        """Gets a list of all child containers for the container in
+        breadth-first order.
 
-        :rtype: List of :class:`Con`.
+        :returns: A list of descendants.
+        :rtype: list(:class:`Con`)
         """
         return [c for c in self]
 
-    def leaves(self):
-        """
-        Retrieve a list of windows that delineate from the currently
-        selected container.  Only lists client windows, no intermediate
-        containers.
+    def descendents(self):
+        """Gets a list of all child containers for the container in
+        breadth-first order.
 
-        :rtype: List of :class:`Con`.
+        .. deprecated:: 2.0.1
+           Use :func:`descendants` instead.
+
+        :returns: A list of descendants.
+        :rtype: list(:class:`Con`)
+        """
+        print('WARNING: descendents is deprecated. Use `descendants()` instead.', file=sys.stderr)
+        return self.descendants()
+
+    def leaves(self):
+        """Gets a list of leaf child containers for this container in
+        breadth-first order. Leaf containers normally contain application
+        windows.
+
+        :returns: A list of leaf descendants.
+        :rtype: list(:class:`Con`)
         """
         leaves = []
 
@@ -309,19 +227,24 @@ class Con(object):
         return leaves
 
     def command(self, command):
-        """
-        Run a command on the currently active container.
+        """Runs a command on this container.
 
-        :rtype: CommandReply
+        .. seealso:: https://i3wm.org/docs/userguide.html#list_of_commands
+
+        :returns: A list of replies for each command in the given command
+            string.
+        :rtype: list(CommandReply)
         """
         return self._conn.command('[con_id="{}"] {}'.format(self.id, command))
 
     def command_children(self, command):
-        """
-        Run a command on the direct children of the currently selected
+        """Runs a command on the immediate children of the currently selected
         container.
 
-        :rtype: List of CommandReply????
+        .. seealso:: https://i3wm.org/docs/userguide.html#list_of_commands
+
+        :returns: A list of replies for each command that was executed.
+        :rtype: list(CommandReply)
         """
         if not len(self.nodes):
             return
@@ -333,9 +256,9 @@ class Con(object):
         self._conn.command(' '.join(commands))
 
     def workspaces(self):
-        """
-        Retrieve a list of currently active workspaces.
+        """Gets a list of workspace containers for this tree.
 
+        :returns: A list of workspace containers.
         :rtype: List of :class:`Con`.
         """
         workspaces = []
@@ -352,10 +275,11 @@ class Con(object):
         return workspaces
 
     def find_focused(self):
-        """
-        Finds the focused container.
+        """Finds the focused container under this container if it exists.
 
-        :rtype class Con:
+        :returns: The focused container if it exists.
+        :rtype: :class:`Con` or :class:`None` if the focused container is not
+            under this container
         """
         try:
             return next(c for c in self if c.focused)
@@ -363,40 +287,107 @@ class Con(object):
             return None
 
     def find_by_id(self, id):
+        """Finds a container with the given container id under this node.
+
+        :returns: The container with this container id if it exists.
+        :rtype: :class:`Con` or :class:`None` if there is no container with
+            this container id.
+        """
         try:
             return next(c for c in self if c.id == id)
         except StopIteration:
             return None
 
     def find_by_window(self, window):
+        """Finds a container with the given window id under this node.
+
+        :returns: The container with this window id if it exists.
+        :rtype: :class:`Con` or :class:`None` if there is no container with
+            this window id.
+        """
         try:
             return next(c for c in self if c.window == window)
         except StopIteration:
             return None
 
     def find_by_role(self, pattern):
+        """Finds all the containers under this node with a window role that
+        matches the given regex pattern.
+
+        :returns: A list of containers that have a window role that matches the
+            pattern.
+        :rtype: list(:class:`Con`)
+        """
         return [c for c in self if c.window_role and re.search(pattern, c.window_role)]
 
     def find_named(self, pattern):
+        """Finds all the containers under this node with a name that
+        matches the given regex pattern.
+
+        :returns: A list of containers that have a name that matches the
+            pattern.
+        :rtype: list(:class:`Con`)
+        """
         return [c for c in self if c.name and re.search(pattern, c.name)]
 
     def find_titled(self, pattern):
+        """Finds all the containers under this node with a window title that
+        matches the given regex pattern.
+
+        :returns: A list of containers that have a window title that matches
+            the pattern.
+        :rtype: list(:class:`Con`)
+        """
         return [c for c in self if c.window_title and re.search(pattern, c.window_title)]
 
     def find_classed(self, pattern):
+        """Finds all the containers under this node with a window class that
+        matches the given regex pattern.
+
+        :returns: A list of containers that have a window class that matches the
+            pattern.
+        :rtype: list(:class:`Con`)
+        """
         return [c for c in self if c.window_class and re.search(pattern, c.window_class)]
 
     def find_instanced(self, pattern):
+        """Finds all the containers under this node with a window instance that
+        matches the given regex pattern.
+
+        :returns: A list of containers that have a window instance that matches the
+            pattern.
+        :rtype: list(:class:`Con`)
+        """
         return [c for c in self if c.window_instance and re.search(pattern, c.window_instance)]
 
     def find_marked(self, pattern=".*"):
+        """Finds all the containers under this node with a mark that
+        matches the given regex pattern.
+
+        :returns: A list of containers that have a mark that matches the
+            pattern.
+        :rtype: list(:class:`Con`)
+        """
         pattern = re.compile(pattern)
         return [c for c in self if any(pattern.search(mark) for mark in c.marks)]
 
     def find_fullscreen(self):
+        """Finds all the containers under this node that are in fullscreen
+        mode.
+
+        :returns: A list of fullscreen containers.
+        :rtype: list(:class:`Con`)
+        """
         return [c for c in self if c.type == 'con' and c.fullscreen_mode]
 
     def workspace(self):
+        """Finds the workspace container for this node if this container is at
+        or below the workspace level.
+
+        :returns: The workspace container if it exists.
+        :rtype: :class:`Con` or :class:`None` if this container is above the
+            workspace level.
+        """
         if self.type == 'workspace':
             return self
 
@@ -410,6 +401,11 @@ class Con(object):
         return ret
 
     def scratchpad(self):
+        """Finds the scratchpad container.
+
+        :returns: The scratchpad container.
+        :rtype: class:`Con`
+        """
         root = self.root()
 
         i3con = None

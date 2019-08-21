@@ -17,20 +17,29 @@ import Xlib
 import Xlib.display
 
 
-class Connection(object):
-    """
-    This class controls a connection to the i3 ipc socket. It is capable of
-    executing commands, subscribing to window manager events, and querying the
-    window manager for information about the current state of windows,
-    workspaces, outputs, and the i3bar. For more information, see the `ipc
-    documentation <http://i3wm.org/docs/ipc.html>`_
+class Connection:
+    """A connection to the i3 ipc used for querying window manager state and
+    listening to events.
 
-    :param str socket_path: The path for the socket to the current i3 session.
-        In most situations, you will not have to supply this yourself. Guessing
-        first happens by the environment variable :envvar:`I3SOCK`, and, if this is
-        empty, by executing :command:`i3 --get-socketpath`.
-    :raises Exception: If the connection to ``i3`` cannot be established, or when
-        the connection terminates.
+    The ``Connection`` class is the entry point into all features of the
+    library.
+
+    :Example:
+
+    .. code-block:: python3
+
+        i3 = Connection()
+        workspaces = i3.get_workspaces()
+        i3.command('focus left')
+
+    :param socket_path: A path to the i3 ipc socket path to connect to. If not
+        given, find the socket path through the default search path.
+    :type socket_path: str
+    :param auto_reconnect: Whether to attempt to reconnect if the connection to
+        the socket is broken when i3 restarts.
+    :type auto_reconnect: bool
+
+    :raises Exception: If the connection to i3 cannot be established.
     """
     _MAGIC = 'i3-ipc'  # safety string for i3-ipc
     _chunk_size = 1024  # in bytes
@@ -69,17 +78,29 @@ class Connection(object):
         self._cmd_lock = Lock()
         self._sub_socket = None
         self._sub_lock = Lock()
-        self.auto_reconnect = auto_reconnect
+        self._auto_reconnect = auto_reconnect
         self._restarting = False
         self._quitting = False
 
     @property
     def socket_path(self):
+        """The path of the socket this ``Connection`` is connected to.
+
+        :rtype: str
+        """
         return self._socket_path
 
-    def _pack(self, msg_type, payload):
+    @property
+    def auto_reconnect(self):
+        """Whether this ``Connection`` will attempt to reconnect when the
+        connection to the socket is broken.
+
+        :rtype: bool
         """
-        Packs the given message type and payload. Turns the resulting
+        return self._auto_reconnect
+
+    def _pack(self, msg_type, payload):
+        """Packs the given message type and payload. Turns the resulting
         message into a byte string.
         """
         pb = payload.encode('utf-8')
@@ -87,8 +108,7 @@ class Connection(object):
         return self._MAGIC.encode('utf-8') + s + pb
 
     def _unpack(self, data):
-        """
-        Unpacks the given byte string and parses the result from JSON.
+        """Unpacks the given byte string and parses the result from JSON.
         Returns None on failure and saves data into "self.buffer".
         """
         msg_magic, msg_length, msg_type = self._unpack_header(data)
@@ -98,8 +118,7 @@ class Connection(object):
         return payload.decode('utf-8', 'replace')
 
     def _unpack_header(self, data):
-        """
-        Unpacks the header of given byte string.
+        """Unpacks the header of given byte string.
         """
         return struct.unpack(self._struct_header, data[:self._struct_header_size])
 
@@ -117,10 +136,9 @@ class Connection(object):
         return self._unpack(data), msg_type
 
     def _ipc_send(self, sock, message_type, payload):
-        '''
-        Send and receive a message from the ipc.
-        NOTE: this is not thread safe
-        '''
+        """Send and receive a message from the ipc.  NOTE: this is not thread
+        safe
+        """
         sock.sendall(self._pack(message_type, payload))
         data, msg_type = self._ipc_recv(sock)
         return data
@@ -136,7 +154,7 @@ class Connection(object):
 
         return socket_path_exists
 
-    def message(self, message_type, payload):
+    def _message(self, message_type, payload):
         try:
             self._cmd_lock.acquire()
             return self._ipc_send(self._cmd_socket, message_type, payload)
@@ -155,55 +173,41 @@ class Connection(object):
             self._cmd_lock.release()
 
     def command(self, payload):
-        """
-        Send a command to i3. See the `list of commands
-        <http://i3wm.org/docs/userguide.html#_list_of_commands>`_ in the user
-        guide for available commands. Pass the text of the command to execute
-        as the first arguments. This is essentially the same as using
-        ``i3-msg`` or an ``exec`` block in your i3 config to control the
-        window manager.
+        """Sends a command to i3.
 
-        :rtype: List of :class:`CommandReply`.
+        .. seealso:: https://i3wm.org/docs/userguide.html#list_of_commands
+
+        :param cmd: The command to send to i3.
+        :type cmd: str
+        :returns: A list of replies that contain info for the result of each
+            command given.
+        :rtype: list(:class:`CommandReply <i3ipc.CommandReply>`)
         """
-        data = self.message(MessageType.COMMAND, payload)
+        data = self._message(MessageType.COMMAND, payload)
         if data:
             return json.loads(data, object_hook=CommandReply)
         else:
             return []
 
     def get_version(self):
+        """Gets the i3 version.
+
+        :returns: The i3 version.
+        :rtype: :class:`i3ipc.VersionReply`
         """
-        Get json encoded information about the running i3 instance.  The
-        equivalent of :command:`i3-msg -t get_version`. The return
-        object exposes the following attributes :attr:`~VersionReply.major`,
-        :attr:`~VersionReply.minor`, :attr:`~VersionReply.patch`,
-        :attr:`~VersionReply.human_readable`, and
-        :attr:`~VersionReply.loaded_config_file_name`.
-
-        Example output:
-
-        .. code:: json
-
-            {'patch': 0,
-             'human_readable': '4.12 (2016-03-06, branch "4.12")',
-             'major': 4,
-             'minor': 12,
-             'loaded_config_file_name': '/home/joep/.config/i3/config'}
-
-
-        :rtype: VersionReply
-
-        """
-        data = self.message(MessageType.GET_VERSION, '')
+        data = self._message(MessageType.GET_VERSION, '')
         return json.loads(data, object_hook=VersionReply)
 
     def get_bar_config(self, bar_id=None):
-        """
-        Get the configuration of a single bar. Defaults to the first if none is
-        specified. Use :meth:`get_bar_config_list` to obtain a list of valid
-        IDs.
+        """Gets the bar configuration specified by the id.
 
-        :rtype: BarConfigReply
+        :param bar_id: The bar id to get the configuration for. If not given,
+            get the configuration for the first bar id.
+        :type bar_id: str
+
+        :returns: The bar configuration for the bar id.
+        :rtype: :class:`BarConfigReply <i3ipc.BarConfigReply>` or :class:`None`
+            if no bar configuration is found.
         """
         if not bar_id:
             bar_config_list = self.get_bar_config_list()
@@ -211,126 +215,97 @@ class Connection(object):
                 return None
             bar_id = bar_config_list[0]
 
-        data = self.message(MessageType.GET_BAR_CONFIG, bar_id)
+        data = self._message(MessageType.GET_BAR_CONFIG, bar_id)
         return json.loads(data, object_hook=BarConfigReply)
 
     def get_bar_config_list(self):
-        """
-        Get list of bar IDs as active in the connected i3 session.
+        """Gets the names of all bar configurations.
 
-        :rtype: List of strings that can be fed as ``bar_id`` into
-            :meth:`get_bar_config`.
+        :returns: A list of all bar configurations.
+        :rtype: list(str)
         """
-        data = self.message(MessageType.GET_BAR_CONFIG, '')
+        data = self._message(MessageType.GET_BAR_CONFIG, '')
         return json.loads(data)
 
     def get_outputs(self):
+        """Gets the list of current outputs.
+
+        :returns: A list of current outputs.
+        :rtype: list(:class:`i3ipc.OutputReply`)
         """
-        Get a list of outputs.  The equivalent of :command:`i3-msg -t get_outputs`.
-
-        :rtype: List of :class:`OutputReply`.
-
-        Example output:
-
-        .. code:: python
-
-            >>> i3ipc.Connection().get_outputs()
-            [{'name': 'eDP1',
-              'primary': True,
-              'active': True,
-              'rect': {'width': 1920, 'height': 1080, 'y': 0, 'x': 0},
-              'current_workspace': '2'},
-             {'name': 'xroot-0',
-              'primary': False,
-              'active': False,
-              'rect': {'width': 1920, 'height': 1080, 'y': 0, 'x': 0},
-              'current_workspace': None}]
-        """
-        data = self.message(MessageType.GET_OUTPUTS, '')
+        data = self._message(MessageType.GET_OUTPUTS, '')
         return json.loads(data, object_hook=OutputReply)
 
     def get_inputs(self):
-        """
-        Get a list of sway inputs. The equivalent of
-        :command:`swaymsg -t get_inputs`.
+        """(sway only) Gets the inputs connected to the compositor.
 
-        :rtype: List of :class:`InputReply`.
-
+        :returns: The reply to the inputs command
+        :rtype: :class:`i3ipc.InputReply`
         """
-        data = self.message(MessageType.GET_INPUTS, '')
+        data = self._message(MessageType.GET_INPUTS, '')
         return json.loads(data, object_hook=InputReply)
 
     def get_seats(self):
-        """
-        Get a list of sway seats. The equivalent of
-        :command:`swaymsg -t get_seats`.
+        """(sway only) Gets the seats configured on the compositor
 
-        :rtype: List of :class:`SeatReply`.
-
+        :returns: The reply to the seats command
+        :rtype: :class:`i3ipc.SeatReply`
         """
-        data = self.message(MessageType.GET_SEATS, '')
+        data = self._message(MessageType.GET_SEATS, '')
         return json.loads(data, object_hook=SeatReply)
 
     def get_workspaces(self):
+        """Gets the list of current workspaces.
+
+        :returns: A list of current workspaces
+        :rtype: list(:class:`i3ipc.WorkspaceReply`)
         """
-        Get a list of workspaces. Returns JSON-like data, not a Con instance.
-
-        You might want to try the :meth:`Con.workspaces` instead if the info
-        contained here is too little.
-
-        :rtype: List of :class:`WorkspaceReply`.
-
-        """
-        data = self.message(MessageType.GET_WORKSPACES, '')
+        data = self._message(MessageType.GET_WORKSPACES, '')
         return json.loads(data, object_hook=WorkspaceReply)
 
     def get_tree(self):
-        """
-        Returns a :class:`Con` instance with all kinds of methods and selectors.
-        Start here with exploration. Read up on the :class:`Con` stuffs.
+        """Gets the root container of the i3 layout tree.
 
-        :rtype: Con
+        :returns: The root container of the i3 layout tree.
+        :rtype: :class:`i3ipc.Con`
         """
-        data = self.message(MessageType.GET_TREE, '')
+        data = self._message(MessageType.GET_TREE, '')
         return Con(json.loads(data), None, self)
 
     def get_marks(self):
-        """
-        Get a list of the names of all currently set marks.
+        """Gets the names of all currently set marks.
 
-        :rtype: list
+        :returns: A list of currently set marks.
+        :rtype: list(str)
         """
-        data = self.message(MessageType.GET_MARKS, '')
+        data = self._message(MessageType.GET_MARKS, '')
         return json.loads(data)
 
     def get_binding_modes(self):
-        """
-        Returns all currently configured binding modes.
+        """Gets the names of all currently configured binding modes
 
-        :rtype: list
+        :returns: A list of binding modes
+        :rtype: list(str)
         """
-        data = self.message(MessageType.GET_BINDING_MODES, '')
+        data = self._message(MessageType.GET_BINDING_MODES, '')
         return json.loads(data)
 
     def get_config(self):
-        """
-        Currently only contains the "config" member, which is a string
-        containing the config file as loaded by i3 most recently.
+        """Returns the last loaded i3 config.
 
-        :rtype: ConfigReply
+        :returns: A class containing the config.
+        :rtype: :class:`i3ipc.ConfigReply`
         """
-        data = self.message(MessageType.GET_CONFIG, '')
+        data = self._message(MessageType.GET_CONFIG, '')
         return json.loads(data, object_hook=ConfigReply)
 
     def send_tick(self, payload=""):
-        """
-        Sends a tick event with the specified payload. After the reply was
-        received, the tick event has been written to all IPC connections which
-        subscribe to tick events.
+        """Sends a tick with the specified payload.
 
-        :rtype: TickReply
+        :returns: The reply to the tick command
+        :rtype: :class:`i3ipc.TickReply`
         """
-        data = self.message(MessageType.SEND_TICK, payload)
+        data = self._message(MessageType.SEND_TICK, payload)
         return json.loads(data, object_hook=TickReply)
 
     def _subscribe(self, events):
@@ -362,9 +337,23 @@ class Connection(object):
         return result
 
     def off(self, handler):
+        """Unsubscribe the handler from being called on ipc events.
+
+        :param handler: The handler that was previously attached with
+            :func:`on()`.
+        :type handler: :class:`Callable`
+        """
         self._pubsub.unsubscribe(handler)
 
     def on(self, event, handler):
+        """Subscribe to the event and call the handler when it is emitted by
+        the i3 ipc.
+
+        :param event: The event to subscribe to.
+        :type event: :class:`Event <i3ipc.Event>` or str
+        :param handler: The event handler to call.
+        :type handler: :class:`Callable`
+        """
         if type(event) is Event:
             event = event.value
 
@@ -464,6 +453,11 @@ class Connection(object):
         self._pubsub.emit(event_name, event)
 
     def main(self, timeout=0):
+        """Starts the main loop for this connection to start handling events.
+
+        :param timeout: If given, quit the main loop after ``timeout`` seconds.
+        :type timeout: float
+        """
         self._quitting = False
         while True:
             try:
@@ -494,5 +488,6 @@ class Connection(object):
                     break
 
     def main_quit(self):
+        """Quits the running main loop for this connection."""
         self._quitting = True
         self._event_socket_teardown()
