@@ -17,6 +17,10 @@ Events
    :members:
    :undoc-members:
 
+.. autoclass:: i3ipc.BindingInfo
+   :members:
+   :undoc-members:
+
 .. autoclass:: i3ipc.BindingEvent
    :members:
    :undoc-members:
