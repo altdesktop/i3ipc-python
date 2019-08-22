@@ -3,10 +3,11 @@
 from .con import Con
 from .replies import (BarConfigReply, CommandReply, ConfigReply, OutputReply, TickReply,
                       VersionReply, WorkspaceReply, SeatReply, InputReply)
-from .events import (BarconfigUpdateEvent, BindingEvent, OutputEvent, ShutdownEvent, WindowEvent,
-                     TickEvent, ModeEvent, WorkspaceEvent, Event)
+from .events import (IpcBaseEvent, BarconfigUpdateEvent, BindingEvent, OutputEvent, ShutdownEvent,
+                     WindowEvent, TickEvent, ModeEvent, WorkspaceEvent, Event)
 from ._private import PubSub, MessageType, EventType
 
+from typing import List, Optional, Union, Callable
 import struct
 import json
 import socket
@@ -83,7 +84,7 @@ class Connection:
         self._quitting = False
 
     @property
-    def socket_path(self):
+    def socket_path(self) -> str:
         """The path of the socket this ``Connection`` is connected to.
 
         :rtype: str
@@ -91,7 +92,7 @@ class Connection:
         return self._socket_path
 
     @property
-    def auto_reconnect(self):
+    def auto_reconnect(self) -> bool:
         """Whether this ``Connection`` will attempt to reconnect when the
         connection to the socket is broken.
 
@@ -172,7 +173,7 @@ class Connection:
         finally:
             self._cmd_lock.release()
 
-    def command(self, payload):
+    def command(self, payload: str) -> List[CommandReply]:
         """Sends a command to i3.
 
         .. seealso:: https://i3wm.org/docs/userguide.html#list_of_commands
@@ -190,7 +191,7 @@ class Connection:
         else:
             return []
 
-    def get_version(self):
+    def get_version(self) -> VersionReply:
         """Gets the i3 version.
 
         :returns: The i3 version.
@@ -200,7 +201,7 @@ class Connection:
         data = json.loads(data)
         return VersionReply(data)
 
-    def get_bar_config(self, bar_id=None):
+    def get_bar_config(self, bar_id: str = None) -> Optional[BarConfigReply]:
         """Gets the bar configuration specified by the id.
 
         :param bar_id: The bar id to get the configuration for. If not given,
@@ -221,7 +222,7 @@ class Connection:
         data = json.loads(data)
         return BarConfigReply(data)
 
-    def get_bar_config_list(self):
+    def get_bar_config_list(self) -> List[str]:
         """Gets the names of all bar configurations.
 
         :returns: A list of all bar configurations.
@@ -230,7 +231,7 @@ class Connection:
         data = self._message(MessageType.GET_BAR_CONFIG, '')
         return json.loads(data)
 
-    def get_outputs(self):
+    def get_outputs(self) -> List[OutputReply]:
         """Gets the list of current outputs.
 
         :returns: A list of current outputs.
@@ -240,27 +241,27 @@ class Connection:
         data = json.loads(data)
         return OutputReply._parse_list(data)
 
-    def get_inputs(self):
+    def get_inputs(self) -> List[InputReply]:
         """(sway only) Gets the inputs connected to the compositor.
 
         :returns: The reply to the inputs command
-        :rtype: :class:`i3ipc.InputReply`
+        :rtype: list(:class:`i3ipc.InputReply`)
         """
         data = self._message(MessageType.GET_INPUTS, '')
         data = json.loads(data)
         return InputReply._parse_list(data)
 
-    def get_seats(self):
+    def get_seats(self) -> List[SeatReply]:
         """(sway only) Gets the seats configured on the compositor
 
         :returns: The reply to the seats command
-        :rtype: :class:`i3ipc.SeatReply`
+        :rtype: list(:class:`i3ipc.SeatReply`)
         """
         data = self._message(MessageType.GET_SEATS, '')
         data = json.loads(data)
         return SeatReply._parse_list(data)
 
-    def get_workspaces(self):
+    def get_workspaces(self) -> List[WorkspaceReply]:
         """Gets the list of current workspaces.
 
         :returns: A list of current workspaces
@@ -270,7 +271,7 @@ class Connection:
         data = json.loads(data)
         return WorkspaceReply._parse_list(data)
 
-    def get_tree(self):
+    def get_tree(self) -> Con:
         """Gets the root container of the i3 layout tree.
 
         :returns: The root container of the i3 layout tree.
@@ -279,7 +280,7 @@ class Connection:
         data = self._message(MessageType.GET_TREE, '')
         return Con(json.loads(data), None, self)
 
-    def get_marks(self):
+    def get_marks(self) -> List[str]:
         """Gets the names of all currently set marks.
 
         :returns: A list of currently set marks.
@@ -288,7 +289,7 @@ class Connection:
         data = self._message(MessageType.GET_MARKS, '')
         return json.loads(data)
 
-    def get_binding_modes(self):
+    def get_binding_modes(self) -> List[str]:
         """Gets the names of all currently configured binding modes
 
         :returns: A list of binding modes
@@ -297,7 +298,7 @@ class Connection:
         data = self._message(MessageType.GET_BINDING_MODES, '')
         return json.loads(data)
 
-    def get_config(self):
+    def get_config(self) -> ConfigReply:
         """Returns the last loaded i3 config.
 
         :returns: A class containing the config.
@@ -307,7 +308,7 @@ class Connection:
         data = json.loads(data)
         return ConfigReply(data)
 
-    def send_tick(self, payload=""):
+    def send_tick(self, payload: str = "") -> TickReply:
         """Sends a tick with the specified payload.
 
         :returns: The reply to the tick command
@@ -346,7 +347,7 @@ class Connection:
         self.subscriptions |= events
         return result
 
-    def off(self, handler):
+    def off(self, handler: Callable[['Connection', IpcBaseEvent], None]):
         """Unsubscribe the handler from being called on ipc events.
 
         :param handler: The handler that was previously attached with
@@ -355,7 +356,7 @@ class Connection:
         """
         self._pubsub.unsubscribe(handler)
 
-    def on(self, event, handler):
+    def on(self, event: Union[Event, str], handler: Callable[['Connection', IpcBaseEvent], None]):
         """Subscribe to the event and call the handler when it is emitted by
         the i3 ipc.
 
@@ -462,7 +463,7 @@ class Connection:
 
         self._pubsub.emit(event_name, event)
 
-    def main(self, timeout=0):
+    def main(self, timeout: float = 0.0):
         """Starts the main loop for this connection to start handling events.
 
         :param timeout: If given, quit the main loop after ``timeout`` seconds.

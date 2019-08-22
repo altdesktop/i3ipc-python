@@ -3,6 +3,12 @@ from .replies import BarConfigReply
 from enum import Enum
 
 
+class IpcBaseEvent:
+    """An abstract base event that all events inherit from.
+    """
+    pass
+
+
 class Event(Enum):
     """An enumeration of events that can be subscribed to with
     :func:`Connection.on()`.
@@ -36,7 +42,7 @@ class Event(Enum):
     SHUTDOWN_EXIT = 'shutdown::exit'
 
 
-class WorkspaceEvent:
+class WorkspaceEvent(IpcBaseEvent):
     """Sent when the user switches to a different workspace, when a new
     workspace is initialized or when a workspace is removed (because the last
     client vanished).
@@ -64,7 +70,7 @@ class WorkspaceEvent:
             self.old = _Con(data['old'], None, conn)
 
 
-class OutputEvent:
+class OutputEvent(IpcBaseEvent):
     """Sent when RandR issues a change notification (of either screens,
     outputs, CRTCs or output properties).
 
@@ -78,7 +84,7 @@ class OutputEvent:
         self.change = data['change']
 
 
-class ModeEvent:
+class ModeEvent(IpcBaseEvent):
     """Sent whenever i3 changes its binding mode.
 
     .. seealso:: https://i3wm.org/docs/ipc.html#_mode_event
@@ -95,7 +101,7 @@ class ModeEvent:
         self.pango_markup = data.get('pango_markup', False)
 
 
-class WindowEvent:
+class WindowEvent(IpcBaseEvent):
     """Sent when a client’s window is successfully reparented (that is when i3
     has finished fitting it into a container), when a window received input
     focus or when certain properties of the window have changed.
@@ -112,7 +118,7 @@ class WindowEvent:
         self.container = _Con(data['container'], None, conn)
 
 
-class BarconfigUpdateEvent(BarConfigReply):
+class BarconfigUpdateEvent(IpcBaseEvent, BarConfigReply):
     """Sent when the hidden_state or mode field in the barconfig of any bar
     instance was updated and when the config is reloaded.
 
@@ -174,7 +180,7 @@ class BindingInfo:
         self.mods = data.get('mods', [])
 
 
-class BindingEvent:
+class BindingEvent(IpcBaseEvent):
     """Sent when a configured command binding is triggered with the keyboard or
     mouse.
 
@@ -191,7 +197,7 @@ class BindingEvent:
         self.binding = BindingInfo(data['binding'])
 
 
-class ShutdownEvent:
+class ShutdownEvent(IpcBaseEvent):
     """Sent when the ipc shuts down because of a restart or exit by user
     command.
 
@@ -205,7 +211,7 @@ class ShutdownEvent:
         self.change = data['change']
 
 
-class TickEvent:
+class TickEvent(IpcBaseEvent):
     """Sent when the ipc client subscribes to the tick event (with "first":
     true) or when any ipc client sends a SEND_TICK message (with "first":
     false).

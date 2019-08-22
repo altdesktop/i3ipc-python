@@ -1,7 +1,7 @@
 from .._private import PubSub, MessageType, EventType
 from ..replies import (BarConfigReply, CommandReply, ConfigReply, OutputReply, TickReply,
                        VersionReply, WorkspaceReply, SeatReply, InputReply)
-from ..events import (BarconfigUpdateEvent, BindingEvent, OutputEvent, ShutdownEvent, WindowEvent,
+from ..events import (IpcBaseEvent, BarconfigUpdateEvent, BindingEvent, OutputEvent, ShutdownEvent, WindowEvent,
                       TickEvent, ModeEvent, WorkspaceEvent, Event)
 from .. import con
 import os
@@ -439,7 +439,7 @@ class Connection:
         await self._loop.sock_sendall(self._sub_socket,
                                       _pack(MessageType.SUBSCRIBE, json.dumps(event_list)))
 
-    def on(self, event: Union[Event, str], handler: Callable):
+    def on(self, event: Union[Event, str], handler: Callable[['Connection', IpcBaseEvent], None]):
         """Subscribe to the event and call the handler when it is emitted by
         the i3 ipc.
 
@@ -460,7 +460,7 @@ class Connection:
         self._pubsub.subscribe(event, handler)
         asyncio.ensure_future(self._subscribe(event_type))
 
-    def off(self, handler: Callable):
+    def off(self, handler: Callable[['Connection', IpcBaseEvent], None]):
         """Unsubscribe the handler from being called on ipc events.
 
         :param handler: The handler that was previously attached with
@@ -595,21 +595,21 @@ class Connection:
         data = json.loads(data)
         return TickReply(data)
 
-    async def get_inputs(self) -> InputReply:
+    async def get_inputs(self) -> List[InputReply]:
         """(sway only) Gets the inputs connected to the compositor.
 
         :returns: The reply to the inputs command
-        :rtype: :class:`i3ipc.InputReply`
+        :rtype: list(:class:`i3ipc.InputReply`)
         """
         data = await self._message(MessageType.GET_INPUTS)
         data = json.loads(data)
         return InputReply._parse_list(data)
 
-    async def get_seats(self) -> SeatReply:
+    async def get_seats(self) -> List[SeatReply]:
         """(sway only) Gets the seats configured on the compositor
 
         :returns: The reply to the seats command
-        :rtype: :class:`i3ipc.SeatReply`
+        :rtype: list(:class:`i3ipc.SeatReply`)
         """
         data = await self._message(MessageType.GET_SEATS)
         data = json.loads(data)
