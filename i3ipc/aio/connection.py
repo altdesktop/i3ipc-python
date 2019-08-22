@@ -484,7 +484,7 @@ class Connection:
 
         if data:
             data = json.loads(data)
-            return [CommandReply(d) for d in data]
+            return CommandReply._parse_list(data)
         else:
             return []
 
@@ -536,7 +536,7 @@ class Connection:
         """
         data = await self._message(MessageType.GET_OUTPUTS)
         data = json.loads(data)
-        return [OutputReply(d) for d in data]
+        return OutputReply._parse_list(data)
 
     async def get_workspaces(self) -> List[WorkspaceReply]:
         """Gets the list of current workspaces.
@@ -546,7 +546,7 @@ class Connection:
         """
         data = await self._message(MessageType.GET_WORKSPACES)
         data = json.loads(data)
-        return [WorkspaceReply(d) for d in data]
+        return WorkspaceReply._parse_list(data)
 
     async def get_tree(self) -> Con:
         """Gets the root container of the i3 layout tree.
@@ -603,7 +603,7 @@ class Connection:
         """
         data = await self._message(MessageType.GET_INPUTS)
         data = json.loads(data)
-        return [InputReply(d) for d in data]
+        return InputReply._parse_list(data)
 
     async def get_seats(self) -> SeatReply:
         """(sway only) Gets the seats configured on the compositor
@@ -613,7 +613,7 @@ class Connection:
         """
         data = await self._message(MessageType.GET_SEATS)
         data = json.loads(data)
-        return [SeatReply(d) for d in data]
+        return SeatReply._parse_list(data)
 
     def main_quit(self, _error=None):
         """Quits the running main loop for this connection."""

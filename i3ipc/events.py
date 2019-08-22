@@ -75,14 +75,14 @@ class BarconfigUpdateEvent:
 class BindingInfo:
     def __init__(self, data):
         self.command = data['command']
-        # not included in sway
-        self.mods = data.get('mods', [])
         self.event_state_mask = data.get('event_state_mask', [])
         self.input_code = data['input_code']
         self.symbol = data['symbol']
+        self.input_type = data['input_type']
         # sway only
         self.symbols = data.get('symbols', [])
-        self.input_type = data['input_type']
+        # not included in sway
+        self.mods = data.get('mods', [])
 
 
 class BindingEvent:
@@ -94,5 +94,5 @@ class BindingEvent:
 class TickEvent:
     def __init__(self, data):
         # i3 didn't include the 'first' field in 4.15. See i3/i3#3271.
-        self.first = ('first' in data) and data['first']
+        self.first = data.get('first', None)
         self.payload = data['payload']

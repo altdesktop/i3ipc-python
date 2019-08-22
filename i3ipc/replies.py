@@ -1,7 +1,7 @@
 from .con import Rect
 
 
-class _I3Reply:
+class _BaseReply:
     def __init__(self, data):
         for member in self.__class__._members:
             if member[0] in data:
@@ -9,8 +9,12 @@ class _I3Reply:
             else:
                 setattr(self, member[0], None)
 
+    @classmethod
+    def _parse_list(cls, data):
+        return [cls(d) for d in data]
 
-class CommandReply(_I3Reply):
+
+class CommandReply(_BaseReply):
     """A reply to the ``RUN_COMMAND`` message.
 
     .. seealso:: https://i3wm.org/docs/ipc.html#_command_reply
@@ -26,7 +30,7 @@ class CommandReply(_I3Reply):
     ]
 
 
-class WorkspaceReply(_I3Reply):
+class WorkspaceReply(_BaseReply):
     """A reply to the ``GET_WORKSPACES`` message.
 
     .. seealso:: https://i3wm.org/docs/ipc.html#_workspaces_reply
@@ -62,7 +66,7 @@ class WorkspaceReply(_I3Reply):
     ]
 
 
-class OutputReply(_I3Reply):
+class OutputReply(_BaseReply):
     """A reply to the ``GET_OUTPUTS`` message.
 
     .. seealso:: https://i3wm.org/docs/ipc.html#_outputs_reply
@@ -89,7 +93,7 @@ class OutputReply(_I3Reply):
     ]
 
 
-class BarConfigReply(_I3Reply):
+class BarConfigReply(_BaseReply):
     """A reply to the ``GET_BAR_CONFIG`` message with a specified bar id.
 
     .. seealso:: https://i3wm.org/docs/ipc.html#_bar_config_reply
@@ -128,7 +132,7 @@ class BarConfigReply(_I3Reply):
     ]
 
 
-class VersionReply(_I3Reply):
+class VersionReply(_BaseReply):
     """A reply to the ``GET_VERSION`` message.
 
     .. seealso:: https://i3wm.org/docs/ipc.html#_version_reply
@@ -154,7 +158,7 @@ class VersionReply(_I3Reply):
     ]
 
 
-class ConfigReply(_I3Reply):
+class ConfigReply(_BaseReply):
     """A reply to the ``GET_CONFIG`` message.
 
     .. seealso:: https://i3wm.org/docs/ipc.html#_config_reply
@@ -168,7 +172,7 @@ class ConfigReply(_I3Reply):
     ]
 
 
-class TickReply(_I3Reply):
+class TickReply(_BaseReply):
     """A reply to the ``SEND_TICK`` message.
 
     .. seealso:: https://i3wm.org/docs/ipc.html#_tick_reply
@@ -181,7 +185,7 @@ class TickReply(_I3Reply):
     ]
 
 
-class InputReply(_I3Reply):
+class InputReply(_BaseReply):
     """(sway only) A reply to ``GET_INPUTS`` message.
 
     .. seealso:: https://github.com/swaywm/sway/blob/master/sway/sway-ipc.7.scd
@@ -219,7 +223,7 @@ class InputReply(_I3Reply):
     ]
 
 
-class SeatReply(_I3Reply):
+class SeatReply(_BaseReply):
     """(sway only) A reply to the ``GET_SEATS`` message.
 
     .. seealso:: https://github.com/swaywm/sway/blob/master/sway/sway-ipc.7.scd
@@ -236,4 +240,4 @@ class SeatReply(_I3Reply):
     :vartype devices: list(:class:`InputReply`)
     """
     _members = [('name', str), ('capabilities', int), ('focus', int),
-                ('devices', lambda replies: [InputReply(r) for r in replies])]
+                ('devices', InputReply._parse_list)]

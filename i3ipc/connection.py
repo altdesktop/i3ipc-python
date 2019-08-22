@@ -186,7 +186,7 @@ class Connection:
         data = self._message(MessageType.COMMAND, payload)
         if data:
             data = json.loads(data)
-            return [CommandReply(d) for d in data]
+            return CommandReply._parse_list(data)
         else:
             return []
 
@@ -238,7 +238,7 @@ class Connection:
         """
         data = self._message(MessageType.GET_OUTPUTS, '')
         data = json.loads(data)
-        return [OutputReply(d) for d in data]
+        return OutputReply._parse_list(data)
 
     def get_inputs(self):
         """(sway only) Gets the inputs connected to the compositor.
@@ -248,7 +248,7 @@ class Connection:
         """
         data = self._message(MessageType.GET_INPUTS, '')
         data = json.loads(data)
-        return [InputReply(d) for d in data]
+        return InputReply._parse_list(data)
 
     def get_seats(self):
         """(sway only) Gets the seats configured on the compositor
@@ -258,7 +258,7 @@ class Connection:
         """
         data = self._message(MessageType.GET_SEATS, '')
         data = json.loads(data)
-        return [SeatReply(d) for d in data]
+        return SeatReply._parse_list(data)
 
     def get_workspaces(self):
         """Gets the list of current workspaces.
@@ -268,7 +268,7 @@ class Connection:
         """
         data = self._message(MessageType.GET_WORKSPACES, '')
         data = json.loads(data)
-        return [WorkspaceReply(ws) for ws in data]
+        return WorkspaceReply._parse_list(data)
 
     def get_tree(self):
         """Gets the root container of the i3 layout tree.
