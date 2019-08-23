@@ -151,8 +151,8 @@ class BarconfigUpdateEvent(IpcBaseEvent, BarConfigReply):
 class BindingInfo:
     """Info about a binding associated with a :class:`BindingEvent`.
 
-    :ivar command: The i3 command that is configured to run for this binding.
-    :vartype command: str
+    :ivar ~.command: The i3 command that is configured to run for this binding.
+    :vartype ~.command: str
     :ivar event_state_mask: The group and modifier keys that were configured
         with this binding.
     :vartype event_state_mask: list(str)
