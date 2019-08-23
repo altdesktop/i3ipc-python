@@ -24,7 +24,7 @@ i3ipc-python is a library for controlling `i3 window manager <https://i3wm.org>`
 
 The main entry point into the features of the library is the :class:`Connection <i3ipc.aio.Connection>` class. This class manages a Unix socket connection to the ipc interface exposed by the window manager. By default, the ``Connection`` will attempt to connect to the running instance of i3 by using information present in the environment or the running X11 display.
 
-.. code-block:: python
+.. code-block:: python3
 
     from i3ipc.aio import Connection
 
@@ -32,7 +32,7 @@ The main entry point into the features of the library is the :class:`Connection 
 
 You can use the ``Connection`` to query window manager state such as the names of the workspaces and outputs.
 
-.. code-block:: python
+.. code-block:: python3
 
     workspaces = await i3.get_workspaces()
     outputs = await i3.get_outputs()
@@ -45,7 +45,7 @@ You can use the ``Connection`` to query window manager state such as the names o
 
 You can use it to send commands to i3 to control the window manager in an automated fashion with the same command syntax as the i3 config or ``i3-msg``.
 
-.. code-block:: python
+.. code-block:: python3
 
     await i3.command('workspace 5')
     await i3.command('focus left')
@@ -53,7 +53,7 @@ You can use it to send commands to i3 to control the window manager in an automa
 
 You can use it to query the windows to find specific applications, get information about their windows, and send them window manager commands. The i3 layout tree is represented by the :class:`Con <i3ipc.aio.Con>` class.
 
-.. code-block:: python
+.. code-block:: python3
 
     # get_tree() returns the root container
     tree = await i3.get_tree()
@@ -76,7 +76,7 @@ You can use it to query the windows to find specific applications, get informati
 
 And you can use it to subscribe to window manager events and call a handler when they occur.
 
-.. code-block:: python
+.. code-block:: python3
 
     from i3ipc import Event
 
@@ -110,9 +110,9 @@ Development for this library happens on `Github <https://github.com/acrisci/i3ip
 License
 ++++++++
 
-This library is available under a `BSD 3-Clause License <https://github.com/acrisci/i3ipc-python/blob/master/LICENCE>`_.
+This library is available under a `BSD-3-Clause License <https://github.com/acrisci/i3ipc-python/blob/master/LICENCE>`_.
 
-© 2016, Tony Crisci
+© 2015, Tony Crisci
 
 Indices and tables
 ==================

@@ -6,43 +6,31 @@ An improved Python library to control `i3wm <http://i3wm.org>`__ and `sway <http
 About
 -----
 
-i3's interprocess communication (or
-`ipc <http://i3wm.org/docs/ipc.html>`__) is the interface i3wm uses to
-receive
-`commands <http://i3wm.org/docs/userguide.html#_list_of_commands>`__
-from client applications such as ``i3-msg``. It also features a
-publish/subscribe mechanism for notifying interested parties of window
-manager events.
+i3's interprocess communication (or `ipc <http://i3wm.org/docs/ipc.html>`__) is the interface i3wm uses to receive `commands <http://i3wm.org/docs/userguide.html#_list_of_commands>`__ from client applications such as ``i3-msg``. It also features a publish/subscribe mechanism for notifying interested parties of window manager events.
 
-i3ipc-python is a Python library for controlling the window manager.
-This project is intended to be useful for general scripting, and for
-applications that interact with the window manager like status line
-generators, notification daemons, and pagers.
+i3ipc-python is a Python library for controlling the window manager.  This project is intended to be useful for general scripting, and for applications that interact with the window manager like status line generators, notification daemons, and window pagers.
 
-If you have an idea for a script to extend i3wm, you can add your script
-to the examples folder or make a `script
-request <https://github.com/acrisci/i3ipc-python/issues>`__ on the issue
-tracker.
+If you have an idea for a script to extend i3wm, you can add your script to the `examples folder <https://github.com/acrisci/i3ipc-python/tree/master/examples>`__.
+
+For details on how to use the library, see the `reference documentation <https://i3ipc-python.readthedocs.io/en/latest/>`__.
 
 Installation
 ------------
 
 i3ipc is on `PyPI <https://pypi.python.org/pypi/i3ipc>`__.
 
-``pip install i3ipc``
+``pip3 install i3ipc``
 
 Example
 -------
 
-.. code:: python
+.. code:: python3
 
-    #!/usr/bin/env python3
-
-    import i3ipc
+    from i3ipc import Connection, Event
 
     # Create the Connection object that can be used to send commands and subscribe
     # to events.
-    i3 = i3ipc.Connection()
+    i3 = Connection()
 
     # Print the name of the focused window
     focused = i3.get_tree().find_focused()
@@ -87,8 +75,8 @@ Example
         i3.command('rename workspace to "%s"' % ws_name)
 
     # Subscribe to events
-    i3.on('workspace::focus', on_workspace_focus)
-    i3.on("window::focus", on_window_focus)
+    i3.on(Event.WORKSPACE_FOCUS, on_workspace_focus)
+    i3.on(Event.WINDOW_FOCUS, on_window_focus)
 
     # Start the main loop and wait for events to come in.
     i3.main()
@@ -96,13 +84,12 @@ Example
 Asyncio Support
 ---------------
 
-Experimental support for asyncio is included in the ``i3ipc.aio`` package. The interface is similar to the blocking interface but the methods that interact with the socket are coroutines.
-
-There will be some other subtle changes in the connection that will be documented at a future time. Asyncio support is unstable and subject to change.
+Support for asyncio is included in the ``i3ipc.aio`` package. The interface is similar to the blocking interface but the methods that interact with the socket are coroutines.
 
 .. code:: python3
 
     from i3ipc.aio import Connection
+    from i3ipc import Event
 
     import asyncio
 
@@ -114,7 +101,7 @@ There will be some other subtle changes in the connection that will be documente
 
         workspaces = await c.get_workspaces()
 
-        c.on('workspace', on_window)
+        c.on(Event.WINDOW, on_window)
 
         await c.main()
 
@@ -123,13 +110,12 @@ There will be some other subtle changes in the connection that will be documente
 Contributing
 ------------
 
-Please feel free to report bugs, request features or add examples by
-submitting a pull request.
+Development happens on `Github <https://github.com/acrisci/i3ipc-python>`__. Please feel free to report bugs, request features or add examples by submitting a pull request.
 
 License
 -------
 
-This work is available under a BSD license (see LICENSE)
+This work is available under a BSD-3-Clause license (see LICENSE).
 
 Copyright © 2015, Tony Crisci
 
