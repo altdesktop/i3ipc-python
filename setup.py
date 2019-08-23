@@ -6,45 +6,30 @@ import os
 
 from setuptools import setup, find_packages
 
-# Package meta-data.
-NAME = 'i3ipc'
-DESCRIPTION = 'An improved Python library for i3wm extensions'
-URL = 'https://github.com/acrisci/i3ipc-python'
-EMAIL = 'tony@dubstepdish.com'
-AUTHOR = 'Tony Crisci'
 REQUIRES_PYTHON = '>=3.4.0'
-VERSION = '1.7.1'
-
 REQUIRED = ['enum-compat', 'python-xlib']
 EXTRAS = {}
 
 here = os.path.abspath(os.path.dirname(__file__))
 
-try:
-    with io.open(os.path.join(here, 'README.rst'), encoding='utf-8') as f:
-        long_description = '\n' + f.read()
-except FileNotFoundError:
-    long_description = DESCRIPTION
+with io.open(os.path.join(here, 'README.rst'), encoding='utf-8') as f:
+    long_description = '\n' + f.read()
 
 # Load the package's __version__.py module as a dictionary.
 about = {}
-if not VERSION:
-    project_slug = NAME.lower().replace('-', '_').replace(' ', '_')
-    with open(os.path.join(here, project_slug, '__version__.py')) as f:
-        exec(f.read(), about)
-else:
-    about['__version__'] = VERSION
+with open(os.path.join(here, 'i3ipc', '__version__.py')) as f:
+    exec(f.read(), about)
 
 
 setup(
-    name=NAME,
+    name=about['__title__'],
     version=about['__version__'],
-    description=DESCRIPTION,
+    description=about['__description__'],
     long_description=long_description,
-    author=AUTHOR,
-    author_email=EMAIL,
+    author=about['__author__'],
+    author_email=about['__author_email__'],
     python_requires=REQUIRES_PYTHON,
-    url=URL,
+    url=about['__url__'],
     packages=find_packages(exclude=['test', '*.test', '*.test.*', 'test.*']),
     install_requires=REQUIRED,
     extras_require=EXTRAS,

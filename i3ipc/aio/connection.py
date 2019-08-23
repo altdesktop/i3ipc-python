@@ -1,8 +1,8 @@
 from .._private import PubSub, MessageType, EventType
 from ..replies import (BarConfigReply, CommandReply, ConfigReply, OutputReply, TickReply,
                        VersionReply, WorkspaceReply, SeatReply, InputReply)
-from ..events import (IpcBaseEvent, BarconfigUpdateEvent, BindingEvent, OutputEvent, ShutdownEvent, WindowEvent,
-                      TickEvent, ModeEvent, WorkspaceEvent, Event)
+from ..events import (IpcBaseEvent, BarconfigUpdateEvent, BindingEvent, OutputEvent, ShutdownEvent,
+                      WindowEvent, TickEvent, ModeEvent, WorkspaceEvent, Event)
 from .. import con
 import os
 import json
