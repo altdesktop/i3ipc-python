@@ -1,7 +1,9 @@
 import re
 import sys
-from collections import deque
 from .model import Rect, Gaps
+from . import replies
+from collections import deque
+from typing import List, Optional
 
 
 class Con:
@@ -158,7 +160,7 @@ class Con:
             queue.extend(con.nodes)
             queue.extend(con.floating_nodes)
 
-    def root(self):
+    def root(self) -> 'Con':
         """Gets the root container.
 
         :returns: The root container.
@@ -175,7 +177,7 @@ class Con:
 
         return con
 
-    def descendants(self):
+    def descendants(self) -> List['Con']:
         """Gets a list of all child containers for the container in
         breadth-first order.
 
@@ -184,7 +186,7 @@ class Con:
         """
         return [c for c in self]
 
-    def descendents(self):
+    def descendents(self) -> List['Con']:
         """Gets a list of all child containers for the container in
         breadth-first order.
 
@@ -197,7 +199,7 @@ class Con:
         print('WARNING: descendents is deprecated. Use `descendants()` instead.', file=sys.stderr)
         return self.descendants()
 
-    def leaves(self):
+    def leaves(self) -> List['Con']:
         """Gets a list of leaf child containers for this container in
         breadth-first order. Leaf containers normally contain application
         windows.
@@ -213,25 +215,25 @@ class Con:
 
         return leaves
 
-    def command(self, command):
+    def command(self, command: str) -> List[replies.CommandReply]:
         """Runs a command on this container.
 
         .. seealso:: https://i3wm.org/docs/userguide.html#list_of_commands
 
         :returns: A list of replies for each command in the given command
             string.
-        :rtype: list(CommandReply)
+        :rtype: list(:class:`CommandReply <i3ipc.CommandReply>`)
         """
         return self._conn.command('[con_id="{}"] {}'.format(self.id, command))
 
-    def command_children(self, command):
+    def command_children(self, command: str) -> List[replies.CommandReply]:
         """Runs a command on the immediate children of the currently selected
         container.
 
         .. seealso:: https://i3wm.org/docs/userguide.html#list_of_commands
 
         :returns: A list of replies for each command that was executed.
-        :rtype: list(CommandReply)
+        :rtype: list(:class:`CommandReply <i3ipc.CommandReply>`)
         """
         if not len(self.nodes):
             return
@@ -242,11 +244,11 @@ class Con:
 
         self._conn.command(' '.join(commands))
 
-    def workspaces(self):
+    def workspaces(self) -> List['Con']:
         """Gets a list of workspace containers for this tree.
 
         :returns: A list of workspace containers.
-        :rtype: List of :class:`Con`.
+        :rtype: list(:class:`Con`)
         """
         workspaces = []
 
@@ -261,7 +263,7 @@ class Con:
         collect_workspaces(self.root())
         return workspaces
 
-    def find_focused(self):
+    def find_focused(self) -> Optional['Con']:
         """Finds the focused container under this container if it exists.
 
         :returns: The focused container if it exists.
@@ -273,7 +275,7 @@ class Con:
         except StopIteration:
             return None
 
-    def find_by_id(self, id):
+    def find_by_id(self, id: int) -> Optional['Con']:
         """Finds a container with the given container id under this node.
 
         :returns: The container with this container id if it exists.
@@ -285,7 +287,7 @@ class Con:
         except StopIteration:
             return None
 
-    def find_by_window(self, window):
+    def find_by_window(self, window: int) -> Optional['Con']:
         """Finds a container with the given window id under this node.
 
         :returns: The container with this window id if it exists.
@@ -297,7 +299,7 @@ class Con:
         except StopIteration:
             return None
 
-    def find_by_role(self, pattern):
+    def find_by_role(self, pattern: str) -> List['Con']:
         """Finds all the containers under this node with a window role that
         matches the given regex pattern.
 
@@ -307,7 +309,7 @@ class Con:
         """
         return [c for c in self if c.window_role and re.search(pattern, c.window_role)]
 
-    def find_named(self, pattern):
+    def find_named(self, pattern: str) -> List['Con']:
         """Finds all the containers under this node with a name that
         matches the given regex pattern.
 
@@ -317,7 +319,7 @@ class Con:
         """
         return [c for c in self if c.name and re.search(pattern, c.name)]
 
-    def find_titled(self, pattern):
+    def find_titled(self, pattern: str) -> List['Con']:
         """Finds all the containers under this node with a window title that
         matches the given regex pattern.
 
@@ -327,7 +329,7 @@ class Con:
         """
         return [c for c in self if c.window_title and re.search(pattern, c.window_title)]
 
-    def find_classed(self, pattern):
+    def find_classed(self, pattern: str) -> List['Con']:
         """Finds all the containers under this node with a window class that
         matches the given regex pattern.
 
@@ -337,7 +339,7 @@ class Con:
         """
         return [c for c in self if c.window_class and re.search(pattern, c.window_class)]
 
-    def find_instanced(self, pattern):
+    def find_instanced(self, pattern: str) -> List['Con']:
         """Finds all the containers under this node with a window instance that
         matches the given regex pattern.
 
@@ -347,7 +349,7 @@ class Con:
         """
         return [c for c in self if c.window_instance and re.search(pattern, c.window_instance)]
 
-    def find_marked(self, pattern=".*"):
+    def find_marked(self, pattern: str = ".*") -> List['Con']:
         """Finds all the containers under this node with a mark that
         matches the given regex pattern.
 
@@ -358,7 +360,7 @@ class Con:
         pattern = re.compile(pattern)
         return [c for c in self if any(pattern.search(mark) for mark in c.marks)]
 
-    def find_fullscreen(self):
+    def find_fullscreen(self) -> List['Con']:
         """Finds all the containers under this node that are in fullscreen
         mode.
 
@@ -367,7 +369,7 @@ class Con:
         """
         return [c for c in self if c.type == 'con' and c.fullscreen_mode]
 
-    def workspace(self):
+    def workspace(self) -> Optional['Con']:
         """Finds the workspace container for this node if this container is at
         or below the workspace level.
 
@@ -387,7 +389,7 @@ class Con:
 
         return ret
 
-    def scratchpad(self):
+    def scratchpad(self) -> 'Con':
         """Finds the scratchpad container.
 
         :returns: The scratchpad container.
