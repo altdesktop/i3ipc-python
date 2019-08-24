@@ -247,7 +247,7 @@ class Connection:
         self._socket_path = socket_path
         self._auto_reconnect = auto_reconnect
         self._pubsub = _AIOPubSub(self)
-        self._subscriptions = 0
+        self._subscriptions = set()
         self._main_future = None
         self._reconnect_future = None
 
@@ -355,7 +355,7 @@ class Connection:
         self._sub_fd = self._sub_socket.fileno()
         self._loop.add_reader(self._sub_fd, self._message_reader)
 
-        await self._subscribe(self._subscriptions, force=True)
+        await self.subscribe(list(self._subscriptions), force=True)
 
         return self
 
@@ -419,25 +419,45 @@ class Connection:
 
         return message
 
-    async def _subscribe(self, events: Union[EventType, int], force=False):
+    async def subscribe(self, events: Union[List[Event], List[str]], force: bool = False):
+        """Send a ``SUBSCRIBE`` command to the ipc subscription connection and
+        await the result. To attach event handlers, use :func:`Connection.on()
+        <i3ipc.aio.Connection.on()>`. Calling this is only needed if you want
+        to be notified when events will start coming in.
+
+        :ivar events: A list of events to subscribe to. Currently you cannot
+            subscribe to detailed events.
+        :vartype events: list(:class:`Event <i3ipc.Event>`) or list(str)
+        :ivar force: If ``False``, the message will not be sent if this
+            connection is already subscribed to the event.
+        :vartype force: bool
+        """
         if not events:
             return
 
-        if type(events) is int:
-            events = EventType(events)
+        if type(events) is not list:
+            raise TypeError('events must be a list of events')
+
+        subscriptions = set()
+
+        for e in events:
+            e = Event(e)
+            if e not in Event._subscribable_events:
+                correct_event = str.split(e.value, '::')[0].upper()
+                raise ValueError(
+                    f'only nondetailed events are subscribable (use Event.{correct_event})')
+            subscriptions.add(e)
 
         if not force:
-            new_subscriptions = EventType(self._subscriptions ^ events.value)
-        else:
-            new_subscriptions = events
+            subscriptions = subscriptions.difference(self._subscriptions)
+            if not subscriptions:
+                return
 
-        if not new_subscriptions:
-            return
+        self._subscriptions.update(subscriptions)
 
-        self._subscriptions |= new_subscriptions.value
-        event_list = new_subscriptions.to_list()
-        await self._loop.sock_sendall(self._sub_socket,
-                                      _pack(MessageType.SUBSCRIBE, json.dumps(event_list)))
+        payload = json.dumps([s.value for s in subscriptions])
+
+        await self._loop.sock_sendall(self._sub_socket, _pack(MessageType.SUBSCRIBE, payload))
 
     def on(self, event: Union[Event, str], handler: Callable[['Connection', IpcBaseEvent], None]):
         """Subscribe to the event and call the handler when it is emitted by
@@ -456,9 +476,8 @@ class Connection:
         if event.count('::') > 0:
             [event, __] = event.split('::')
 
-        event_type = EventType.from_string(event)
         self._pubsub.subscribe(event, handler)
-        asyncio.ensure_future(self._subscribe(event_type))
+        asyncio.ensure_future(self.subscribe([event]))
 
     def off(self, handler: Callable[['Connection', IpcBaseEvent], None]):
         """Unsubscribe the handler from being called on ipc events.

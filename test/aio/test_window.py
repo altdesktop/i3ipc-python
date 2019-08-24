@@ -1,7 +1,7 @@
 from .ipctest import IpcTest
 
 import pytest
-import asyncio
+from i3ipc import Event
 
 
 class TestWindow(IpcTest):
@@ -14,12 +14,10 @@ class TestWindow(IpcTest):
     @pytest.mark.asyncio
     async def test_window_event(self, i3):
         await self.fresh_workspace()
-        i3.on('window', self.on_window)
+        await i3.subscribe([Event.WINDOW])
+        i3.on(Event.WINDOW, self.on_window)
 
-        def open_window():
-            asyncio.ensure_future(self.open_window())
-
-        i3._loop.call_later(0.1, open_window)
+        self.open_window()
 
         await i3.main()
 
@@ -28,7 +26,7 @@ class TestWindow(IpcTest):
     @pytest.mark.asyncio
     async def test_marks(self, i3):
         await self.fresh_workspace()
-        await self.open_window()
+        self.open_window()
         await i3.command('mark foo')
         tree = await i3.get_tree()
         assert 'foo' in tree.find_focused().marks

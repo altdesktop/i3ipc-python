@@ -8,7 +8,6 @@ import math
 from random import random
 import asyncio
 
-from Xlib import display
 from .window import Window
 
 
@@ -64,11 +63,9 @@ class IpcTest:
 
         return result
 
-    async def open_window(self):
-        d = display.Display()
-        window = Window(d)
+    def open_window(self):
+        window = Window()
         window.run()
-        await self.i3_conn.command('nop')
         return window.window.id
 
     async def fresh_workspace(self):

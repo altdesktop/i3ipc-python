@@ -42,6 +42,12 @@ class Event(Enum):
     SHUTDOWN_EXIT = 'shutdown::exit'
 
 
+Event._subscribable_events = [
+    Event.WORKSPACE, Event.OUTPUT, Event.MODE, Event.WINDOW, Event.BARCONFIG_UPDATE, Event.BINDING,
+    Event.SHUTDOWN, Event.TICK
+]
+
+
 class WorkspaceEvent(IpcBaseEvent):
     """Sent when the user switches to a different workspace, when a new
     workspace is initialized or when a workspace is removed (because the last
