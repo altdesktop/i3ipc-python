@@ -8,7 +8,7 @@ class TestWindow(IpcTest):
     event = None
 
     def on_window(self, i3, e):
-        self.event = e
+        TestWindow.event = e
         i3.main_quit()
 
     @pytest.mark.asyncio
@@ -21,7 +21,7 @@ class TestWindow(IpcTest):
 
         await i3.main()
 
-        assert self.event
+        assert TestWindow.event
 
     @pytest.mark.asyncio
     async def test_marks(self, i3):
