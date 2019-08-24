@@ -1,4 +1,4 @@
-from .con import Rect
+from .model import Rect
 
 
 class _BaseReply:

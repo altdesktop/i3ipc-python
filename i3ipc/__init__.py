@@ -5,5 +5,6 @@ from .replies import (BarConfigReply, CommandReply, ConfigReply, OutputReply, Ti
                       VersionReply, WorkspaceReply, SeatReply, InputReply)
 from .events import (BarconfigUpdateEvent, BindingEvent, BindingInfo, OutputEvent, ShutdownEvent,
                      WindowEvent, TickEvent, ModeEvent, WorkspaceEvent, Event)
-from .con import Con, Rect, Gaps
+from .con import Con
+from .model import Rect, Gaps
 from .connection import Connection
