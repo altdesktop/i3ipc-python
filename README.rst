@@ -110,7 +110,7 @@ Support for asyncio is included in the ``i3ipc.aio`` package. The interface is s
 Contributing
 ------------
 
-Development happens on `Github <https://github.com/acrisci/i3ipc-python>`__. Please feel free to report bugs, request features or add examples by submitting a pull request.
+Development happens on `Github <https://github.com/altdesktop/i3ipc-python>`__. Please feel free to report bugs, request features or add examples by submitting a pull request.
 
 License
 -------

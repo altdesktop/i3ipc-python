@@ -91,7 +91,7 @@ And you can use it to subscribe to window manager events and call a handler when
 
     await i3.main()
 
-For more examples, see the `examples <https://github.com/acrisci/i3ipc-python/tree/master/examples>`_ folder in the repository for useful scripts people have contributed.
+For more examples, see the `examples <https://github.com/altdesktop/i3ipc-python/tree/master/examples>`_ folder in the repository for useful scripts people have contributed.
 
 Installation
 ++++++++++++
@@ -105,12 +105,12 @@ This library is available on PyPi as `i3ipc <https://pypi.org/project/i3ipc/>`_.
 Contributing
 ++++++++++++
 
-Development for this library happens on `Github <https://github.com/acrisci/i3ipc-python>`_. Report bugs or request features there. Contributions are welcome.
+Development for this library happens on `Github <https://github.com/altdesktop/i3ipc-python>`_. Report bugs or request features there. Contributions are welcome.
 
 License
 ++++++++
 
-This library is available under a `BSD-3-Clause License <https://github.com/acrisci/i3ipc-python/blob/master/LICENCE>`_.
+This library is available under a `BSD-3-Clause License <https://github.com/altdesktop/i3ipc-python/blob/master/LICENCE>`_.
 
 © 2015, Tony Crisci
 
