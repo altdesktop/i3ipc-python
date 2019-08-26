@@ -83,7 +83,7 @@ class Con:
         ipc_properties = [
             'border', 'current_border_width', 'floating', 'focus', 'focused', 'fullscreen_mode',
             'id', 'layout', 'marks', 'name', 'num', 'orientation', 'percent', 'scratchpad_state',
-            'sticky', 'type', 'urgent', 'window', 'pid'
+            'sticky', 'type', 'urgent', 'window', 'pid', 'app_id'
         ]
         for attr in ipc_properties:
             if attr in data:
@@ -92,7 +92,7 @@ class Con:
                 setattr(self, attr, None)
 
         # XXX in 4.12, marks is an array (old property was a string "mark")
-        if not self.marks:
+        if self.marks is None:
             self.marks = []
             if 'mark' in data and data['mark']:
                 self.marks.append(data['mark'])
@@ -135,10 +135,8 @@ class Con:
             if 'title' in data['window_properties']:
                 self.window_title = data['window_properties']['title']
 
-        if 'app_id' in data:
-            self.app_id = data['app_id']
-
         self.rect = Rect(data['rect'])
+        self.deco_rect = None
         if 'window_rect' in data:
             self.window_rect = Rect(data['window_rect'])
         if 'deco_rect' in data:
