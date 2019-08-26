@@ -1,5 +1,33 @@
 # Changelog
 
+## Version 2.0.1
+
+Version 2.0.1 is a major release which adds breaking changes and major new features.
+
+i3ipc-python is now Python 3 only.
+
+This release adds the asyncio connection class. New code for Python 3.6 or greater is recommended to use this class over the old blocking connection.
+
+* (breaking) Remove python2 support (#110)
+* (breaking) Use the `Rect` class for `OutputReply` and `WorkspaceReply` rect attributes (cec29f9).
+* (breaking) Make socket-related members of the `Connection` private (4936704)
+    - `cmd_socket`, `cmd_lock`, `sub_socket`, `sub_lock`, `MAGIC`, `_event_socket_setup()`, `_event_socket_teardown()`, `_event_socket_poll()`
+* (breaking) Make event-related members of the `Connection` private (8424811)
+    - `subscribe()`, `EventType`
+* (breaking) Remove `GenericEvent` in favor of specific events `OutputEvent`, `ModeEvent`, and `ShutdownEvent`.
+* (breaking) Remove the `PropsObject` (6ddbc22)
+* Add asyncio support with the new `aio.Connection` class.
+* Add `Event` class for event subscription by enum (#59)
+* Add the `app_id` attribute to the `Con` class (sway only) (#113).
+* Get the socket path from the root window with python-xlib (#116).
+* Add a commands to get inputs and seats (sway only) (#115).
+* Add `event_state_mask` and `symbols` (sway only) to `BindingInfo` (262246d).
+* Add version info in `__version__.py` (ee779b).
+* Use real X windows in tests (4e9746c).
+* Run tests in a docker container (97d0455).
+* Add type annotations for all public members.
+* Completely rewrite the documentation.
+
 ## Version 1.7.1
 
 Version 1.7.1 adds some bugfixes and features.
