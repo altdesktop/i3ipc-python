@@ -41,6 +41,7 @@ class EventType(Enum):
     BINDING = (1 << 5)
     SHUTDOWN = (1 << 6)
     TICK = (1 << 7)
+    INPUT = (1 << 21)
 
     def to_string(self):
         return str.lower(self.name)
@@ -72,5 +73,7 @@ class EventType(Enum):
             events_list.append(EventType.SHUTDOWN.to_string())
         if self.value & EventType.TICK.value:
             events_list.append(EventType.TICK.to_string())
+        if self.value & EventType.INPUT.value:
+            events_list.append(EventType.INPUT.to_string())
 
         return events_list

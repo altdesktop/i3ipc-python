@@ -2,7 +2,7 @@ from .._private import PubSub, MessageType, EventType
 from ..replies import (BarConfigReply, CommandReply, ConfigReply, OutputReply, TickReply,
                        VersionReply, WorkspaceReply, SeatReply, InputReply)
 from ..events import (IpcBaseEvent, BarconfigUpdateEvent, BindingEvent, OutputEvent, ShutdownEvent,
-                      WindowEvent, TickEvent, ModeEvent, WorkspaceEvent, Event)
+                      WindowEvent, TickEvent, ModeEvent, WorkspaceEvent, InputEvent, Event)
 from .. import con
 import os
 import json
@@ -326,6 +326,8 @@ class Connection:
             event = ShutdownEvent(message)
         elif event_type == EventType.TICK:
             event = TickEvent(message)
+        elif event_type == EventType.INPUT:
+            event = InputEvent(message)
         else:
             # we have not implemented this event
             return

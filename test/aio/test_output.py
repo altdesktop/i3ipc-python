@@ -1,10 +1,9 @@
 from .ipctest import IpcTest
 
 import pytest
-from i3ipc import Event
+
 
 class TestOutput(IpcTest):
-
     @pytest.mark.asyncio
     async def test_output(self, i3):
         await i3.command('workspace 12')

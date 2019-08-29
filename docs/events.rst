@@ -40,3 +40,7 @@ Events
 .. autoclass:: i3ipc.ShutdownEvent
    :members:
    :undoc-members:
+
+.. autoclass:: i3ipc.InputEvent
+   :members:
+   :undoc-members:

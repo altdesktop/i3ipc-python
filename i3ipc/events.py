@@ -1,5 +1,5 @@
 from . import con
-from .replies import BarConfigReply
+from .replies import BarConfigReply, InputReply
 from enum import Enum
 
 
@@ -21,6 +21,7 @@ class Event(Enum):
     BINDING = 'binding'
     SHUTDOWN = 'shutdown'
     TICK = 'tick'
+    INPUT = 'input'
     WORKSPACE_FOCUS = 'workspace::focus'
     WORKSPACE_INIT = 'workspace::init'
     WORKSPACE_EMPTY = 'workspace::empty'
@@ -40,6 +41,8 @@ class Event(Enum):
     WINDOW_MARK = 'window::mark'
     SHUTDOWN_RESTART = 'shutdown::restart'
     SHUTDOWN_EXIT = 'shutdown::exit'
+    INPUT_ADDED = 'input::added'
+    INPUT_REMOVED = 'input::removed'
 
 
 Event._subscribable_events = [
@@ -235,3 +238,17 @@ class TickEvent(IpcBaseEvent):
         # i3 didn't include the 'first' field in 4.15. See i3/i3#3271.
         self.first = data.get('first', None)
         self.payload = data['payload']
+
+
+class InputEvent(IpcBaseEvent):
+    """(sway only) Sent when something related to the input devices changes.
+
+    :ivar change: The type of change ("added" or "removed")
+    :vartype change: str
+    :ivar input: Information about the input that changed.
+    :vartype input: :class:`InputReply <i3ipc.InputReply>`
+    """
+
+    def __init__(self, data):
+        self.change = data['change']
+        self.input = InputReply(data['input'])
