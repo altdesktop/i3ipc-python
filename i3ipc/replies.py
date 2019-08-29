@@ -4,8 +4,9 @@ from .model import Rect
 class _BaseReply:
     def __init__(self, data):
         for member in self.__class__._members:
-            if member[0] in data:
-                setattr(self, member[0], member[1](data[member[0]]))
+            value = data.get(member[0], None)
+            if value is not None:
+                setattr(self, member[0], member[1](value))
             else:
                 setattr(self, member[0], None)
 
@@ -78,8 +79,8 @@ class OutputReply(_BaseReply):
     :ivar primary: Whether this output is currently the primary output.
     :vartype primary: bool
     :ivar current_workspace: The name of the current workspace that is visible
-        on this output. null if the output is not active.
-    :vartype current_workspace: str
+        on this output. :class:`None` if the output is not active.
+    :vartype current_workspace: str or :class:`None` if the output is not active.
     :ivar rect: The rectangle of this output (equals the rect of the output it
         is on).
     :vartype rect: :class:`Rect`
