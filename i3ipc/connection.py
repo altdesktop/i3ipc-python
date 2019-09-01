@@ -373,7 +373,9 @@ class Connection:
         event = event.replace('-', '_')
 
         if event.count('::') > 0:
-            [event, __] = event.split('::')
+            [base_event, __] = event.split('::')
+        else:
+            base_event = event
 
         # special case: ipc-shutdown is not in the protocol
         if event == 'ipc_shutdown':
@@ -382,23 +384,23 @@ class Connection:
             return
 
         event_type = 0
-        if event == "workspace":
+        if base_event == 'workspace':
             event_type = EventType.WORKSPACE
-        elif event == "output":
+        elif base_event == 'output':
             event_type = EventType.OUTPUT
-        elif event == "mode":
+        elif base_event == 'mode':
             event_type = EventType.MODE
-        elif event == "window":
+        elif base_event == 'window':
             event_type = EventType.WINDOW
-        elif event == "barconfig_update":
+        elif base_event == 'barconfig_update':
             event_type = EventType.BARCONFIG_UPDATE
-        elif event == "binding":
+        elif base_event == 'binding':
             event_type = EventType.BINDING
-        elif event == "shutdown":
+        elif base_event == 'shutdown':
             event_type = EventType.SHUTDOWN
-        elif event == "tick":
+        elif base_event == 'tick':
             event_type = EventType.TICK
-        elif event == "input":
+        elif base_event == 'input':
             event_type = EventType.INPUT
 
         if not event_type:

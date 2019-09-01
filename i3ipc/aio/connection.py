@@ -476,10 +476,12 @@ class Connection:
         event = event.replace('-', '_')
 
         if event.count('::') > 0:
-            [event, __] = event.split('::')
+            [base_event, __] = event.split('::')
+        else:
+            base_event = event
 
         self._pubsub.subscribe(event, handler)
-        asyncio.ensure_future(self.subscribe([event]))
+        asyncio.ensure_future(self.subscribe([base_event]))
 
     def off(self, handler: Callable[['Connection', IpcBaseEvent], None]):
         """Unsubscribe the handler from being called on ipc events.
