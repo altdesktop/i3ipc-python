@@ -1,7 +1,7 @@
-from .ipctest import IpcTest
+from ipctest import IpcTest
 
+from threading import Timer
 import pytest
-import asyncio
 
 
 class HandlerException(Exception):
@@ -12,11 +12,10 @@ class TestEventExceptions(IpcTest):
     def exception_throwing_handler(self, i3, e):
         raise HandlerException()
 
-    @pytest.mark.asyncio
-    async def test_event_exceptions(self, i3):
+    def test_event_exceptions(self, i3):
         i3.on('tick', self.exception_throwing_handler)
 
-        asyncio.ensure_future(i3.send_tick())
+        Timer(0.001, i3.send_tick).start()
 
         with pytest.raises(HandlerException):
-            await i3.main()
+            i3.main()

@@ -6,7 +6,6 @@ import asyncio
 
 
 class TestWindow(IpcTest):
-    '''
     @pytest.mark.asyncio
     async def test_window_event(self, i3):
         event = None
@@ -26,7 +25,6 @@ class TestWindow(IpcTest):
         assert event
 
         i3.off(on_window)
-        '''
 
     @pytest.mark.asyncio
     async def test_detailed_window_event(self, i3):

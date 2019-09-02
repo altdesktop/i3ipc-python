@@ -470,7 +470,11 @@ class Connection:
             # we have not implemented this event
             return
 
-        self._pubsub.emit(event_name, event)
+        try:
+            self._pubsub.emit(event_name, event)
+        except Exception as e:
+            print(e)
+            raise e
 
     def main(self, timeout: float = 0.0):
         """Starts the main loop for this connection to start handling events.
@@ -478,6 +482,7 @@ class Connection:
         :param timeout: If given, quit the main loop after ``timeout`` seconds.
         :type timeout: float
         """
+        loop_exception = None
         self._quitting = False
         while True:
             try:
@@ -491,14 +496,16 @@ class Connection:
 
                 while not self._event_socket_poll():
                     pass
-
+            except Exception as e:
+                loop_exception = e
+            finally:
                 if timer:
                     timer.cancel()
-            finally:
+
                 self._event_socket_teardown()
 
                 if self._quitting or not self._restarting or not self.auto_reconnect:
-                    return
+                    break
 
                 self._restarting = False
                 # The ipc told us it's restarting and the user wants to survive
@@ -506,6 +513,9 @@ class Connection:
                 # to it.
                 if not self._wait_for_socket():
                     break
+
+        if loop_exception:
+            raise loop_exception
 
     def main_quit(self):
         """Quits the running main loop for this connection."""
