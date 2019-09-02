@@ -1,5 +1,14 @@
 # Changelog
 
+## Version 2.1.1
+
+Version 2.1.1 includes bugfixes and new features.
+
+* Regression: emit detailed events correctly (#126)
+* Regression: null values in replies should be python None (#123)
+* Add the sway input event (#122)
+* Raise handler exceptions from Connection.main() (the old behavior was just to exit silently which is wrong) (#125)
+
 ## Version 2.0.1
 
 Version 2.0.1 is a major release which adds breaking changes and major new features.
