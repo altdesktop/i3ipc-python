@@ -45,10 +45,7 @@ class Event(Enum):
     INPUT_REMOVED = 'input::removed'
 
 
-Event._subscribable_events = [
-    Event.WORKSPACE, Event.OUTPUT, Event.MODE, Event.WINDOW, Event.BARCONFIG_UPDATE, Event.BINDING,
-    Event.SHUTDOWN, Event.TICK
-]
+Event._subscribable_events = [ e for e in Event if '::' not in e.value ]
 
 
 class WorkspaceEvent(IpcBaseEvent):
