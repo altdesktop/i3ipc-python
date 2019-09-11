@@ -7,7 +7,7 @@ import os
 from setuptools import setup, find_packages
 
 REQUIRES_PYTHON = '>=3.4.0'
-REQUIRED = ['enum-compat', 'python-xlib']
+REQUIRED = ['python-xlib']
 EXTRAS = {}
 
 here = os.path.abspath(os.path.dirname(__file__))

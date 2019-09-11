@@ -3,7 +3,6 @@ pytest
 pytest-asyncio
 pytest-timeout
 
-enum-compat
 yapf
 flake8
 
