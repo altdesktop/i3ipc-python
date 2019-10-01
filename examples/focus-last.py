@@ -25,7 +25,7 @@ class FocusWatcher:
 
     def on_window_focus(self, i3conn, event):
         with self.window_list_lock:
-            window_id = event.container.props.id
+            window_id = event.container.id
             if window_id in self.window_list:
                 self.window_list.remove(window_id)
             self.window_list.insert(0, window_id)
