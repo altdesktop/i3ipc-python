@@ -1,2 +1,8 @@
 include README.rst LICENSE CHANGELOG.md pytest.ini requirements.txt .flake8 .style.yapf
+include Makefile
+include run-tests.py
 recursive-include test *.py
+include test/i3.config
+recursive-include examples *.md
+recursive-include examples *.py
+recursive-include docs *.rst
