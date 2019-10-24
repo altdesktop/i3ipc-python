@@ -22,7 +22,7 @@ i3 = i3ipc.Connection()
 
 def on_window_open(i3, e):
     ws = i3.get_tree().find_focused().workspace()
-    if is_ws_floating(ws.props.name):
+    if is_ws_floating(ws.name):
         e.container.command('floating toggle')
 
 

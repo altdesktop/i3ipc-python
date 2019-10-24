@@ -53,17 +53,17 @@ class FocusWatcher:
             return set(w.id for w in tree.leaves())
 
     def on_window_focus(self, i3conn, event):
-        if args.ignore_float and (event.container.props.floating == "user_on"
-                                  or event.container.props.floating == "auto_on"):
+        if args.ignore_float and (event.container.floating == "user_on"
+                                  or event.container.floating == "auto_on"):
             return
         if UPDATE_DELAY != 0.0:
             if self.focus_timer is not None:
                 self.focus_timer.cancel()
             self.focus_timer = threading.Timer(UPDATE_DELAY, self.update_windowlist,
-                                               [event.container.props.id])
+                                               [event.container.id])
             self.focus_timer.start()
         else:
-            self.update_windowlist(event.container.props.id)
+            self.update_windowlist(event.container.id)
 
     def launch_i3(self):
         self.i3.main()

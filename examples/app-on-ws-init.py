@@ -27,7 +27,7 @@ args = parser.parse_args()
 
 
 def on_workspace(i3, e):
-    if e.current.props.name in args.workspace and not len(e.current.leaves()):
+    if e.current.name in args.workspace and not len(e.current.leaves()):
         i3.command('exec {}'.format(args.command))
 
 
