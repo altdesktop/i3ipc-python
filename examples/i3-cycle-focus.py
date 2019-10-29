@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+#
+# provides alt+tab functionality between windows, switching
+# between n windows; example i3 conf to use:
+#     exec_always --no-startup-id i3-cycle-focus.py --history 2
+#     bindsym $mod1+Tab exec --no-startup-id i3-cycle-focus.py --switch
 
 import os
 import socket
@@ -7,15 +12,19 @@ import threading
 from argparse import ArgumentParser
 import i3ipc
 
-SOCKET_FILE = '/tmp/i3-cycle-focus'
+SOCKET_FILE = '/tmp/.i3-cycle-focus.sock'
 MAX_WIN_HISTORY = 16
 UPDATE_DELAY = 2.0
 
+
+def on_shutdown(i3_conn, e):
+    os._exit(0)
 
 class FocusWatcher:
     def __init__(self):
         self.i3 = i3ipc.Connection()
         self.i3.on('window::focus', self.on_window_focus)
+        self.i3.on('shutdown', on_shutdown)
         self.listening_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         if os.path.exists(SOCKET_FILE):
             os.remove(SOCKET_FILE)
