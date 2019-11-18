@@ -91,6 +91,18 @@ class OutputReply(_BaseReply):
         ('primary', bool),
         ('current_workspace', str),
         ('rect', Rect),
+        # Sway only output fields:
+        ('make', str),
+        ('model', str),
+        ('serial', str),
+        ('scale', float),
+        ('transform', str),
+        ('max_render_time', int),
+        ('focused', bool),
+        ('dpms', bool),
+        ('subpixel_hinting', str),
+        ('modes', list),
+        ('current_mode', dict),
     ]
 
 
