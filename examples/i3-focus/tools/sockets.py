@@ -8,6 +8,6 @@ class Sockets:
 
     def get_containers_history(self):
         self._client.connect(self._socket_file)
-        history_json = self._client.recv(4096).decode("utf-8")
+        history_json = self._client.recv(4096).decode()
         self._client.close()
         return json.loads(history_json)

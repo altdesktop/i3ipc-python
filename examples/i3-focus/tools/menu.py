@@ -12,7 +12,7 @@ class Menu:
         menu_input = bytes(str.join('\n', items), 'UTF-8')
         menu_cmd = [self._menu] + ['-l', str(len(items))] + self._menu_args
         menu_result = check_output(menu_cmd, input=menu_input)
-        return menu_result.decode('UTF-8').strip()
+        return menu_result.decode().strip()
 
     def show_menu_app(self, apps):
         titles = list(map(lambda a: a.get_title(), apps))

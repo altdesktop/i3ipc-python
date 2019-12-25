@@ -72,7 +72,7 @@ class FocusWatcher:
                             "focused": con.focused
                         })
 
-            conn.send(json.dumps(info).encode("utf-8"));
+            conn.send(json.dumps(info).encode());
             conn.close()
 
         selector.register(self.listening_socket, selectors.EVENT_READ, accept)
