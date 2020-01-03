@@ -285,17 +285,13 @@ class Con:
         except StopIteration:
             return None
 
-    def find_by_pid(self, pid: int) -> Optional['Con']:
-        """Finds a container with the given pid under this node.
+    def find_by_pid(self, pid: int) -> List['Con']:
+        """Finds all the containers under this node with this pid.
 
-        :returns: The container with this pid if it exists.
-        :rtype: :class:`Con` or :class:`None` if there is no container with
-            this pid.
+        :returns: A list of containers with this pid.
+        :rtype: list(:class:`Con`)
         """
-        try:
-            return next(c for c in self if c.pid == pid)
-        except StopIteration:
-            return None
+        return [c for c in self if c.pid == pid]
 
     def find_by_window(self, window: int) -> Optional['Con']:
         """Finds a container with the given window id under this node.
