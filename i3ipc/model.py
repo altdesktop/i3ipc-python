@@ -25,8 +25,20 @@ class Gaps:
     :vartype inner: int
     :ivar outer: The outer gaps.
     :vartype outer: int
+    :ivar left: The left outer gaps.
+    :vartype left: int or :class:`None` if not supported.
+    :ivar right: The right outer gaps.
+    :vartype right: int or :class:`None` if not supported.
+    :ivar top: The top outer gaps.
+    :vartype top: int or :class:`None` if not supported.
+    :ivar bottom: The bottom outer gaps.
+    :vartype bottom: int or :class:`None` if not supported.
     """
 
     def __init__(self, data):
         self.inner = data['inner']
         self.outer = data['outer']
+        self.left = data.get('left', None)
+        self.right = data.get('right', None)
+        self.top = data.get('top', None)
+        self.bottom = data.get('bottom', None)
