@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 
-# i3 get_tree does not contain information about focus throw all workspaces,
-# so scripts those use it can sort windows only with workspace groupping.
-# This server accumulates window focus history and does not pay attention on workspaces.
-
 import os
 import socket
 import selectors
@@ -11,6 +7,7 @@ import threading
 import json
 from argparse import ArgumentParser
 import i3ipc
+
 
 MAX_WIN_HISTORY = 15
 
@@ -39,11 +36,12 @@ class FocusWatcher:
             t.start()
 
     def _on_window_focus(self, i3conn, event):
-        if not self._is_window(event.container):
+        window_id = event.container.id
+        con = self.i3.get_tree().find_by_id(window_id)
+        if not self._is_window(con):
             return
 
         with self.window_list_lock:
-            window_id = event.container.id
             if window_id in self.window_list:
                 self.window_list.remove(window_id)
             self.window_list.insert(0, window_id)
@@ -69,6 +67,7 @@ class FocusWatcher:
                             "window": con.window,
                             "window_title": con.window_title,
                             "window_class": con.window_class,
+                            "window_role": con.window_role,
                             "focused": con.focused
                         })
 
