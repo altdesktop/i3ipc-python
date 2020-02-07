@@ -21,7 +21,7 @@ class Lists:
 
         focused_app = App(focused_info)
 
-        focused_app_windows_by_class = list(filter(lambda i: i["window_class"] == focused_app.get_window_class(), infos))
+        focused_app_windows_by_class = list(filter(lambda i: App(i).get_title() == focused_app.get_title(), infos))
         return focused_app_windows_by_class
 
     @staticmethod
@@ -29,9 +29,3 @@ class Lists:
         for a in apps:
             if a.get_title() == title:
                 return a
-
-    @staticmethod
-    def find_container_info_by_title(title, infos):
-        for i in infos:
-            if i["window_title"] == title:
-                return i

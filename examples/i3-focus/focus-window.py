@@ -22,8 +22,6 @@ parser.add_argument('--socket-file', default='/tmp/i3-app-focus.socket', help='S
 sockets = Sockets(args.socket_file)
 containers_info = sockets.get_containers_history()
 
-containers_info_by_focused_app = Lists.find_all_by_focused_app(containers_info)
-
 i3 = i3ipc.Connection()
 menu = Menu(i3, args.menu, menu_args)
-menu.show_menu_container_info(containers_info_by_focused_app)
+menu.show_menu_container_info(containers_info)
