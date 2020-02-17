@@ -2,13 +2,29 @@ FROM ubuntu:19.10
 
 WORKDIR /app
 
-RUN apt update && apt install ca-certificates -y && \
-    /usr/lib/apt/apt-helper download-file https://debian.sur5r.net/i3/pool/main/s/sur5r-keyring/sur5r-keyring_2019.02.01_all.deb keyring.deb SHA256:176af52de1a976f103f9809920d80d02411ac5e763f695327de9fa6aff23f416 && \
-    dpkg -i ./keyring.deb && \
-    echo "deb http://debian.sur5r.net/i3/ $(grep '^DISTRIB_CODENAME=' /etc/lsb-release | cut -f2 -d=) universe" >> /etc/apt/sources.list.d/sur5r-i3.list && \
-    apt install i3-wm python3-pip xvfb -y
+RUN echo force-unsafe-io > /etc/dpkg/dpkg.cfg.d/docker-apt-speedup
+RUN echo 'APT::Acquire::Retries "5";' > /etc/apt/apt.conf.d/80retry
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    build-essential git automake autotools-dev libev-dev libxcb1-dev \
+    libxcb-util-dev ca-certificates libxkbcommon-dev libxkbcommon-x11-dev \
+    libyajl-dev libstartup-notification0-dev libxcb-xinerama0-dev \
+    libxcb-randr0-dev libxcb-shape0-dev libxcb-cursor-dev libxcb-keysyms1-dev \
+    libxcb-icccm4-dev libxcb-xrm-dev libpcre3-dev libpango1.0-dev \
+    libpangocairo-1.0-0 xvfb python3-pip && \
+    rm -rf /var/lib/apt/lists/*
 
 RUN pip3 install python-xlib pytest pytest-asyncio pytest-timeout
+
+RUN git clone https://github.com/i3/i3 && \
+    cd ./i3 && \
+    git checkout 2914c7f && \
+    autoreconf -fi && \
+    ./configure --prefix=/usr && \
+    cd ./x86_64-pc-linux-gnu && \
+    make -j8 && \
+    make install
 
 ADD . /app
 
