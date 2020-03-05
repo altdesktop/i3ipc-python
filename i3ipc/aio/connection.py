@@ -123,6 +123,9 @@ class Con(con.Con):
     :vartype pid: int
     :ivar gaps: (gaps only)
     :vartype gaps: :class:`Gaps <i3ipc.Gaps>`
+
+    :ivar ipc_data: The raw data from the i3 ipc.
+    :vartype ipc_data: dict
     """
 
     async def command(self, command: str) -> List[CommandReply]:

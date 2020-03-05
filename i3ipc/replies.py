@@ -3,6 +3,7 @@ from .model import Rect
 
 class _BaseReply:
     def __init__(self, data):
+        self.ipc_data = data
         for member in self.__class__._members:
             value = data.get(member[0], None)
             if value is not None:
@@ -24,6 +25,8 @@ class CommandReply(_BaseReply):
     :vartype success: bool
     :ivar error: A human-readable error message.
     :vartype error: str or :class:`None` if no error message was set.
+    :ivar ipc_data: The raw data from the i3 ipc.
+    :vartype ipc_data: dict
     """
     _members = [
         ('success', bool),
@@ -55,6 +58,8 @@ class WorkspaceReply(_BaseReply):
     :vartype rect: :class:`Rect`
     :ivar output: The video output this workspace is on (LVDS1, VGA1, ...).
     :vartype output: str
+    :ivar ipc_data: The raw data from the i3 ipc.
+    :vartype ipc_data: dict
     """
     _members = [
         ('num', int),
@@ -84,6 +89,8 @@ class OutputReply(_BaseReply):
     :ivar rect: The rectangle of this output (equals the rect of the output it
         is on).
     :vartype rect: :class:`Rect`
+    :ivar ipc_data: The raw data from the i3 ipc.
+    :vartype ipc_data: dict
     """
     _members = [
         ('name', str),
@@ -131,6 +138,8 @@ class BarConfigReply(_BaseReply):
     :ivar colors: Contains key/value pairs of colors. Each value is a color
         code in hex, formatted #rrggbb (like in HTML).
     :vartype colors: dict
+    :ivar ipc_data: The raw data from the i3 ipc.
+    :vartype ipc_data: dict
     """
     _members = [
         ('id', str),
@@ -161,6 +170,8 @@ class VersionReply(_BaseReply):
     :vartype human_readable: str
     :ivar loaded_config_file_name: The current config path.
     :vartype loaded_config_file_name: str
+    :ivar ipc_data: The raw data from the i3 ipc.
+    :vartype ipc_data: dict
     """
     _members = [
         ('major', int),
@@ -179,6 +190,8 @@ class ConfigReply(_BaseReply):
     :ivar config: A string containing the config file as loaded by i3 most
         recently.
     :vartype config: str
+    :ivar ipc_data: The raw data from the i3 ipc.
+    :vartype ipc_data: dict
     """
     _members = [
         ('config', str),
@@ -192,6 +205,8 @@ class TickReply(_BaseReply):
 
     :ivar success: Whether the tick succeeded.
     :vartype success: bool
+    :ivar ipc_data: The raw data from the i3 ipc.
+    :vartype ipc_data: dict
     """
     _members = [
         ('success', bool),
@@ -222,6 +237,8 @@ class InputReply(_BaseReply):
     :vartype xkb_active_layout_index: int
     :ivar libinput: (Only libinput devices) An object describing the current device settings.
     :vartype libinput: dict
+    :ivar ipc_data: The raw data from the i3 ipc.
+    :vartype ipc_data: dict
     """
     _members = [
         ('identifier', str),
@@ -251,6 +268,8 @@ class SeatReply(_BaseReply):
     :vartype focus: int
     :ivar devices: An array of input devices that are attached to the seat.
     :vartype devices: list(:class:`InputReply`)
+    :ivar ipc_data: The raw data from the i3 ipc.
+    :vartype ipc_data: dict
     """
     _members = [('name', str), ('capabilities', int), ('focus', int),
                 ('devices', InputReply._parse_list)]

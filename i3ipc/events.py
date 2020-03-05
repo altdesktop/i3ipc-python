@@ -62,9 +62,12 @@ class WorkspaceEvent(IpcBaseEvent):
     :ivar old: When the change is "focus", an old (object) property will be
         present with the previous workspace if it exists.
     :vartype old: :class:`Con` or :class:`None`
+    :ivar ipc_data: The raw data from the i3 ipc.
+    :vartype ipc_data: dict
     """
 
     def __init__(self, data, conn, _Con=con.Con):
+        self.ipc_data = data
         self.change = data['change']
         self.current = None
         self.old = None
@@ -84,9 +87,12 @@ class OutputEvent(IpcBaseEvent):
 
     :ivar change: The type of change (currently only "unspecified").
     :vartype change: str
+    :ivar ipc_data: The raw data from the i3 ipc.
+    :vartype ipc_data: dict
     """
 
     def __init__(self, data):
+        self.ipc_data = data
         self.change = data['change']
 
 
@@ -100,9 +106,12 @@ class ModeEvent(IpcBaseEvent):
     :ivar pango_markup: Whether pango markup should be used for displaying this
         mode.
     :vartype pango_markup: bool
+    :ivar ipc_data: The raw data from the i3 ipc.
+    :vartype ipc_data: dict
     """
 
     def __init__(self, data):
+        self.ipc_data = data
         self.change = data['change']
         self.pango_markup = data.get('pango_markup', False)
 
@@ -117,9 +126,12 @@ class WindowEvent(IpcBaseEvent):
     :ivar change: The type of change.
     :vartype change: str
     :ivar container: The window's parent container.
+    :ivar ipc_data: The raw data from the i3 ipc.
+    :vartype ipc_data: dict
     """
 
     def __init__(self, data, conn, _Con=con.Con):
+        self.ipc_data = data
         self.change = data['change']
         self.container = _Con(data['container'], None, conn)
 
@@ -150,6 +162,8 @@ class BarconfigUpdateEvent(IpcBaseEvent, BarConfigReply):
     :ivar colors: Contains key/value pairs of colors. Each value is a color
         code in hex, formatted #rrggbb (like in HTML).
     :vartype colors: dict
+    :ivar ipc_data: The raw data from the i3 ipc.
+    :vartype ipc_data: dict
     """
     pass
 
@@ -172,9 +186,12 @@ class BindingInfo:
     :ivar input_type: This will be "keyboard" or "mouse" depending on whether
         or not this was a keyboard or a mouse binding.
     :vartype input_type: str
+    :ivar ipc_data: The raw data from the i3 ipc.
+    :vartype ipc_data: dict
     """
 
     def __init__(self, data):
+        self.ipc_data = data
         self.command = data['command']
         self.event_state_mask = data.get('event_state_mask', [])
         self.input_code = data['input_code']
@@ -196,9 +213,12 @@ class BindingEvent(IpcBaseEvent):
     :vartype change: str
     :ivar binding: Contains details about the binding that was run.
     :vartype binding: :class:`BindingInfo <i3ipc.BindingInfo>`
+    :ivar ipc_data: The raw data from the i3 ipc.
+    :vartype ipc_data: dict
     """
 
     def __init__(self, data):
+        self.ipc_data = data
         self.change = data['change']
         self.binding = BindingInfo(data['binding'])
 
@@ -211,9 +231,12 @@ class ShutdownEvent(IpcBaseEvent):
 
     :ivar change: The type of change.
     :vartype change: str
+    :ivar ipc_data: The raw data from the i3 ipc.
+    :vartype ipc_data: dict
     """
 
     def __init__(self, data):
+        self.ipc_data = data
         self.change = data['change']
 
 
@@ -229,9 +252,12 @@ class TickEvent(IpcBaseEvent):
         i3 (<=4.15).
     :ivar payload: The payload that was sent with the tick.
     :vartype payload: str
+    :ivar ipc_data: The raw data from the i3 ipc.
+    :vartype ipc_data: dict
     """
 
     def __init__(self, data):
+        self.ipc_data = data
         # i3 didn't include the 'first' field in 4.15. See i3/i3#3271.
         self.first = data.get('first', None)
         self.payload = data['payload']
@@ -244,8 +270,11 @@ class InputEvent(IpcBaseEvent):
     :vartype change: str
     :ivar input: Information about the input that changed.
     :vartype input: :class:`InputReply <i3ipc.InputReply>`
+    :ivar ipc_data: The raw data from the i3 ipc.
+    :vartype ipc_data: dict
     """
 
     def __init__(self, data):
+        self.ipc_data = data
         self.change = data['change']
         self.input = InputReply(data['input'])

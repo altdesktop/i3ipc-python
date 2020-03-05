@@ -73,9 +73,13 @@ class Con:
     :vartype pid: int
     :ivar gaps: (gaps only)
     :vartype gaps: :class:`Gaps <i3ipc.Gaps>`
+
+    :ivar ipc_data: The raw data from the i3 ipc.
+    :vartype ipc_data: dict
     """
 
     def __init__(self, data, parent, conn):
+        self.ipc_data = data
         self._conn = conn
         self.parent = parent
 
