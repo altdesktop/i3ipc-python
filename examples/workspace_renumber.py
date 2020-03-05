@@ -9,8 +9,8 @@ i3 = i3ipc.Connection()
 # check if workspaces are all in order
 def workspaces_ordered(i3conn):
     last_workspace = 0
-    for i in sorted(i3conn.get_workspaces(), key=lambda x: x['num']):
-        number = int(i['num'])
+    for i in sorted(i3conn.get_workspaces(), key=lambda x: x.num):
+        number = int(i.num)
         if number != last_workspace + 1:
             return False
         last_workspace += 1
@@ -22,11 +22,11 @@ def workspaces_ordered(i3conn):
 def find_disordered(i3conn):
     disordered = []
     least_number = None
-    workspaces = sorted(i3conn.get_workspaces(), key=lambda x: x['num'])
-    occupied_workspaces = [int(x['num']) for x in workspaces]
+    workspaces = sorted(i3conn.get_workspaces(), key=lambda x: x.num)
+    occupied_workspaces = [int(x.num) for x in workspaces]
     last_workspace = 0
     for i in workspaces:
-        number = int(i['num'])
+        number = int(i.num)
         if number != last_workspace + 1:
             disordered.append(number)
             if least_number is None and last_workspace + 1 not in occupied_workspaces:
