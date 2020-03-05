@@ -484,11 +484,11 @@ class Connection:
         """
         loop_exception = None
         self._quitting = False
+        timer = None
+
         while True:
             try:
                 self._event_socket_setup()
-
-                timer = None
 
                 if timeout:
                     timer = Timer(timeout, self.main_quit)
