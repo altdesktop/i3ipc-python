@@ -1,6 +1,7 @@
 import socket
 import json
 
+
 class Sockets:
     def __init__(self, socket_file):
         self._socket_file = socket_file

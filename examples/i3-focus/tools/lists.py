@@ -1,5 +1,6 @@
 from . import App
 
+
 class Lists:
     @staticmethod
     def accum_uniq_apps(result, app):
@@ -21,7 +22,8 @@ class Lists:
 
         focused_app = App(focused_info)
 
-        focused_app_windows_by_class = list(filter(lambda i: App(i).get_title() == focused_app.get_title(), infos))
+        focused_app_windows_by_class = list(
+            filter(lambda i: App(i).get_title() == focused_app.get_title(), infos))
         return focused_app_windows_by_class
 
     @staticmethod

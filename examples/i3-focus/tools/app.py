@@ -1,6 +1,7 @@
 import re
 import i3ipc
 
+
 class App:
     def __init__(self, container_info):
         self._container_info = container_info
@@ -21,7 +22,8 @@ class App:
         return self._container_info["window_class"].replace('-', ' ').title()
 
     def _get_title_based_on_title(self):
-        return re.match(r"^.*?\s*(?P<title>[^-—]+)$", self._container_info["window_title"]).group("title")
+        return re.match(r"^.*?\s*(?P<title>[^-—]+)$",
+                        self._container_info["window_title"]).group("title")
 
     # App specific functions
 

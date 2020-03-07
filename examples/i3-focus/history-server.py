@@ -8,14 +8,12 @@ import json
 from argparse import ArgumentParser
 import i3ipc
 
-
 MAX_WIN_HISTORY = 15
 
-parser = ArgumentParser(prog='i3-app-focus.py',
-                        description='''''',
-                        epilog='''''')
+parser = ArgumentParser(prog='i3-app-focus.py', description='''''', epilog='''''')
 parser.add_argument('--socket-file', default='/tmp/i3-app-focus.socket', help='Socket file path')
 (args, other) = parser.parse_known_args()
+
 
 class FocusWatcher:
     def __init__(self):
@@ -71,7 +69,7 @@ class FocusWatcher:
                             "focused": con.focused
                         })
 
-            conn.send(json.dumps(info).encode());
+            conn.send(json.dumps(info).encode())
             conn.close()
 
         selector.register(self.listening_socket, selectors.EVENT_READ, accept)
@@ -81,10 +79,10 @@ class FocusWatcher:
                 callback = key.data
                 callback(key.fileobj)
 
-
     @staticmethod
     def _is_window(con):
-        return not con.nodes and con.type == "con" and (con.parent and con.parent.type != "dockarea" or True)
+        return not con.nodes and con.type == "con" and (con.parent and con.parent.type != "dockarea"
+                                                        or True)
 
 
 focus_watcher = FocusWatcher()

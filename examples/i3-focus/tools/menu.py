@@ -2,6 +2,7 @@ from collections import deque
 from subprocess import check_output
 from . import Lists, App
 
+
 class Menu:
     def __init__(self, i3, menu, menu_args):
         self._i3 = i3
@@ -20,7 +21,7 @@ class Menu:
         selected_app = Lists.find_app_by_title(selected_title, apps)
         tree = self._i3.get_tree()
         con = tree.find_by_id(selected_app.get_con_id())
-        con.command('focus');
+        con.command('focus')
 
     def show_menu_container_info(self, containers_info):
         titles = self._get_titles_with_app_prefix(containers_info)
@@ -30,7 +31,7 @@ class Menu:
         selected_info = infos_by_title[selected_title]
         tree = self._i3.get_tree()
         con = tree.find_by_id(selected_info["id"])
-        con.command('focus');
+        con.command('focus')
 
     def _get_titles_with_app_prefix(self, containers_info):
         return list(map(lambda i: App(i).get_title() + ': ' + i["window_title"], containers_info))

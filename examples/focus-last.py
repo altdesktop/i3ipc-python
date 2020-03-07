@@ -8,8 +8,8 @@ import threading
 from argparse import ArgumentParser
 import i3ipc
 
-SOCKET_DIR = '{}/i3_focus_last.{}{}'.format(
-    tempfile.gettempdir(), os.geteuid(), os.getenv("DISPLAY"))
+SOCKET_DIR = '{}/i3_focus_last.{}{}'.format(tempfile.gettempdir(), os.geteuid(),
+                                            os.getenv("DISPLAY"))
 SOCKET_FILE = '{}/socket'.format(SOCKET_DIR)
 MAX_WIN_HISTORY = 15
 

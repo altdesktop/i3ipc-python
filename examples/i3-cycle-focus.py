@@ -20,6 +20,7 @@ UPDATE_DELAY = 2.0
 def on_shutdown(i3_conn, e):
     os._exit(0)
 
+
 class FocusWatcher:
     def __init__(self):
         self.i3 = i3ipc.Connection()
