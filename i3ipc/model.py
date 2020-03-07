@@ -10,7 +10,6 @@ class Rect:
     :ivar width: The width of the rectangle.
     :vartype width: int
     """
-
     def __init__(self, data):
         self.x = data['x']
         self.y = data['y']
@@ -34,7 +33,6 @@ class Gaps:
     :ivar bottom: The bottom outer gaps.
     :vartype bottom: int or :class:`None` if not supported.
     """
-
     def __init__(self, data):
         self.inner = data['inner']
         self.outer = data['outer']

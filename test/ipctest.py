@@ -44,7 +44,7 @@ class IpcTest:
     def open_window(self):
         window = Window()
         window.run()
-        self.i3_conn.command('nop')
+        IpcTest.i3_conn._sync()
         return window.window.id
 
     def fresh_workspace(self):

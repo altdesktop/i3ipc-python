@@ -77,7 +77,6 @@ class Con:
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
-
     def __init__(self, data, parent, conn):
         self.ipc_data = data
         self._conn = conn

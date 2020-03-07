@@ -66,6 +66,7 @@ class IpcTest:
     def open_window(self):
         window = Window()
         window.run()
+        IpcTest.i3_conn._sync()
         return window.window.id
 
     async def fresh_workspace(self):

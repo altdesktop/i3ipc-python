@@ -65,7 +65,6 @@ class WorkspaceEvent(IpcBaseEvent):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
-
     def __init__(self, data, conn, _Con=con.Con):
         self.ipc_data = data
         self.change = data['change']
@@ -90,7 +89,6 @@ class OutputEvent(IpcBaseEvent):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
-
     def __init__(self, data):
         self.ipc_data = data
         self.change = data['change']
@@ -109,7 +107,6 @@ class ModeEvent(IpcBaseEvent):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
-
     def __init__(self, data):
         self.ipc_data = data
         self.change = data['change']
@@ -129,7 +126,6 @@ class WindowEvent(IpcBaseEvent):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
-
     def __init__(self, data, conn, _Con=con.Con):
         self.ipc_data = data
         self.change = data['change']
@@ -189,7 +185,6 @@ class BindingInfo:
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
-
     def __init__(self, data):
         self.ipc_data = data
         self.command = data['command']
@@ -216,7 +211,6 @@ class BindingEvent(IpcBaseEvent):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
-
     def __init__(self, data):
         self.ipc_data = data
         self.change = data['change']
@@ -234,7 +228,6 @@ class ShutdownEvent(IpcBaseEvent):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
-
     def __init__(self, data):
         self.ipc_data = data
         self.change = data['change']
@@ -255,7 +248,6 @@ class TickEvent(IpcBaseEvent):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
-
     def __init__(self, data):
         self.ipc_data = data
         # i3 didn't include the 'first' field in 4.15. See i3/i3#3271.
@@ -273,7 +265,6 @@ class InputEvent(IpcBaseEvent):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
-
     def __init__(self, data):
         self.ipc_data = data
         self.change = data['change']

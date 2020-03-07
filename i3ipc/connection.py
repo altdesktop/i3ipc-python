@@ -5,7 +5,7 @@ from .replies import (BarConfigReply, CommandReply, ConfigReply, OutputReply, Ti
                       VersionReply, WorkspaceReply, SeatReply, InputReply)
 from .events import (IpcBaseEvent, BarconfigUpdateEvent, BindingEvent, OutputEvent, ShutdownEvent,
                      WindowEvent, TickEvent, ModeEvent, WorkspaceEvent, InputEvent, Event)
-from ._private import PubSub, MessageType, EventType
+from ._private import PubSub, MessageType, EventType, Synchronizer
 
 from typing import List, Optional, Union, Callable
 import struct
@@ -82,6 +82,13 @@ class Connection:
         self._auto_reconnect = auto_reconnect
         self._restarting = False
         self._quitting = False
+        self._synchronizer = None
+
+    def _sync(self):
+        if self._synchronizer is None:
+            self._synchronizer = Synchronizer()
+
+        self._synchronizer.sync()
 
     @property
     def socket_path(self) -> str:

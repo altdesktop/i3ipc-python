@@ -1,4 +1,4 @@
-from .._private import PubSub, MessageType, EventType
+from .._private import PubSub, MessageType, EventType, Synchronizer
 from ..replies import (BarConfigReply, CommandReply, ConfigReply, OutputReply, TickReply,
                        VersionReply, WorkspaceReply, SeatReply, InputReply)
 from ..events import (IpcBaseEvent, BarconfigUpdateEvent, BindingEvent, OutputEvent, ShutdownEvent,
@@ -127,7 +127,6 @@ class Con(con.Con):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
-
     async def command(self, command: str) -> List[CommandReply]:
         """Runs a command on this container.
 
@@ -245,7 +244,6 @@ class Connection:
 
     :raises Exception: If the connection to i3 cannot be established.
     """
-
     def __init__(self, socket_path: Optional[str] = None, auto_reconnect: bool = False):
         self._socket_path = socket_path
         self._auto_reconnect = auto_reconnect
@@ -253,6 +251,13 @@ class Connection:
         self._subscriptions = set()
         self._main_future = None
         self._reconnect_future = None
+        self._synchronizer = None
+
+    def _sync(self):
+        if self._synchronizer is None:
+            self._synchronizer = Synchronizer()
+
+        self._synchronizer.sync()
 
     @property
     def socket_path(self) -> str:
