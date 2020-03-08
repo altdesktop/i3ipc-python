@@ -17,9 +17,8 @@ class TestWorkspace(IpcTest):
         await i3.command('workspace 0')
         await i3.subscribe([Event.WORKSPACE])
         i3.on(Event.WORKSPACE_INIT, self.on_workspace)
-        main_cor = i3.main()
-        await i3.command('workspace 12')
-        await main_cor
+        asyncio.ensure_future(i3.command('workspace 12'))
+        await i3.main()
         workspaces = await i3.get_workspaces()
 
         assert len(workspaces) == 1
