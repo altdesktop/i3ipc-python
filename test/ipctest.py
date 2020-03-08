@@ -39,6 +39,7 @@ class IpcTest:
             pass
 
         process.kill()
+        process.wait()
         IpcTest.i3_conn = None
 
     def open_window(self):

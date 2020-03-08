@@ -47,6 +47,7 @@ class IpcTest:
             pass
 
         process.kill()
+        process.wait()
         IpcTest.i3_conn = None
 
     async def command_checked(self, cmd):
