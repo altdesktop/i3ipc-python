@@ -1,4 +1,4 @@
-from .model import Rect
+from .model import Rect, OutputMode
 
 
 class _BaseReply:
@@ -89,6 +89,28 @@ class OutputReply(_BaseReply):
     :ivar rect: The rectangle of this output (equals the rect of the output it
         is on).
     :vartype rect: :class:`Rect`
+    :ivar make: (sway only)
+    :vartype make: str
+    :ivar model: (sway only)
+    :vartype model: str
+    :ivar serial: (sway only)
+    :vartype serial: str
+    :ivar scale: (sway only)
+    :vartype scale: float
+    :ivar transform: (sway only)
+    :vartype transform: str
+    :ivar max_render_time: (sway only)
+    :vartype max_render_time: int
+    :ivar focused: (sway only)
+    :vartype focused: bool
+    :ivar dpms: (sway only)
+    :vartype dpms: bool
+    :ivar subpixel_hinting: (sway only)
+    :vartype subpixel_hinting: str
+    :ivar modes: (sway only)
+    :vartype modes: list(:class:`OutputMode`)
+    :ivar current_mode: (sway only)
+    :vartype current_mode: :class:`OutputMode`
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
@@ -108,9 +130,28 @@ class OutputReply(_BaseReply):
         ('focused', bool),
         ('dpms', bool),
         ('subpixel_hinting', str),
-        ('modes', list),
-        ('current_mode', dict),
+        ('modes', OutputMode._parse_list),
+        ('current_mode', OutputMode),
     ]
+
+
+class BarConfigGaps:
+    """(sway only) The useless gaps for the bar.
+
+    :ivar left: The gap to the left.
+    :vartype left: int
+    :ivar right: The gap to the right.
+    :vartype right: int
+    :ivar top: The gap on the top.
+    :vartype top: int
+    :ivar bottom: The gap on the bottom.
+    :vartype bottom: int
+    """
+    def __init__(self, data):
+        self.left = data['left']
+        self.right = data['right']
+        self.top = data['top']
+        self.bottom = data['bottom']
 
 
 class BarConfigReply(_BaseReply):
@@ -138,19 +179,49 @@ class BarConfigReply(_BaseReply):
     :ivar colors: Contains key/value pairs of colors. Each value is a color
         code in hex, formatted #rrggbb (like in HTML).
     :vartype colors: dict
+    :ivar tray_padding:
+    :vartype tray_padding: int
+    :ivar hidden_state:
+    :vartype hidden_state: str
+    :ivar modifier:
+    :vartype modifier: int
+    :ivar workspace_min_width:
+    :vartype workspace_min_width: int
+    :ivar strip_workspace_numbers:
+    :vartype strip_workspace_numbers: bool
+    :ivar strip_workspace_name:
+    :vartype strip_workspace_name: bool
+    :ivar gaps: (sway only)
+    :vartype gaps: :class:`BarConfigGaps`
+    :ivar bar_height: (sway only)
+    :vartype bar_height: int
+    :ivar status_padding: (sway only)
+    :vartype status_padding: int
+    :ivar status_edge_padding: (sway only)
+    :vartype status_edge_padding: int
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
     _members = [
         ('id', str),
+        ('tray_padding', int),
+        ('hidden_state', str),
         ('mode', str),
+        ('modifier', int),
         ('position', str),
         ('status_command', str),
         ('font', str),
         ('workspace_buttons', bool),
+        ('workspace_min_width', int),
+        ('strip_workspace_numbers', bool),
+        ('strip_workspace_name', bool),
         ('binding_mode_indicator', bool),
         ('verbose', bool),
         ('colors', dict),
+        ('gaps', BarConfigGaps),
+        ('bar_height', int),
+        ('status_padding', int),
+        ('status_edge_padding', int),
     ]
 
 

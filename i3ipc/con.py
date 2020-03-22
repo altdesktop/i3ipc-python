@@ -67,12 +67,18 @@ class Con:
     :vartype window_rect: :class:`Rect <i3ipc.Rect>`
     :ivar deco_rect:
     :vartype deco_rect: :class:`Rect <i3ipc.Rect>`
+    :ivar geometry:
+    :vartype geometry: :class:`Rect <i3ipc.Rect>`
     :ivar app_id: (sway only)
     :vartype app_id: str
     :ivar pid: (sway only)
     :vartype pid: int
     :ivar gaps: (gaps only)
     :vartype gaps: :class:`Gaps <i3ipc.Gaps>`
+    :ivar representation: (sway only)
+    :vartype representation: str
+    :ivar visible: (sway only)
+    :vartype visible: bool
 
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
@@ -86,7 +92,7 @@ class Con:
         ipc_properties = [
             'border', 'current_border_width', 'floating', 'focus', 'focused', 'fullscreen_mode',
             'id', 'layout', 'marks', 'name', 'num', 'orientation', 'percent', 'scratchpad_state',
-            'sticky', 'type', 'urgent', 'window', 'pid', 'app_id'
+            'sticky', 'type', 'urgent', 'window', 'pid', 'app_id', 'representation'
         ]
         for attr in ipc_properties:
             if attr in data:
@@ -139,11 +145,16 @@ class Con:
                 self.window_title = data['window_properties']['title']
 
         self.rect = Rect(data['rect'])
-        self.deco_rect = None
         if 'window_rect' in data:
             self.window_rect = Rect(data['window_rect'])
+
+        self.deco_rect = None
         if 'deco_rect' in data:
             self.deco_rect = Rect(data['deco_rect'])
+
+        self.geometry = None
+        if 'geometry' in data:
+            self.geometry = Rect(data['geometry'])
 
         self.gaps = None
         if 'gaps' in data:
