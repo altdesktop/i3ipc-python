@@ -43,7 +43,7 @@ class TestWindow(IpcTest):
             events.append(e)
 
         i3.on(Event.WINDOW_NEW, on_window)
-        Timer(0.001, generate_events).start()
+        Timer(0.01, generate_events).start()
         i3.main(timeout=2)
 
         assert len(events)
@@ -54,7 +54,7 @@ class TestWindow(IpcTest):
         i3.off(on_window)
 
         i3.on(Event.WINDOW_FOCUS, on_window)
-        Timer(0.001, generate_events).start()
+        Timer(0.01, generate_events).start()
         i3.main(timeout=2)
 
         assert len(events)
