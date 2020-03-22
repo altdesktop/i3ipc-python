@@ -415,30 +415,8 @@ class Con:
         :returns: The scratchpad container.
         :rtype: class:`Con`
         """
-        root = self.root()
+        for con in self.root():
+            if con.type == 'workspace' and con.name == "__i3_scratch":
+                return con
 
-        i3con = None
-        for c in root.nodes:
-            if c.name == "__i3":
-                i3con = c
-                break
-
-        if not i3con:
-            return None
-
-        i3con_content = None
-        for c in i3con.nodes:
-            if c.name == "content":
-                i3con_content = c
-                break
-
-        if not i3con_content:
-            return None
-
-        scratch = None
-        for c in i3con_content.nodes:
-            if c.name == "__i3_scratch":
-                scratch = c
-                break
-
-        return scratch
+        return None
