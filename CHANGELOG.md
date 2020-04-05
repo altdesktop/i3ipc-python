@@ -1,5 +1,20 @@
 # Changelog
 
+## Version 2.2.1
+
+Version 2.2.1 includes sway comatibility enhancements (#98) and other bugfixes.
+
+* Make the sway INPUT event subscribable (#127).
+* Remove the enum-compat dependency (#128).
+* Add examples and docs to MANIFEST.in (#132).
+* Add sway-specific fields to OutputReply (#137).
+* Add `find_by_pid()` method for sway (#142).
+* Add side properties to Gaps object (#143).
+* Add `ipc_data` attribute to objects (8947b9f).
+* Add all known sway properties (e6c7f1b).
+* Fix scratchpad for sway (f11e729).
+* Bug: fix crash after reload then restart (#148).
+
 ## Version 2.1.1
 
 Version 2.1.1 includes bugfixes and new features.
