@@ -19,7 +19,7 @@ RUN pip3 install python-xlib pytest pytest-asyncio pytest-timeout
 
 RUN git clone https://github.com/i3/i3 && \
     cd ./i3 && \
-    git checkout 2914c7f && \
+    git checkout cf505ea && \
     autoreconf -fi && \
     ./configure --prefix=/usr && \
     cd ./x86_64-pc-linux-gnu && \
