@@ -18,7 +18,8 @@ parser.add_argument('--socket-file', default='/tmp/i3-app-focus.socket', help='S
 class FocusWatcher:
     def __init__(self):
         self.i3 = i3ipc.Connection()
-        self.i3.on('window::focus', self._on_window_focus)
+        self.i3.on(i3ipc.Event.WINDOW_FOCUS, self._on_window_focus)
+        self.i3.on(i3ipc.Event.WINDOW_CLOSE, self._on_window_close)
         self.listening_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         if os.path.exists(args.socket_file):
             os.remove(args.socket_file)
@@ -42,9 +43,17 @@ class FocusWatcher:
         with self.window_list_lock:
             if window_id in self.window_list:
                 self.window_list.remove(window_id)
+
             self.window_list.insert(0, window_id)
+
             if len(self.window_list) > MAX_WIN_HISTORY:
                 del self.window_list[MAX_WIN_HISTORY:]
+
+    def _on_window_close(self, i3conn, event):
+        window_id = event.container.id
+        with self.window_list_lock:
+            if window_id in self.window_list:
+                self.window_list.remove(window_id)
 
     def _launch_i3(self):
         self.i3.main()
