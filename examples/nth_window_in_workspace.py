@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+# * Can go straight to a window given a workspace, integer-index of window pair.
+#   (for instance for mapping keys to windows in a mode for that)
+# * Can also go to workspace, or cycle through the windows on that.
+#   (as opposed to going there and the button not having a use while there)
+
 from itertools import cycle
 from subprocess import check_output
 import i3ipc
@@ -86,7 +91,10 @@ if __name__ == '__main__':
 
     parser = ArgumentParser(
         prog='nth_window_in_workspace.py',
-        description="Program using i3ipc to select the nth window from a workspace.")
+        description="""Program to:
+* Select the nth window from a workspace. (i.e. for mapping each window to a key)
+* Go to workspace, or cycle through the windows of the workspace.
+  (improvement on just going to the workspace)""")
 
     parser.add_argument('workspace', help="Name of workspace to go to.")
     parser.add_argument('select',
