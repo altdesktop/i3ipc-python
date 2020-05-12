@@ -1,12 +1,15 @@
-FROM ubuntu:19.10
+FROM ubuntu:20.04
 
 WORKDIR /app
 
 RUN echo force-unsafe-io > /etc/dpkg/dpkg.cfg.d/docker-apt-speedup
 RUN echo 'APT::Acquire::Retries "5";' > /etc/apt/apt.conf.d/80retry
 
-RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+RUN export DEBIAN_FRONTEND=noninteractive; \
+    export DEBCONF_NONINTERACTIVE_SEEN=true; \
+    echo 'tzdata tzdata/Areas select Etc' | debconf-set-selections; \
+    echo 'tzdata tzdata/Zones/Etc select UTC' | debconf-set-selections; \
+    apt update && apt install -y --no-install-recommends \
     build-essential git automake autotools-dev libev-dev libxcb1-dev \
     libxcb-util-dev ca-certificates libxkbcommon-dev libxkbcommon-x11-dev \
     libyajl-dev libstartup-notification0-dev libxcb-xinerama0-dev \
