@@ -53,9 +53,10 @@ class FocusWatcher:
             ws_list = []
             w_set = set()
             for item in self.i3.get_outputs():
-                ws_list.append(item.current_workspace)
+                if item.active:
+                    ws_list.append(item.current_workspace)
             for ws in tree.workspaces():
-                if str(ws.num) in ws_list:
+                if str(ws.name) in ws_list:
                     for w in ws.leaves():
                         w_set.add(w.id)
             return w_set
