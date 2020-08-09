@@ -14,6 +14,8 @@ If you have an idea for a script to extend i3wm, you can add your script to the 
 
 For details on how to use the library, see the `reference documentation <https://i3ipc-python.readthedocs.io/en/latest/>`__.
 
+`Chat <https://discord.gg/UdbXHVX>`__
+
 Installation
 ------------
 
