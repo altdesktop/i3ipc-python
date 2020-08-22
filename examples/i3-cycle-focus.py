@@ -6,11 +6,11 @@
 #     bindsym $mod1+Tab exec --no-startup-id i3-cycle-focus.py --switch
 
 import os
-import socket
-import selectors
-import threading
+import asyncio
 from argparse import ArgumentParser
-import i3ipc
+import logging
+
+from i3ipc.aio import Connection
 
 SOCKET_FILE = '/tmp/.i3-cycle-focus.sock'
 MAX_WIN_HISTORY = 16
@@ -23,36 +23,41 @@ def on_shutdown(i3_conn, e):
 
 class FocusWatcher:
     def __init__(self):
-        self.i3 = i3ipc.Connection()
-        self.i3.on('window::focus', self.on_window_focus)
-        self.i3.on('shutdown', on_shutdown)
-        self.listening_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        if os.path.exists(SOCKET_FILE):
-            os.remove(SOCKET_FILE)
-        self.listening_socket.bind(SOCKET_FILE)
-        self.listening_socket.listen(1)
+        self.i3 = None
         self.window_list = []
-        self.window_list_lock = threading.RLock()
-        self.focus_timer = None
+        self.update_task = None
         self.window_index = 1
 
-    def update_windowlist(self, window_id):
-        with self.window_list_lock:
-            if window_id in self.window_list:
-                self.window_list.remove(window_id)
-            self.window_list.insert(0, window_id)
-            if len(self.window_list) > MAX_WIN_HISTORY:
-                del self.window_list[MAX_WIN_HISTORY:]
-            self.window_index = 1
+    async def connect(self):
+        self.i3 = await Connection().connect()
+        self.i3.on('window::focus', self.on_window_focus)
+        self.i3.on('shutdown', on_shutdown)
 
-    def get_valid_windows(self):
-        tree = self.i3.get_tree()
+    async def update_window_list(self, window_id):
+        if UPDATE_DELAY != 0.0:
+            await asyncio.sleep(UPDATE_DELAY)
+
+        logging.info('updating window list')
+        if window_id in self.window_list:
+            self.window_list.remove(window_id)
+
+        self.window_list.insert(0, window_id)
+
+        if len(self.window_list) > MAX_WIN_HISTORY:
+            del self.window_list[MAX_WIN_HISTORY:]
+
+        self.window_index = 1
+        logging.info('new window list: {}'.format(self.window_list))
+
+    async def get_valid_windows(self):
+        tree = await self.i3.get_tree()
         if args.active_workspace:
             return set(w.id for w in tree.find_focused().workspace().leaves())
         elif args.visible_workspaces:
             ws_list = []
             w_set = set()
-            for item in self.i3.get_outputs():
+            outputs = await self.i3.get_outputs()
+            for item in outputs:
                 if item.active:
                     ws_list.append(item.current_workspace)
             for ws in tree.workspaces():
@@ -63,60 +68,59 @@ class FocusWatcher:
         else:
             return set(w.id for w in tree.leaves())
 
-    def on_window_focus(self, i3conn, event):
+    async def on_window_focus(self, i3conn, event):
+        logging.info('got window focus event')
         if args.ignore_float and (event.container.floating == "user_on"
                                   or event.container.floating == "auto_on"):
+            logging.info('not handling this floating window')
             return
-        if UPDATE_DELAY != 0.0:
-            if self.focus_timer is not None:
-                self.focus_timer.cancel()
-            self.focus_timer = threading.Timer(UPDATE_DELAY, self.update_windowlist,
-                                               [event.container.id])
-            self.focus_timer.start()
-        else:
-            self.update_windowlist(event.container.id)
 
-    def launch_i3(self):
-        self.i3.main()
+        if self.update_task is not None:
+            self.update_task.cancel()
 
-    def launch_server(self):
-        selector = selectors.DefaultSelector()
+        logging.info('scheduling task to update window list')
+        self.update_task = asyncio.create_task(self.update_window_list(event.container.id))
 
-        def accept(sock):
-            conn, addr = sock.accept()
-            selector.register(conn, selectors.EVENT_READ, read)
-
-        def read(conn):
-            data = conn.recv(1024)
+    async def run(self):
+        async def handle_switch(reader, writer):
+            data = await reader.read(1024)
+            logging.info('received data: {}'.format(data))
             if data == b'switch':
-                with self.window_list_lock:
-                    windows = self.get_valid_windows()
-                    for window_id in self.window_list[self.window_index:]:
-                        if window_id not in windows:
-                            self.window_list.remove(window_id)
+                logging.info('switching window')
+                windows = await self.get_valid_windows()
+                logging.info('valid windows = {}'.format(windows))
+                for window_id in self.window_list[self.window_index:]:
+                    if window_id not in windows:
+                        self.window_list.remove(window_id)
+                    else:
+                        if self.window_index < (len(self.window_list) - 1):
+                            self.window_index += 1
                         else:
-                            if self.window_index < (len(self.window_list) - 1):
-                                self.window_index += 1
-                            else:
-                                self.window_index = 0
-                            self.i3.command('[con_id=%s] focus' % window_id)
-                            break
-            elif not data:
-                selector.unregister(conn)
-                conn.close()
+                            self.window_index = 0
+                        logging.info('focusing window id={}'.format(window_id))
+                        await self.i3.command('[con_id={}] focus'.format(window_id))
+                        break
 
-        selector.register(self.listening_socket, selectors.EVENT_READ, accept)
+        server = await asyncio.start_unix_server(handle_switch, SOCKET_FILE)
+        await server.serve_forever()
 
-        while True:
-            for key, event in selector.select():
-                callback = key.data
-                callback(key.fileobj)
 
-    def run(self):
-        t_i3 = threading.Thread(target=self.launch_i3)
-        t_server = threading.Thread(target=self.launch_server)
-        for t in (t_i3, t_server):
-            t.start()
+async def send_switch():
+    reader, writer = await asyncio.open_unix_connection(SOCKET_FILE)
+
+    logging.info('sending switch message')
+    writer.write('switch'.encode())
+    await writer.drain()
+
+    logging.info('closing the connection')
+    writer.close()
+    await writer.wait_closed()
+
+
+async def run_server():
+    focus_watcher = FocusWatcher()
+    await focus_watcher.connect()
+    await focus_watcher.run()
 
 
 if __name__ == '__main__':
@@ -166,7 +170,11 @@ if __name__ == '__main__':
                         action='store_true',
                         help='Switch to the previous window',
                         default=False)
+    parser.add_argument('--debug', dest='debug', action='store_true', help='Turn on debug logging')
     args = parser.parse_args()
+
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG)
 
     if args.history:
         MAX_WIN_HISTORY = args.history
@@ -175,11 +183,7 @@ if __name__ == '__main__':
     else:
         if args.delay == 0.0:
             UPDATE_DELAY = args.delay
-    if not args.switch:
-        focus_watcher = FocusWatcher()
-        focus_watcher.run()
+    if args.switch:
+        asyncio.run(send_switch())
     else:
-        client_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        client_socket.connect(SOCKET_FILE)
-        client_socket.send(b'switch')
-        client_socket.close()
+        asyncio.run(run_server())
