@@ -11,6 +11,7 @@ from Xlib import display, X
 from Xlib.error import DisplayError
 import struct
 import socket
+import logging
 
 import asyncio
 from asyncio.subprocess import PIPE
@@ -22,6 +23,7 @@ _timeout = 0.5  # in seconds
 _struct_header = f'={len(_MAGIC)}sII'
 _struct_header_size = struct.calcsize(_struct_header)
 
+logger = logging.getLogger(__name__)
 
 class _AIOPubSub(PubSub):
     def queue_handler(self, handler, data=None):
@@ -173,16 +175,23 @@ async def _find_socket_path() -> Optional[str]:
     def exists(path):
         if not path:
             return False
-        return os.path.exists(path)
+        result = os.path.exists(path)
+        if not result:
+            logger.info('file not found: %s', socket_path)
+        return result
 
     # first try environment variables
     socket_path = os.environ.get('I3SOCK')
-    if exists(socket_path):
-        return socket_path
+    if socket_path:
+        logger.info('got socket path from I3SOCK env variable: %s', socket_path)
+        if exists(socket_path):
+            return socket_path
 
     socket_path = os.environ.get('SWAYSOCK')
-    if exists(socket_path):
-        return socket_path
+    if socket_path:
+        logger.info('got socket path from SWAYSOCK env variable: %s', socket_path)
+        if exists(socket_path):
+            return socket_path
 
     # next try the root window property
     try:
@@ -192,11 +201,14 @@ async def _find_socket_path() -> Optional[str]:
         prop = root.get_full_property(atom, X.AnyPropertyType)
         if prop and prop.value:
             socket_path = prop.value.decode()
-    except DisplayError:
+    except DisplayError as e:
+        logger.info('could not get i3 socket path from root atom', exc_info=e)
         pass
 
-    if exists(socket_path):
-        return socket_path
+    if socket_path:
+        logger.info('got socket path from root atom: %s', socket_path)
+        if exists(socket_path):
+            return socket_path
 
     # finally try the binaries
     for binary in ('i3', 'sway'):
@@ -205,17 +217,23 @@ async def _find_socket_path() -> Optional[str]:
                                                            '--get-socketpath',
                                                            stdout=PIPE,
                                                            stderr=PIPE)
-        except Exception:
+
+            stdout, stderr = await process.communicate()
+
+            if process.returncode == 0 and stdout:
+                socket_path = stdout.decode().strip()
+                if socket_path:
+                    logger.info('got socket path from `%s` binary: %s', binary, socket_path)
+                    if exists(socket_path):
+                        return socket_path
+            else:
+                logger.info('could not get socket path from `%s` binary: returncode=%d, stdout=%s, stderr=%s', process.returncode, stdout, stderr)
+
+        except Exception as e:
+            logger.info('could not get i3 socket path from `%s` binary', binary, exc_info=e)
             continue
 
-        stdout, stderr = await process.communicate()
-
-        if process.returncode == 0 and stdout:
-            socket_path = stdout.decode().strip()
-            if exists(socket_path):
-                return socket_path
-
-    # could not find the socket path
+    logger.info('could not find i3 socket path')
     return None
 
 
@@ -298,6 +316,7 @@ class Connection:
             self._loop.remove_reader(self._sub_fd)
 
             if self._auto_reconnect:
+                logger.info('could not read message, reconnecting', exc_info=error)
                 asyncio.ensure_future(self._reconnect())
             else:
                 if error is not None:
@@ -309,7 +328,8 @@ class Connection:
 
         magic, message_length, event_type = _unpack_header(buf)
         assert magic == _MAGIC
-        message = json.loads(self._sub_socket.recv(message_length))
+        raw_message = self._sub_socket.recv(message_length)
+        message = json.loads(raw_message)
 
         # events have the highest bit set
         if not event_type & (1 << 31):
@@ -317,6 +337,7 @@ class Connection:
             return
 
         event_type = EventType(1 << (event_type & 0x7f))
+        logger.info('got message on subscription socket: type=%s, message=%s', event_type, raw_message)
 
         if event_type == EventType.WORKSPACE:
             event = WorkspaceEvent(message, self, _Con=Con)
@@ -349,6 +370,9 @@ class Connection:
         :returns: The ``Connection``.
         :rtype: :class:`~.Connection`
         """
+        if self._socket_path:
+            logger.info('using user provided socket path: {}', self._socket_path)
+
         if not self._socket_path:
             self._socket_path = await _find_socket_path()
 
@@ -402,6 +426,8 @@ class Connection:
         if message_type is MessageType.SUBSCRIBE:
             raise Exception('cannot subscribe on the command socket')
 
+        logger.info('sending message: type=%s, payload=%s', message_type, payload)
+
         for tries in range(0, 5):
             try:
                 await self._loop.sock_sendall(self._cmd_socket, _pack(message_type, payload))
@@ -411,6 +437,7 @@ class Connection:
                 if not self._auto_reconnect:
                     raise e
 
+                logger.info('got connection error, attempting to reconnect', exc_info=e)
                 await self._reconnect()
 
         if not buf:
@@ -427,6 +454,7 @@ class Connection:
                 asyncio.ensure_future(self._reconnect())
             raise e
 
+        logger.info('got message reply: %s', message)
         return message
 
     async def subscribe(self, events: Union[List[Event], List[str]], force: bool = False):
@@ -458,14 +486,20 @@ class Connection:
                     f'only nondetailed events are subscribable (use Event.{correct_event})')
             subscriptions.add(e)
 
+        logger.info('subscribing to events: %s', subscriptions)
+        logger.info('current subscriptions: %s', self._subscriptions)
+
         if not force:
             subscriptions = subscriptions.difference(self._subscriptions)
             if not subscriptions:
+                logger.info('no new subscriptions')
                 return
 
         self._subscriptions.update(subscriptions)
 
         payload = json.dumps([s.value for s in subscriptions])
+
+        logger.info('sending SUBSCRIBE message with payload: %s', payload)
 
         await self._loop.sock_sendall(self._sub_socket, _pack(MessageType.SUBSCRIBE, payload))
 
@@ -488,6 +522,8 @@ class Connection:
         else:
             base_event = event
 
+        logger.info('adding event handler: event=%s, handler=%s', event, handler)
+
         self._pubsub.subscribe(event, handler)
         asyncio.ensure_future(self.subscribe([base_event]))
 
@@ -498,6 +534,7 @@ class Connection:
             :func:`on()`.
         :type handler: :class:`Callable`
         """
+        logger.info('removing event handler: handler=%s', handler)
         self._pubsub.unsubscribe(handler)
 
     async def command(self, cmd: str) -> List[CommandReply]:
@@ -648,6 +685,7 @@ class Connection:
 
     def main_quit(self, _error=None):
         """Quits the running main loop for this connection."""
+        logger.info('quitting the main loop', exc_info=_error)
         if self._main_future is not None:
             if _error:
                 self._main_future.set_exception(_error)
@@ -660,5 +698,6 @@ class Connection:
         """Starts the main loop for this connection to start handling events."""
         if self._main_future is not None:
             raise Exception('the main loop is already running')
+        logger.info('starting the main loop')
         self._main_future = self._loop.create_future()
         await self._main_future
