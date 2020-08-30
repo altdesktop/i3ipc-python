@@ -109,6 +109,17 @@ Support for asyncio is included in the ``i3ipc.aio`` package. The interface is s
 
     asyncio.get_event_loop().run_until_complete(main())
 
+Debug Logging
+-------------
+
+i3ipc-python uses the standard logging module under the `i3ipc` namespace.
+
+.. code:: python3
+
+    import logging
+    logging.basicConfig(level=logging.DEBUG)
+
+
 Contributing
 ------------
 
