@@ -9,6 +9,7 @@ from itertools import cycle
 from subprocess import check_output
 import i3ipc
 
+
 def get_windows_on_ws(conn):
     return filter(lambda x: x.window, conn.get_tree().find_focused().workspace().descendents())
 
@@ -46,11 +47,11 @@ def main(args):
 
     workspace = workspace_by_name(conn, args.workspace)  # Find workspace.
     if workspace is None:
-        print("Workspace %s not found, making it."%args.workspace)
+        print("Workspace %s not found, making it." % args.workspace)
         conn.command("workspace " + args.workspace)
 
     else:
-        windows =  list(workspace.leaves())  # Find windows in there.
+        windows = list(workspace.leaves())  # Find windows in there.
         if args.filter == 'visible':
             windows = filter(window_is_visible, windows)
         elif args.filter != 'none':
@@ -78,7 +79,7 @@ def main(args):
             print("Focussing %d" % window.window)
             conn.command('[id="%d"] focus' % window.window)
         else:
-            print("Did not find window(%s) going to workspace anyway."%args.select)
+            print("Did not find window(%s) going to workspace anyway." % args.select)
             conn.command("workspace " + args.workspace)
 
     if args.mode != 'no':
@@ -89,9 +90,8 @@ if __name__ == '__main__':
 
     from argparse import ArgumentParser
 
-    parser = ArgumentParser(
-        prog='nth_window_in_workspace.py',
-        description="""Program to:
+    parser = ArgumentParser(prog='nth_window_in_workspace.py',
+                            description="""Program to:
 * Select the nth window from a workspace. (i.e. for mapping each window to a key)
 * Go to workspace, or cycle through the windows of the workspace.
   (improvement on just going to the workspace)""")
