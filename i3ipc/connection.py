@@ -16,6 +16,11 @@ from threading import Timer, Lock
 import time
 import Xlib
 import Xlib.display
+from Xlib.error import DisplayError
+import logging
+from subprocess import run, PIPE
+
+logger = logging.getLogger(__name__)
 
 
 class Connection:
@@ -49,20 +54,11 @@ class Connection:
     _struct_header_size = struct.calcsize(_struct_header)
 
     def __init__(self, socket_path=None, auto_reconnect=False):
-        if not socket_path:
-            socket_path = os.environ.get("I3SOCK")
 
-        if not socket_path:
-            socket_path = os.environ.get("SWAYSOCK")
-
-        if not socket_path:
-            try:
-                disp = Xlib.display.Display()
-                root = disp.screen().root
-                i3atom = disp.intern_atom("I3_SOCKET_PATH")
-                socket_path = root.get_full_property(i3atom, Xlib.X.AnyPropertyType).value.decode()
-            except Exception:
-                pass
+        if socket_path:
+            logger.info('using user provided socket path: %s', socket_path)
+        else:
+            socket_path = self._find_socket_path()
 
         if not socket_path:
             raise Exception('Failed to retrieve the i3 or sway IPC socket path')
@@ -78,6 +74,50 @@ class Connection:
         self._auto_reconnect = auto_reconnect
         self._quitting = False
         self._synchronizer = None
+
+    def _find_socket_path(self):
+        socket_path = os.environ.get("I3SOCK")
+        if socket_path:
+            logger.info('got socket path from I3SOCK env variable: %s', socket_path)
+            return socket_path
+
+        socket_path = os.environ.get("SWAYSOCK")
+        if socket_path:
+            logger.info('got socket path from SWAYSOCK env variable: %s', socket_path)
+            return socket_path
+
+        try:
+            disp = Xlib.display.Display()
+            root = disp.screen().root
+            i3atom = disp.intern_atom("I3_SOCKET_PATH")
+            prop = root.get_full_property(i3atom, Xlib.X.AnyPropertyType)
+            if prop and prop.value:
+                socket_path = prop.value.decode()
+        except DisplayError as e:
+            logger.info('could not get i3 socket path from root atom', exc_info=e)
+
+        if socket_path:
+            logger.info('got socket path from root atom: %s', socket_path)
+            return socket_path
+
+        for binary in ('i3', 'sway'):
+            try:
+                process = run([binary, '--get-socketpath'], stdout=PIPE, stderr=PIPE)
+                if process.returncode == 0 and process.stdout:
+                    socket_path = process.stdout.decode().strip()
+                    logger.info('got socket path from `%s` binary: %s', binary, socket_path)
+                    return socket_path
+                else:
+                    logger.info(
+                        'could not get socket path from `%s` binary: returncode=%d, stdout=%s, stderr=%s',
+                        process.returncode, process.stdout, process.stderr)
+
+            except Exception as e:
+                logger.info('could not get i3 socket path from `%s` binary', binary, exc_info=e)
+                continue
+
+        logger.info('could not find i3 socket path')
+        return None
 
     def _sync(self):
         if self._synchronizer is None:
@@ -129,19 +169,23 @@ class Connection:
         data = sock.recv(14)
 
         if len(data) == 0:
-            # EOF
+            logger.info('got EOF from ipc socket')
             return '', 0
 
         msg_magic, msg_length, msg_type = self._unpack_header(data)
+        logger.info('reading ipc message: type=%s, length=%s', msg_type, msg_length)
         msg_size = self._struct_header_size + msg_length
         while len(data) < msg_size:
             data += sock.recv(msg_length)
-        return self._unpack(data), msg_type
+        payload = self._unpack(data)
+        logger.info('message payload: %s', payload)
+        return payload, msg_type
 
     def _ipc_send(self, sock, message_type, payload):
         """Send and receive a message from the ipc.  NOTE: this is not thread
         safe
         """
+        logger.info('sending to ipc socket: type=%s, payload=%s', message_type, payload)
         sock.sendall(self._pack(message_type, payload))
         data, msg_type = self._ipc_recv(sock)
         return data
@@ -165,8 +209,10 @@ class Connection:
             if not self.auto_reconnect:
                 raise e
 
+            logger.info('got a connection error, reconnecting', exc_info=e)
             # XXX: can the socket path change between restarts?
             if not self._wait_for_socket():
+                logger.info('could not reconnect')
                 raise e
 
             self._cmd_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -427,10 +473,11 @@ class Connection:
         if self._sub_socket is None:
             return True
 
+        logger.info('getting ipc event from subscription socket')
         data, msg_type = self._ipc_recv(self._sub_socket)
 
         if len(data) == 0:
-            # EOF
+            logger.info('subscription socket got EOF, shutting down')
             self._pubsub.emit('ipc_shutdown', None)
             return True
 
@@ -486,6 +533,8 @@ class Connection:
         self._quitting = False
         timer = None
 
+        logger.info('starting the main loop')
+
         while True:
             try:
                 self._event_socket_setup()
@@ -515,5 +564,6 @@ class Connection:
 
     def main_quit(self):
         """Quits the running main loop for this connection."""
+        logger.info('shutting down the main loop')
         self._quitting = True
         self._event_socket_teardown()
