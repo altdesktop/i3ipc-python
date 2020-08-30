@@ -25,6 +25,7 @@ _struct_header_size = struct.calcsize(_struct_header)
 
 logger = logging.getLogger(__name__)
 
+
 class _AIOPubSub(PubSub):
     def queue_handler(self, handler, data=None):
         conn = self.conn
@@ -203,7 +204,6 @@ async def _find_socket_path() -> Optional[str]:
             socket_path = prop.value.decode()
     except DisplayError as e:
         logger.info('could not get i3 socket path from root atom', exc_info=e)
-        pass
 
     if socket_path:
         logger.info('got socket path from root atom: %s', socket_path)
@@ -222,12 +222,13 @@ async def _find_socket_path() -> Optional[str]:
 
             if process.returncode == 0 and stdout:
                 socket_path = stdout.decode().strip()
-                if socket_path:
-                    logger.info('got socket path from `%s` binary: %s', binary, socket_path)
-                    if exists(socket_path):
-                        return socket_path
+                logger.info('got socket path from `%s` binary: %s', binary, socket_path)
+                if exists(socket_path):
+                    return socket_path
             else:
-                logger.info('could not get socket path from `%s` binary: returncode=%d, stdout=%s, stderr=%s', process.returncode, stdout, stderr)
+                logger.info(
+                    'could not get socket path from `%s` binary: returncode=%d, stdout=%s, stderr=%s',
+                    process.returncode, stdout, stderr)
 
         except Exception as e:
             logger.info('could not get i3 socket path from `%s` binary', binary, exc_info=e)
@@ -337,7 +338,8 @@ class Connection:
             return
 
         event_type = EventType(1 << (event_type & 0x7f))
-        logger.info('got message on subscription socket: type=%s, message=%s', event_type, raw_message)
+        logger.info('got message on subscription socket: type=%s, message=%s', event_type,
+                    raw_message)
 
         if event_type == EventType.WORKSPACE:
             event = WorkspaceEvent(message, self, _Con=Con)
