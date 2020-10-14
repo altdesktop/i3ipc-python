@@ -68,8 +68,8 @@ class Con(con.Con):
     :vartype border: str
     :ivar current_border_width:
     :vartype current_border_with: int
-    :ivar floating:
-    :vartype floating: bool
+    :ivar floating: Either "auto_off", "auto_on", "user_off", or "user_on".
+    :vartype floating: str
     :ivar focus: The focus stack for this container as a list of container ids.
         The "focused inactive" is at the top of the list which is the container
         that would be focused if this container recieves focus.

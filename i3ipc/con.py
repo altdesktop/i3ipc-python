@@ -15,8 +15,8 @@ class Con:
     :vartype border: str
     :ivar current_border_width:
     :vartype current_border_with: int
-    :ivar floating:
-    :vartype floating: bool
+    :ivar floating: Either "auto_off", "auto_on", "user_off", or "user_on".
+    :vartype floating: str
     :ivar focus: The focus stack for this container as a list of container ids.
         The "focused inactive" is at the top of the list which is the container
         that would be focused if this container recieves focus.
@@ -171,6 +171,16 @@ class Con:
             yield con
             queue.extend(con.nodes)
             queue.extend(con.floating_nodes)
+
+    def is_floating(self) -> bool:
+        """A boolean value of whether this is a floating node.
+
+        :returns: Whether this is a floating node
+        :rtype: bool
+        """
+        if self.floating in ['user_on', 'auto_on']:
+            return True
+        return False
 
     def root(self) -> 'Con':
         """Gets the root container.
