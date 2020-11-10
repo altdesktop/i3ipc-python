@@ -60,3 +60,20 @@ class TestWindow(IpcTest):
         assert len(events)
         for e in events:
             assert e.change == 'focus'
+
+    def test_resize(self, i3):
+        self.fresh_workspace()
+        self.open_window()
+        i3.command('floating enable')
+
+        self.command_checked('resize set height 200 px; resize set width 250 px')
+        con = i3.get_tree().find_focused()
+
+        self.command_checked('resize set width 300 px; resize set height 350 px')
+        con2 = i3.get_tree().find_focused()
+
+        def height_width(c):
+            return (c.rect.height + c.deco_rect.height, c.rect.width)
+
+        assert height_width(con) == (200, 250)
+        assert height_width(con2) == (350, 300)

@@ -57,10 +57,11 @@ class IpcTest:
         result = await i3.command(cmd)
 
         assert type(result) is list
+        assert result
 
         for r in result:
             assert type(r) is CommandReply
-            assert r.success is True
+            assert r.success is True, r.error
 
         return result
 

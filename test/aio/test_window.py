@@ -72,3 +72,31 @@ class TestWindow(IpcTest):
         await i3.command('mark foo')
         tree = await i3.get_tree()
         assert 'foo' in tree.find_focused().marks
+
+    @pytest.mark.asyncio
+    async def test_resize(self, i3):
+
+        ws1 = await self.fresh_workspace()
+        win = self.open_window()
+        await self.command_checked(f'[id="{win}"] floating enable')
+
+        # XXX: uncomment and it will fail
+        # ws2 = await self.fresh_workspace()
+
+        def height_width(c):
+            return c.rect.height + c.deco_rect.height, c.rect.width
+
+        async def do_resize(h, w):
+            result = await self.command_checked(f'[id="{win}"] resize set {w}px {h}px')
+
+        size1 = 200, 250
+        size2 = 350, 300
+
+        await do_resize(*size1)
+        con = (await i3.get_tree()).find_by_window(win)
+
+        await do_resize(*size2)
+        con2 = (await i3.get_tree()).find_by_window(win)
+
+        assert height_width(con) == size1
+        assert height_width(con2) == size2

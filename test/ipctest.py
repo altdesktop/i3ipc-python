@@ -1,6 +1,7 @@
 from subprocess import Popen
 import pytest
 import i3ipc
+from i3ipc import CommandReply
 import math
 from random import random
 import time
@@ -58,3 +59,17 @@ class IpcTest:
             if not any(w for w in workspaces if w.name == new_name):
                 i3.command('workspace %s' % new_name)
                 return new_name
+
+    def command_checked(self, cmd):
+        i3 = IpcTest.i3_conn
+        assert i3
+
+        result = i3.command(cmd)
+
+        assert type(result) is list
+
+        for r in result:
+            assert type(r) is CommandReply
+            assert r.success is True
+
+        return result

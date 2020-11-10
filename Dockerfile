@@ -31,4 +31,5 @@ RUN git clone https://github.com/i3/i3 && \
 
 ADD . /app
 
-CMD ["./run-tests.py"]
+#CMD ["bash", "-c", "./run-tests.py ./test/aio/test_window.py"]
+CMD ["bash", "-c", "./run-tests.py"]
