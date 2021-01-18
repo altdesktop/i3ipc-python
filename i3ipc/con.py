@@ -41,6 +41,8 @@ class Con:
     :vartype percent: float
     :ivar scratchpad_state:
     :vartype scratchpad_state: str
+    :ivar shell: (sway only)
+    :vartype shell: str
     :ivar sticky:
     :vartype sticky: bool
     :ivar type:
@@ -92,7 +94,7 @@ class Con:
         ipc_properties = [
             'border', 'current_border_width', 'floating', 'focus', 'focused', 'fullscreen_mode',
             'id', 'layout', 'marks', 'name', 'num', 'orientation', 'percent', 'scratchpad_state',
-            'sticky', 'type', 'urgent', 'window', 'pid', 'app_id', 'representation'
+            'shell', 'sticky', 'type', 'urgent', 'window', 'pid', 'app_id', 'representation'
         ]
         for attr in ipc_properties:
             if attr in data:
