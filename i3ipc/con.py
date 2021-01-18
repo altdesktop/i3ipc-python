@@ -360,14 +360,17 @@ class Con:
         return [c for c in self if c.window_title and re.search(pattern, c.window_title)]
 
     def find_classed(self, pattern: str) -> List['Con']:
-        """Finds all the containers under this node with a window class that
-        matches the given regex pattern.
+        """Finds all the containers under this node with a window class,
+        or app_id that matches the given regex pattern.
 
-        :returns: A list of containers that have a window class that matches the
-            pattern.
+        :returns: A list of containers that have a window class, or
+        app_id that matches the pattern.
         :rtype: list(:class:`Con`)
         """
-        return [c for c in self if c.window_class and re.search(pattern, c.window_class)]
+        x11_windows = [c for c in self if c.window_class and re.search(pattern, c.window_class)]
+        wayland_windows = [c for c in self if c.app_id and re.search(pattern, c.app_id)]
+
+        return x11_windows + wayland_windows
 
     def find_instanced(self, pattern: str) -> List['Con']:
         """Finds all the containers under this node with a window instance that
