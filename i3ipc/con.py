@@ -94,7 +94,8 @@ class Con:
         ipc_properties = [
             'border', 'current_border_width', 'floating', 'focus', 'focused', 'fullscreen_mode',
             'id', 'layout', 'marks', 'name', 'num', 'orientation', 'percent', 'scratchpad_state',
-            'shell', 'sticky', 'type', 'urgent', 'window', 'pid', 'app_id', 'representation', 'visible'
+            'shell', 'sticky', 'type', 'urgent', 'window', 'pid', 'app_id', 'representation',
+            'visible'
         ]
         for attr in ipc_properties:
             if attr in data:
