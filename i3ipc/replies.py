@@ -13,6 +13,7 @@ class _BaseReply:
 
     @classmethod
     def _parse_list(cls, data):
+        #print(data, file=sys.stderr)
         return [cls(d) for d in data]
 
 
@@ -179,17 +180,19 @@ class BarConfigReply(_BaseReply):
     :ivar colors: Contains key/value pairs of colors. Each value is a color
         code in hex, formatted #rrggbb (like in HTML).
     :vartype colors: dict
-    :ivar tray_padding:
+    :ivar tray_padding: The tray is shown on the right-hand side of the bar. By default, a padding of 2 pixels is used for the upper, lower and right-hand side of the tray area and between the individual icons.
     :vartype tray_padding: int
-    :ivar hidden_state:
+    :ivar hidden_state: In order to control whether i3bar is hidden or shown in hide mode, there exists the hidden_state option, which has no effect in dock mode or invisible mode. It indicates the current hidden_state of the bar: (1) The bar acts like in normal hide mode, it is hidden and is only unhidden in case of urgency hints or by pressing the modifier key (hide state), or (2) it is drawn on top of the currently visible workspace (show state).
     :vartype hidden_state: str
-    :ivar modifier:
+    :ivar modifier: The modifier used to switch between hide/show mode.
     :vartype modifier: int
+    :ivar separator_symbol: Specifies a custom symbol to be used for the separator as opposed to the vertical, one pixel thick separator.
+    :vartype separator_symbol: str
     :ivar workspace_min_width:
     :vartype workspace_min_width: int
-    :ivar strip_workspace_numbers:
+    :ivar strip_workspace_numbers: When strip_workspace_numbers is set to yes, any workspace that has a name of the form "[n][:][NAME]" will display only the name. You could use this, for instance, to display Roman numerals rather than digits by naming your workspaces to "2:I", "2:II", "3:III", "4:IV", ...
     :vartype strip_workspace_numbers: bool
-    :ivar strip_workspace_name:
+    :ivar strip_workspace_name: When strip_workspace_name is set to yes, any workspace that has a name of the form "[n][:][NAME]" will display only the number.
     :vartype strip_workspace_name: bool
     :ivar gaps: (sway only)
     :vartype gaps: :class:`BarConfigGaps`
@@ -216,6 +219,7 @@ class BarConfigReply(_BaseReply):
         ('strip_workspace_numbers', bool),
         ('strip_workspace_name', bool),
         ('binding_mode_indicator', bool),
+        ('separator_symbol', str),
         ('verbose', bool),
         ('colors', dict),
         ('gaps', BarConfigGaps),
