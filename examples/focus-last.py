@@ -15,7 +15,6 @@ MAX_WIN_HISTORY = 15
 
 
 class FocusWatcher:
-    global focus_watcher
     def __init__(self):
         self.alive = True 
         self.i3 = i3ipc.Connection()
@@ -77,10 +76,10 @@ class FocusWatcher:
                 callback = key.data
                 callback(key.fileobj)
                 
-        self.i3.main_quit() 
+        self.i3.main_quit()
         focus_watcher = FocusWatcher()
         focus_watcher.run()
-        del(self) 
+        del(self)
 
     def run(self):
         t_i3 = threading.Thread(target=self.launch_i3)
