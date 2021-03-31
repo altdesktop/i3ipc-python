@@ -16,6 +16,7 @@ MAX_WIN_HISTORY = 15
 
 class FocusWatcher:
     def __init__(self):
+        self.alive = True 
         self.i3 = i3ipc.Connection()
         self.i3.on('window::focus', self.on_window_focus)
         # Make a directory with permissions that restrict access to
@@ -52,24 +53,33 @@ class FocusWatcher:
             data = conn.recv(1024)
             if data == b'switch':
                 with self.window_list_lock:
-                    tree = self.i3.get_tree()
-                    windows = set(w.id for w in tree.leaves())
-                    for window_id in self.window_list[1:]:
-                        if window_id not in windows:
-                            self.window_list.remove(window_id)
-                        else:
-                            self.i3.command('[con_id=%s] focus' % window_id)
-                            break
+                    try: 
+                        tree = self.i3.get_tree()
+                        windows = set(w.id for w in tree.leaves())
+                        for window_id in self.window_list[1:]:
+                            if window_id not in windows:
+                                self.window_list.remove(window_id)
+                            else:
+                                self.i3.command('[con_id=%s] focus' % window_id)
+                                break
+                    except BrokenPipeError:
+                        print("Caught broken pipe, restarting...")
+                        self.alive = False 
             elif not data:
                 selector.unregister(conn)
                 conn.close()
 
         selector.register(self.listening_socket, selectors.EVENT_READ, accept)
 
-        while True:
+        while self.alive:
             for key, event in selector.select():
                 callback = key.data
                 callback(key.fileobj)
+                
+        self.i3.main_quit()
+        focus_watcher = FocusWatcher()
+        focus_watcher.run()
+        del(self)
 
     def run(self):
         t_i3 = threading.Thread(target=self.launch_i3)
