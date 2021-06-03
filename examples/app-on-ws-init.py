@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-# https://faq.i3wm.org/question/3699/how-can-i-open-an-application-when-i-open-a-certain-workspace-for-the-first-time/
-
 from argparse import ArgumentParser
 import i3ipc
 
