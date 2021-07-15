@@ -287,7 +287,7 @@ class Connection:
         return self._socket_path
 
     @property
-    def auto_reconect(self) -> bool:
+    def auto_reconnect(self) -> bool:
         """Whether this ``Connection`` will attempt to reconnect when the
         connection to the socket is broken.
 
