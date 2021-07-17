@@ -22,8 +22,17 @@ _chunk_size = 1024  # in bytes
 _timeout = 0.5  # in seconds
 _struct_header = f'={len(_MAGIC)}sII'
 _struct_header_size = struct.calcsize(_struct_header)
+_running_futures = set()
 
 logger = logging.getLogger(__name__)
+
+
+def ensure_future(obj):
+    """Wrapper around futures keeping a reference to them."""
+    future = asyncio.ensure_future(obj)
+    _running_futures.add(future)
+    future.add_done_callback(lambda f: _running_futures.remove(f))
+    return future
 
 
 class _AIOPubSub(PubSub):
@@ -45,7 +54,7 @@ class _AIOPubSub(PubSub):
             except Exception as e:
                 conn.main_quit(_error=e)
 
-        asyncio.ensure_future(handler_coroutine())
+        ensure_future(handler_coroutine())
 
     def emit(self, event, data):
         detail = ''
@@ -318,7 +327,7 @@ class Connection:
 
             if self._auto_reconnect:
                 logger.info('could not read message, reconnecting', exc_info=error)
-                asyncio.ensure_future(self._reconnect())
+                ensure_future(self._reconnect())
             else:
                 if error is not None:
                     raise error
@@ -420,7 +429,7 @@ class Connection:
 
             self._reconnect_future = None
 
-        asyncio.ensure_future(do_reconnect())
+        ensure_future(do_reconnect())
 
         return self._reconnect_future
 
@@ -453,7 +462,7 @@ class Connection:
             message = await self._loop.sock_recv(self._cmd_socket, message_length)
         except ConnectionError as e:
             if self._auto_reconnect:
-                asyncio.ensure_future(self._reconnect())
+                ensure_future(self._reconnect())
             raise e
 
         logger.info('got message reply: %s', message)
@@ -527,7 +536,7 @@ class Connection:
         logger.info('adding event handler: event=%s, handler=%s', event, handler)
 
         self._pubsub.subscribe(event, handler)
-        asyncio.ensure_future(self.subscribe([base_event]))
+        ensure_future(self.subscribe([base_event]))
 
     def off(self, handler: Callable[['Connection', IpcBaseEvent], None]):
         """Unsubscribe the handler from being called on ipc events.
