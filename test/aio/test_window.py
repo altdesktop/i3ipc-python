@@ -66,6 +66,35 @@ class TestWindow(IpcTest):
             assert e.change == 'focus'
 
     @pytest.mark.asyncio
+    async def test_detailed_window_event_decorator(self, i3):
+        events = []
+
+        async def generate_events():
+            win1 = self.open_window()
+            win2 = self.open_window()
+            await i3.command(f'[id={win1}] kill; [id={win2}] kill')
+            # TODO sync protocol
+            await asyncio.sleep(0.01)
+            i3.main_quit()
+
+        @i3.on(Event.WINDOW_NEW)
+        @i3.on(Event.WINDOW_FOCUS)
+        async def on_window(i3, e):
+            nonlocal events
+            events.append(e)
+
+        asyncio.ensure_future(generate_events())
+        await i3.main()
+
+        assert len(events)
+        for e in events:
+            assert e.change in ['new', 'focus']
+        assert len([e for e in events if e.change == 'new'])
+        assert len([e for e in events if e.change == 'focus'])
+
+        i3.off(on_window)
+
+    @pytest.mark.asyncio
     async def test_marks(self, i3):
         await self.fresh_workspace()
         self.open_window()
