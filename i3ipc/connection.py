@@ -406,7 +406,17 @@ class Connection:
         """
         self._pubsub.unsubscribe(handler)
 
-    def on(self, event: Union[Event, str], handler: Callable[['Connection', IpcBaseEvent], None]):
+    def on(self, event: Union[Event, str], handler: Callable[['Connection', IpcBaseEvent], None] = None):
+        def on_wrapped(handler):
+            self._on(event, handler)
+            return handler
+
+        if handler:
+            return on_wrapped(handler)
+        else:
+            return on_wrapped
+
+    def _on(self, event: Union[Event, str], handler: Callable[['Connection', IpcBaseEvent], None]):
         """Subscribe to the event and call the handler when it is emitted by
         the i3 ipc.
 
