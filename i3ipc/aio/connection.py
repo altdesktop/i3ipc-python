@@ -459,7 +459,16 @@ class Connection:
         assert magic == _MAGIC
 
         try:
-            message = await self._loop.sock_recv(self._cmd_socket, message_length)
+            message = b''
+            remaining_length = message_length
+            while remaining_length:
+                buf = await self._loop.sock_recv(self._cmd_socket, remaining_length)
+                if not buf:
+                    logger.error('premature ending while reading message (%s bytes remaining)',
+                                 remaining_length)
+                    break
+                message += buf
+                remaining_length -= len(buf)
         except ConnectionError as e:
             if self._auto_reconnect:
                 ensure_future(self._reconnect())
