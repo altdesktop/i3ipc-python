@@ -433,7 +433,7 @@ class Connection:
 
         return self._reconnect_future
 
-    async def _message(self, message_type: MessageType, payload: str = '') -> bytes:
+    async def _message(self, message_type: MessageType, payload: str = '') -> bytearray:
         if message_type is MessageType.SUBSCRIBE:
             raise Exception('cannot subscribe on the command socket')
 
@@ -452,14 +452,23 @@ class Connection:
                 await self._reconnect()
 
         if not buf:
-            return b''
+            return bytearray()
 
         magic, message_length, reply_type = _unpack_header(buf)
         assert reply_type == message_type.value
         assert magic == _MAGIC
 
         try:
-            message = await self._loop.sock_recv(self._cmd_socket, message_length)
+            message = bytearray()
+            remaining_length = message_length
+            while remaining_length:
+                buf = await self._loop.sock_recv(self._cmd_socket, remaining_length)
+                if not buf:
+                    logger.error('premature ending while reading message (%s bytes remaining)',
+                                 remaining_length)
+                    break
+                message.extend(buf)
+                remaining_length -= len(buf)
         except ConnectionError as e:
             if self._auto_reconnect:
                 ensure_future(self._reconnect())
