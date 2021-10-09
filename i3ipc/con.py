@@ -367,7 +367,7 @@ class Con:
         or app_id that matches the given regex pattern.
 
         :returns: A list of containers that have a window class, or
-        app_id that matches the pattern.
+            app_id that matches the pattern.
         :rtype: list(:class:`Con`)
         """
         x11_windows = [c for c in self if c.window_class and re.search(pattern, c.window_class)]

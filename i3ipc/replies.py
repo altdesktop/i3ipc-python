@@ -13,7 +13,6 @@ class _BaseReply:
 
     @classmethod
     def _parse_list(cls, data):
-        #print(data, file=sys.stderr)
         return [cls(d) for d in data]
 
 

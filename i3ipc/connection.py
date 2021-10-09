@@ -406,7 +406,9 @@ class Connection:
         """
         self._pubsub.unsubscribe(handler)
 
-    def on(self, event: Union[Event, str], handler: Callable[['Connection', IpcBaseEvent], None] = None):
+    def on(self,
+           event: Union[Event, str],
+           handler: Callable[['Connection', IpcBaseEvent], None] = None):
         def on_wrapped(handler):
             self._on(event, handler)
             return handler

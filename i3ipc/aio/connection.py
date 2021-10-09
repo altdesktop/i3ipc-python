@@ -528,7 +528,9 @@ class Connection:
 
         await self._loop.sock_sendall(self._sub_socket, _pack(MessageType.SUBSCRIBE, payload))
 
-    def on(self, event: Union[Event, str], handler: Callable[['Connection', IpcBaseEvent], None] = None):
+    def on(self,
+           event: Union[Event, str],
+           handler: Callable[['Connection', IpcBaseEvent], None] = None):
         def on_wrapped(handler):
             self._on(event, handler)
             return handler
