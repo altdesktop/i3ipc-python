@@ -9,3 +9,4 @@ flake8
 sphinx
 sphinxcontrib-asyncio
 sphinxcontrib-fulltoc
+sphinx-autobuild
