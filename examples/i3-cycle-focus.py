@@ -5,33 +5,65 @@
 #     exec_always --no-startup-id i3-cycle-focus.py --history 2
 #     bindsym $mod1+Tab exec --no-startup-id i3-cycle-focus.py --switch
 
-import os
 import asyncio
 from argparse import ArgumentParser
 import logging
 
-from i3ipc.aio import Connection
-
 SOCKET_FILE = '/tmp/.i3-cycle-focus.sock'
-MAX_WIN_HISTORY = 16
+STATE_FILE = '/tmp/.i3-cycle-focus.state'
+STATE_VER = 1  # bump this whenever persisted state data structure changes
+WIN_HISTORY = 16
 UPDATE_DELAY = 2.0
 
-
-def on_shutdown(i3_conn, e):
-    os._exit(0)
+SWITCH_MSG = 'switch'.encode()
+GLOBAL_KEY = '_global_'  # for when we're tracking windows globally, not per output/ws
 
 
 class FocusWatcher:
     def __init__(self):
         self.i3 = None
-        self.window_list = {} if KEYED_CONF else []
         self.update_task = None
-        self.window_index = {} if KEYED_CONF else [1]
+        self.window_list = {}
+        self.window_index = {}
+
+    def hydrate_state(self) -> None:
+        if os.path.isfile(STATE_FILE) and os.access(STATE_FILE, os.R_OK):
+            with open(STATE_FILE, 'r') as f:
+                try:
+                    state = json.load(f)
+                except Exception:
+                    return
+
+            if type(state) == dict and state.get('ver') == STATE_VER:
+                self.window_list = state.get('window_list') or {}
+                self.window_index = state.get('window_index') or {}
+
+    def persist_state(self) -> None:
+        data = {
+            'window_list': self.window_list,
+            'window_index': self.window_index,
+            'ver': STATE_VER
+        }
+
+        with open(STATE_FILE, 'w') as f:
+            f.write(json.dumps(
+                    data,
+                    indent=4,
+                    sort_keys=True,
+                    separators=(',', ': '),
+                    ensure_ascii=False))
+
+    def on_shutdown(self, i3conn, e):
+        try:
+            if e.change == 'restart':
+                self.persist_state()
+        finally:
+            os._exit(0)
 
     async def connect(self):
         self.i3 = await Connection().connect()
         self.i3.on('window::focus', self.on_window_focus)
-        self.i3.on('shutdown', on_shutdown)
+        self.i3.on('shutdown', self.on_shutdown)
 
     async def update_window_list(self, container):
         if UPDATE_DELAY != 0.0:
@@ -39,19 +71,19 @@ class FocusWatcher:
 
         logging.info('updating window list')
 
+        key = GLOBAL_KEY
         if KEYED_CONF:
             key = (container.ipc_data['output'] if PER_OUTPUT
-                    else (await self.i3.get_tree()).find_focused().workspace().id)
-            wlist = self.window_list.get(key)
-            if wlist is None:
-                wlist = self.window_list[key] = []
+                   else str((await self.i3.get_tree()).find_focused().workspace().num))
 
+        wlist = self.window_list.get(key)
+        if wlist is None:
+            wlist = self.window_list[key] = []
             self.window_index[key] = [1]
         else:
-            wlist = self.window_list
-            self.window_index[0] = 1
+            self.window_index[key][0] = 1
 
-        window_id = container.id
+        window_id = container.window
         if window_id in wlist:
             wlist.remove(window_id)
 
@@ -64,7 +96,7 @@ class FocusWatcher:
 
     async def get_valid_windows(self, tree, focused_ws):
         if args.active_workspace or args.focused_workspace:
-            return set(w.id for w in focused_ws.leaves())
+            return set(w.window for w in focused_ws.leaves())
         elif args.visible_workspaces:
             ws_list = []
             w_set = set()
@@ -75,7 +107,7 @@ class FocusWatcher:
             for ws in tree.workspaces():
                 if str(ws.name) in ws_list:
                     for w in ws.leaves():
-                        w_set.add(w.id)
+                        w_set.add(w.window)
             return w_set
         elif args.focused_output:
             w_set = set()
@@ -83,10 +115,10 @@ class FocusWatcher:
             for ws in tree.workspaces():
                 if ws.ipc_data['output'] == focused_output:
                     for w in ws.leaves():
-                        w_set.add(w.id)
+                        w_set.add(w.window)
             return w_set
         else:
-            return set(w.id for w in tree.leaves())
+            return set(w.window for w in tree.leaves())
 
     async def on_window_focus(self, i3conn, event):
         logging.info('got window focus event')
@@ -105,19 +137,20 @@ class FocusWatcher:
         async def handle_switch(reader, writer):
             data = await reader.read(1024)
             logging.info('received data: {}'.format(data))
-            if data == b'switch':
+            if data == SWITCH_MSG:
                 logging.info('switching window')
                 tree = await self.i3.get_tree()
-                focused_ws = tree.find_focused().workspace()
+                focused_win = tree.find_focused()
+                focused_ws = focused_win.workspace()
 
-                wlist = self.window_list
-                widx = self.window_index
+                key = GLOBAL_KEY
                 if KEYED_CONF:
-                    key = focused_ws.ipc_data['output'] if PER_OUTPUT else focused_ws.id
-                    wlist = wlist.get(key)
-                    if wlist is None:
-                        return
-                    widx = widx.get(key)
+                    key = focused_ws.ipc_data['output'] if PER_OUTPUT else str(focused_ws.num)
+
+                wlist = self.window_list.get(key)
+                if wlist is None:
+                    return
+                widx = self.window_index.get(key)
 
                 windows = await self.get_valid_windows(tree, focused_ws)
                 logging.info('valid windows = {}'.format(windows))
@@ -125,13 +158,15 @@ class FocusWatcher:
                 for window_id in wlist[widx[0]:]:
                     if window_id not in windows:
                         wlist.remove(window_id)
+                    elif window_id == focused_win.window:
+                        widx[0] += 1
                     else:
-                        if widx[0] < (len(wlist) - 1):
+                        if widx[0] < min(len(wlist), WIN_HISTORY) - 1:
                             widx[0] += 1
                         else:
                             widx[0] = 0
                         logging.info('focusing window id={}'.format(window_id))
-                        await self.i3.command('[con_id={}] focus'.format(window_id))
+                        await self.i3.command('[id={}] focus'.format(window_id))
                         break
 
         server = await asyncio.start_unix_server(handle_switch, SOCKET_FILE)
@@ -142,7 +177,7 @@ async def send_switch():
     reader, writer = await asyncio.open_unix_connection(SOCKET_FILE)
 
     logging.info('sending switch message')
-    writer.write('switch'.encode())
+    writer.write(SWITCH_MSG)
     await writer.drain()
 
     logging.info('closing the connection')
@@ -152,6 +187,7 @@ async def send_switch():
 
 async def run_server():
     focus_watcher = FocusWatcher()
+    focus_watcher.hydrate_state()
     await focus_watcher.connect()
     await focus_watcher.run()
 
@@ -191,30 +227,30 @@ if __name__ == '__main__':
                         help='Ignore floating windows '
                         'when cycling and updating the focus history')
     mutex_group.add_argument('--visible-workspaces',
-                        dest='visible_workspaces',
-                        action='store_true',
-                        help='Include windows on visible '
-                        'workspaces only when cycling the focus history')
+                             dest='visible_workspaces',
+                             action='store_true',
+                             help='Include windows on visible '
+                             'workspaces only when cycling the focus history')
     mutex_group.add_argument('--active-workspace',
-                        dest='active_workspace',
-                        action='store_true',
-                        help='Include windows on the '
-                        'active workspace only when cycling the focus history')
+                             dest='active_workspace',
+                             action='store_true',
+                             help='Include windows on the '
+                             'active workspace only when cycling the focus history')
     mutex_group.add_argument('--focused-workspace',
-                        dest='focused_workspace',
-                        action='store_true',
-                        help='Include windows on the '
-                        'focused workspace only when cycling the focus history')
+                             dest='focused_workspace',
+                             action='store_true',
+                             help='Include windows on the '
+                             'focused workspace only when cycling the focus history')
     mutex_group.add_argument('--focused-output',
-                        dest='focused_output',
-                        action='store_true',
-                        help='Include windows on the '
-                        'focused output/screen only when cycling the focus history')
+                             dest='focused_output',
+                             action='store_true',
+                             help='Include windows on the '
+                             'focused output/screen only when cycling the focus history')
     mutex_group.add_argument('--switch',
-                        dest='switch',
-                        action='store_true',
-                        help='Switch to the previous window',
-                        default=False)
+                             dest='switch',
+                             action='store_true',
+                             help='Switch to the previous window',
+                             default=False)
     parser.add_argument('--debug', dest='debug', action='store_true', help='Turn on debug logging')
     args = parser.parse_args()
 
@@ -224,10 +260,16 @@ if __name__ == '__main__':
     if args.switch:
         asyncio.run(send_switch())
     else:
-        if args.history:
-            MAX_WIN_HISTORY = args.history
+        from i3ipc.aio import Connection
+        import os
+        import json
 
-        if args.delay or args.delay == 0.0:
+        if args.history:
+            WIN_HISTORY = args.history
+
+        MAX_WIN_HISTORY = WIN_HISTORY + 5
+
+        if (args.delay and args.delay > 0) or args.delay == 0.0:
             UPDATE_DELAY = args.delay
 
         PER_OUTPUT = args.focused_output
