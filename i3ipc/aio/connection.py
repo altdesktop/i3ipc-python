@@ -177,7 +177,7 @@ def _unpack_header(data: bytes) -> Tuple[bytes, int, int]:
     return struct.unpack(_struct_header, data[:_struct_header_size])
 
 
-async def _find_socket_path() -> Optional[str]:
+async def _find_socket_path(disp: Optional[str] = None) -> Optional[str]:
     socket_path = None
 
     def exists(path):
@@ -202,12 +202,17 @@ async def _find_socket_path() -> Optional[str]:
             return socket_path
 
     # finally try the binaries
+    if disp:
+        env = {**os.environ, 'DISPLAY': disp}
+    else:
+        env = None
     for binary in ('i3', 'sway'):
         try:
             process = await asyncio.create_subprocess_exec(binary,
                                                            '--get-socketpath',
                                                            stdout=PIPE,
-                                                           stderr=PIPE)
+                                                           stderr=PIPE,
+                                                           env=env)
 
             stdout, stderr = await process.communicate()
 
@@ -251,10 +256,13 @@ class Connection:
     :param auto_reconnect: Whether to attempt to reconnect if the connection to
         the socket is broken when i3 restarts.
     :type auto_reconnect: bool
+    :param display: A custom DISPLAY to determinate the socket_path.
+    :type display: str
 
     :raises Exception: If the connection to i3 cannot be established.
     """
-    def __init__(self, socket_path: Optional[str] = None, auto_reconnect: bool = False):
+    def __init__(self, socket_path: Optional[str] = None, auto_reconnect: bool = False, *,
+                 display: Optional[str] = None):
         self._socket_path = socket_path
         self._auto_reconnect = auto_reconnect
         self._pubsub = _AIOPubSub(self)
@@ -262,6 +270,7 @@ class Connection:
         self._main_future = None
         self._reconnect_future = None
         self._synchronizer = None
+        self._display = display
 
     def _sync(self):
         if self._synchronizer is None:
@@ -372,7 +381,7 @@ class Connection:
             logger.info('using user provided socket path: {}', self._socket_path)
 
         if not self._socket_path:
-            self._socket_path = await _find_socket_path()
+            self._socket_path = await _find_socket_path(self._display)
 
         if not self.socket_path:
             raise Exception('Failed to retrieve the i3 or sway IPC socket path')

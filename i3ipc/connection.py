@@ -41,6 +41,8 @@ class Connection:
     :param auto_reconnect: Whether to attempt to reconnect if the connection to
         the socket is broken when i3 restarts.
     :type auto_reconnect: bool
+    :param display: A custom DISPLAY to determinate the socket_path.
+    :type display: str
 
     :raises Exception: If the connection to i3 cannot be established.
     """
@@ -50,12 +52,12 @@ class Connection:
     _struct_header = '=%dsII' % len(_MAGIC.encode('utf-8'))
     _struct_header_size = struct.calcsize(_struct_header)
 
-    def __init__(self, socket_path=None, auto_reconnect=False):
+    def __init__(self, socket_path=None, auto_reconnect=False, display=None):
 
         if socket_path:
             logger.info('using user provided socket path: %s', socket_path)
         else:
-            socket_path = self._find_socket_path()
+            socket_path = self._find_socket_path(display)
 
         if not socket_path:
             raise Exception('Failed to retrieve the i3 or sway IPC socket path')
@@ -71,8 +73,9 @@ class Connection:
         self._auto_reconnect = auto_reconnect
         self._quitting = False
         self._synchronizer = None
+        self._display = display
 
-    def _find_socket_path(self):
+    def _find_socket_path(self, disp=None):
         socket_path = os.environ.get("I3SOCK")
         if socket_path:
             logger.info('got socket path from I3SOCK env variable: %s', socket_path)
@@ -83,9 +86,13 @@ class Connection:
             logger.info('got socket path from SWAYSOCK env variable: %s', socket_path)
             return socket_path
 
+        if disp:
+            env = {**os.environ, 'DISPLAY': disp}
+        else:
+            env = None
         for binary in ('i3', 'sway'):
             try:
-                process = run([binary, '--get-socketpath'], stdout=PIPE, stderr=PIPE)
+                process = run([binary, '--get-socketpath'], stdout=PIPE, stderr=PIPE, env=env)
                 if process.returncode == 0 and process.stdout:
                     socket_path = process.stdout.decode().strip()
                     logger.info('got socket path from `%s` binary: %s', binary, socket_path)
