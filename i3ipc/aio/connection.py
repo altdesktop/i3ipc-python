@@ -264,6 +264,7 @@ class Connection:
     def __init__(self, socket_path: Optional[str] = None, auto_reconnect: bool = False, *,
                  display: Optional[str] = None):
         self._socket_path = socket_path
+        self._connection_socket_path = None
         self._auto_reconnect = auto_reconnect
         self._pubsub = _AIOPubSub(self)
         self._subscriptions = set()
@@ -284,7 +285,7 @@ class Connection:
 
         :rtype: str
         """
-        return self._socket_path
+        return self._connection_socket_path or self._socket_path
 
     @property
     def auto_reconect(self) -> bool:
@@ -380,8 +381,10 @@ class Connection:
         if self._socket_path:
             logger.info('using user provided socket path: {}', self._socket_path)
 
-        if not self._socket_path:
-            self._socket_path = await _find_socket_path(self._display)
+        if self._socket_path:
+            self._connection_socket_path = self._socket_path
+        else:
+            self._connection_socket_path = await _find_socket_path(self._display)
 
         if not self.socket_path:
             raise Exception('Failed to retrieve the i3 or sway IPC socket path')
@@ -415,6 +418,7 @@ class Connection:
                     error = None
                     break
                 except Exception as e:
+                    self._connection_socket_path = None
                     error = e
                     await asyncio.sleep(0.001)
 

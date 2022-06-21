@@ -56,26 +56,33 @@ class Connection:
 
         if socket_path:
             logger.info('using user provided socket path: %s', socket_path)
-        else:
-            socket_path = self._find_socket_path(display)
-
-        if not socket_path:
-            raise Exception('Failed to retrieve the i3 or sway IPC socket path')
+        # else _find_socket_path() will be used
 
         self.subscriptions = 0
         self._pubsub = PubSub(self)
+        self._display = display
         self._socket_path = socket_path
+        self._connection_socket_path = self._get_socket_path()
         self._cmd_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self._cmd_socket.connect(self._socket_path)
+        self._cmd_socket.connect(self._connection_socket_path)
         self._cmd_lock = Lock()
         self._sub_socket = None
         self._sub_lock = Lock()
         self._auto_reconnect = auto_reconnect
         self._quitting = False
         self._synchronizer = None
-        self._display = display
 
-    def _find_socket_path(self, disp=None):
+    def _get_socket_path(self):
+        """Returns a current socket path."""
+        if self._socket_path:
+            socket_path = self._socket_path
+        else:
+            socket_path = self._find_socket_path()
+        if not socket_path:
+            raise Exception('Failed to retrieve the i3 or sway IPC socket path')
+        return socket_path
+
+    def _find_socket_path(self):
         socket_path = os.environ.get("I3SOCK")
         if socket_path:
             logger.info('got socket path from I3SOCK env variable: %s', socket_path)
@@ -86,8 +93,8 @@ class Connection:
             logger.info('got socket path from SWAYSOCK env variable: %s', socket_path)
             return socket_path
 
-        if disp:
-            env = {**os.environ, 'DISPLAY': disp}
+        if self._display:
+            env = {**os.environ, 'DISPLAY': self._display}
         else:
             env = None
         for binary in ('i3', 'sway'):
@@ -121,7 +128,7 @@ class Connection:
 
         :rtype: str
         """
-        return self._socket_path
+        return self._connection_socket_path or self._socket_path
 
     @property
     def auto_reconnect(self) -> bool:
@@ -182,14 +189,16 @@ class Connection:
 
     def _wait_for_socket(self):
         # for the auto_reconnect feature only
-        socket_path_exists = False
         for tries in range(0, 500):
-            socket_path_exists = os.path.exists(self._socket_path)
-            if socket_path_exists:
-                break
+            try:
+                self._connection_socket_path = self._get_socket_path()
+                if os.path.exists(self._connection_socket_path):
+                    return True
+            except Exception:
+                pass
             time.sleep(0.001)
 
-        return socket_path_exists
+        return False
 
     def _message(self, message_type, payload):
         try:
@@ -198,15 +207,16 @@ class Connection:
         except ConnectionError as e:
             if not self.auto_reconnect:
                 raise e
+            self._connection_socket_path = None
 
             logger.info('got a connection error, reconnecting', exc_info=e)
-            # XXX: can the socket path change between restarts?
+            # The socket path can change between restarts.
             if not self._wait_for_socket():
                 logger.info('could not reconnect')
                 raise e
 
             self._cmd_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            self._cmd_socket.connect(self._socket_path)
+            self._cmd_socket.connect(self._connection_socket_path)
             return self._ipc_send(self._cmd_socket, message_type, payload)
         finally:
             self._cmd_lock.release()
@@ -462,7 +472,7 @@ class Connection:
 
     def _event_socket_setup(self):
         self._sub_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self._sub_socket.connect(self._socket_path)
+        self._sub_socket.connect(self._connection_socket_path)
 
         self._subscribe(self.subscriptions)
 
