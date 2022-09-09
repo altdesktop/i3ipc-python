@@ -2,7 +2,6 @@ from Xlib import X, Xutil
 from Xlib.display import Display
 from threading import Thread
 
-
 class Window(object):
     def __init__(self, display=None):
         if display is None:
