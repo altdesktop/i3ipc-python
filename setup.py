@@ -7,7 +7,7 @@ import os
 from setuptools import setup, find_packages
 
 REQUIRES_PYTHON = '>=3.4.0'
-REQUIRED = ['python-xlib']
+REQUIRED = []
 EXTRAS = {}
 
 here = os.path.abspath(os.path.dirname(__file__))

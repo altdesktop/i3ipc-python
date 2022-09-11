@@ -7,8 +7,6 @@ from .. import con
 import os
 import json
 from typing import Optional, List, Tuple, Callable, Union
-from Xlib import display, X
-from Xlib.error import DisplayError
 import struct
 import socket
 import logging
@@ -200,22 +198,6 @@ async def _find_socket_path() -> Optional[str]:
     socket_path = os.environ.get('SWAYSOCK')
     if socket_path:
         logger.info('got socket path from SWAYSOCK env variable: %s', socket_path)
-        if exists(socket_path):
-            return socket_path
-
-    # next try the root window property
-    try:
-        d = display.Display()
-        atom = d.get_atom('I3_SOCKET_PATH')
-        root = d.screen().root
-        prop = root.get_full_property(atom, X.AnyPropertyType)
-        if prop and prop.value:
-            socket_path = prop.value.decode()
-    except DisplayError as e:
-        logger.info('could not get i3 socket path from root atom', exc_info=e)
-
-    if socket_path:
-        logger.info('got socket path from root atom: %s', socket_path)
         if exists(socket_path):
             return socket_path
 

@@ -1,8 +1,4 @@
-from Xlib import display
-from Xlib.protocol import event
-from Xlib import X
 import random
-
 
 class Synchronizer:
     def __init__(self):

@@ -14,9 +14,6 @@ import socket
 import os
 from threading import Timer, Lock
 import time
-import Xlib
-import Xlib.display
-from Xlib.error import DisplayError
 import logging
 from subprocess import run, PIPE
 
@@ -86,20 +83,6 @@ class Connection:
             logger.info('got socket path from SWAYSOCK env variable: %s', socket_path)
             return socket_path
 
-        try:
-            disp = Xlib.display.Display()
-            root = disp.screen().root
-            i3atom = disp.intern_atom("I3_SOCKET_PATH")
-            prop = root.get_full_property(i3atom, Xlib.X.AnyPropertyType)
-            if prop and prop.value:
-                socket_path = prop.value.decode()
-        except DisplayError as e:
-            logger.info('could not get i3 socket path from root atom', exc_info=e)
-
-        if socket_path:
-            logger.info('got socket path from root atom: %s', socket_path)
-            return socket_path
-
         for binary in ('i3', 'sway'):
             try:
                 process = run([binary, '--get-socketpath'], stdout=PIPE, stderr=PIPE)
@@ -116,7 +99,7 @@ class Connection:
                 logger.info('could not get i3 socket path from `%s` binary', binary, exc_info=e)
                 continue
 
-        logger.info('could not find i3 socket path')
+        logger.info('could not find i3/sway socket path')
         return None
 
     def _sync(self):
