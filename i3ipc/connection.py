@@ -2,7 +2,7 @@
 
 from .con import Con
 from .replies import (BarConfigReply, CommandReply, ConfigReply, OutputReply, TickReply,
-                      VersionReply, WorkspaceReply, SeatReply, InputReply)
+                      VersionReply, WorkspaceReply, SeatReply, InputReply, BindingStateReply)
 from .events import (IpcBaseEvent, BarconfigUpdateEvent, BindingEvent, OutputEvent, ShutdownEvent,
                      WindowEvent, TickEvent, ModeEvent, WorkspaceEvent, InputEvent, Event)
 from ._private import PubSub, MessageType, EventType, Synchronizer
@@ -348,6 +348,16 @@ class Connection:
         data = self._message(MessageType.SEND_TICK, payload)
         data = json.loads(data)
         return TickReply(data)
+
+    def get_binding_state(self) -> BindingStateReply:
+        """Gets the name of the currently active binding mode.
+
+        :returns: A class containing the name of the currently active binding mode.
+        :rtype: :class:`i3ipc.BindingStateReply`
+        """
+        data = self._message(MessageType.GET_BINDING_STATE, '')
+        data = json.loads(data)
+        return BindingStateReply(data)
 
     def _subscribe(self, events):
         events_obj = []

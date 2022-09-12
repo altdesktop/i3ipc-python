@@ -287,6 +287,21 @@ class TickReply(_BaseReply):
     ]
 
 
+class BindingStateReply(_BaseReply):
+    """A reply to the ``GET_BINDING_STATE`` message.
+
+    .. seealso:: https://i3wm.org/docs/ipc.html#_binding_state_reply
+
+    :ivar name: Name of the currently active binding mode.
+    :vartype name: str
+    :ivar ipc_data: The raw data from the i3 ipc.
+    :vartype ipc_data: dict
+    """
+    _members = [
+        ('name', str),
+    ]
+
+
 class InputReply(_BaseReply):
     """(sway only) A reply to ``GET_INPUTS`` message.
 
