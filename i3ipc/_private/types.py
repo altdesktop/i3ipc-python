@@ -13,6 +13,7 @@ class MessageType(Enum):
     GET_BINDING_MODES = 8
     GET_CONFIG = 9
     SEND_TICK = 10
+    GET_BINDING_STATE = 12
     # sway-specific command types
     GET_INPUTS = 100
     GET_SEATS = 101
@@ -30,6 +31,7 @@ class ReplyType(Enum):
     BINDING_MODES = 8
     GET_CONFIG = 9
     TICK = 10
+    BINDING_STATE = 12
 
 
 class EventType(Enum):

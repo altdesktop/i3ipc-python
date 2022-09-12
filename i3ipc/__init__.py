@@ -2,7 +2,7 @@ from .__version__ import (__title__, __description__, __url__, __version__, __au
                           __author_email__, __license__, __copyright__)
 
 from .replies import (BarConfigReply, CommandReply, ConfigReply, OutputReply, TickReply,
-                      VersionReply, WorkspaceReply, SeatReply, InputReply)
+                      VersionReply, WorkspaceReply, SeatReply, InputReply, BindingStateReply)
 from .events import (BarconfigUpdateEvent, BindingEvent, BindingInfo, OutputEvent, ShutdownEvent,
                      WindowEvent, TickEvent, ModeEvent, WorkspaceEvent, InputEvent, Event)
 from .con import Con
