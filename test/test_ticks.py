@@ -1,10 +1,12 @@
+from typing import List
+from i3ipc.events import TickEvent
 from ipctest import IpcTest
 
 
 class TestTicks(IpcTest):
-    events = []
+    events: List[TickEvent] = []
 
-    def on_tick(self, i3, e):
+    def on_tick(self, i3, e: TickEvent):
         self.events.append(e)
         if len(self.events) == 3:
             i3.main_quit()

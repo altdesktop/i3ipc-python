@@ -6,7 +6,7 @@ from ..events import (IpcBaseEvent, BarconfigUpdateEvent, BindingEvent, OutputEv
 from .. import con
 import os
 import json
-from typing import Optional, List, Tuple, Callable, Union
+from typing import Optional, List, Set, Tuple, Callable, Union, cast
 import struct
 import socket
 import logging
@@ -137,7 +137,7 @@ class Con(con.Con):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
-    async def command(self, command: str) -> List[CommandReply]:
+    async def command(self, command: str) -> List[CommandReply]: # type: ignore[override]
         """Runs a command on this container.
 
         .. seealso:: https://i3wm.org/docs/userguide.html#list_of_commands
@@ -146,9 +146,9 @@ class Con(con.Con):
             string.
         :rtype: list(CommandReply)
         """
-        return await self._conn.command('[con_id="{}"] {}'.format(self.id, command))
+        return await self._conn.command('[con_id="{}"] {}'.format(self.id, command)) # type: ignore[attr-defined]
 
-    async def command_children(self, command: str) -> List[CommandReply]:
+    async def command_children(self, command: str) -> List[CommandReply]: # type: ignore[override]
         """Runs a command on the immediate children of the currently selected
         container.
 
@@ -174,7 +174,7 @@ def _pack(msg_type: MessageType, payload: str) -> bytes:
 
 
 def _unpack_header(data: bytes) -> Tuple[bytes, int, int]:
-    return struct.unpack(_struct_header, data[:_struct_header_size])
+    return cast(Tuple[bytes, int, int], struct.unpack(_struct_header, data[:_struct_header_size]))
 
 
 async def _find_socket_path() -> Optional[str]:
@@ -258,9 +258,9 @@ class Connection:
         self._socket_path = socket_path
         self._auto_reconnect = auto_reconnect
         self._pubsub = _AIOPubSub(self)
-        self._subscriptions = set()
+        self._subscriptions: Set[Event] = set()
         self._main_future = None
-        self._reconnect_future = None
+        self._reconnect_future: Optional[Future] = None
         self._synchronizer = None
 
     def _sync(self):
@@ -270,7 +270,7 @@ class Connection:
         self._synchronizer.sync()
 
     @property
-    def socket_path(self) -> str:
+    def socket_path(self) -> Optional[str]:
         """The path of the socket this ``Connection`` is connected to.
 
         :rtype: str
@@ -487,7 +487,7 @@ class Connection:
 
         for e in events:
             e = Event(e)
-            if e not in Event._subscribable_events:
+            if e not in cast(List[Event], Event._subscribable_events): # type: ignore[attr-defined]
                 correct_event = str.split(e.value, '::')[0].upper()
                 raise ValueError(
                     f'only nondetailed events are subscribable (use Event.{correct_event})')
@@ -512,7 +512,7 @@ class Connection:
 
     def on(self,
            event: Union[Event, str],
-           handler: Callable[['Connection', IpcBaseEvent], None] = None):
+           handler: Optional[Callable[['Connection', IpcBaseEvent], None]] = None):
         def on_wrapped(handler):
             self._on(event, handler)
             return handler
@@ -531,7 +531,7 @@ class Connection:
         :param handler: The event handler to call.
         :type handler: :class:`Callable`
         """
-        if type(event) is Event:
+        if isinstance(event, Event):
             event = event.value
 
         event = event.replace('-', '_')
@@ -594,7 +594,7 @@ class Connection:
         data = await self._message(MessageType.GET_BAR_CONFIG)
         return json.loads(data)
 
-    async def get_bar_config(self, bar_id=None) -> Optional[BarConfigReply]:
+    async def get_bar_config(self, bar_id: Optional[str]=None) -> Optional[BarConfigReply]:
         """Gets the bar configuration specified by the id.
 
         :param bar_id: The bar id to get the configuration for. If not given,

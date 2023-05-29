@@ -232,7 +232,7 @@ class Connection:
         data = json.loads(data)
         return VersionReply(data)
 
-    def get_bar_config(self, bar_id: str = None) -> Optional[BarConfigReply]:
+    def get_bar_config(self, bar_id: Optional[str] = None) -> Optional[BarConfigReply]:
         """Gets the bar configuration specified by the id.
 
         :param bar_id: The bar id to get the configuration for. If not given,
@@ -391,7 +391,7 @@ class Connection:
 
     def on(self,
            event: Union[Event, str],
-           handler: Callable[['Connection', IpcBaseEvent], None] = None):
+           handler: Optional[Callable[['Connection', IpcBaseEvent], None]] = None):
         def on_wrapped(handler):
             self._on(event, handler)
             return handler
@@ -410,7 +410,7 @@ class Connection:
         :param handler: The event handler to call.
         :type handler: :class:`Callable`
         """
-        if type(event) is Event:
+        if isinstance(event, Event):
             event = event.value
 
         event = event.replace('-', '_')
@@ -426,7 +426,7 @@ class Connection:
             self._pubsub.subscribe(event, handler)
             return
 
-        event_type = 0
+        event_type: Optional[EventType] = None
         if base_event == 'workspace':
             event_type = EventType.WORKSPACE
         elif base_event == 'output':
