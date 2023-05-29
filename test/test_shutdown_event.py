@@ -1,14 +1,16 @@
 from threading import Timer
+from typing import List
+from i3ipc.events import ShutdownEvent
 from ipctest import IpcTest
 
 
 class TestShutdownEvent(IpcTest):
-    events = []
+    events: List[ShutdownEvent] = []
 
     def restart_func(self, i3):
         i3.command('restart')
 
-    def on_shutdown(self, i3, e):
+    def on_shutdown(self, i3, e: ShutdownEvent):
         self.events.append(e)
         assert i3._wait_for_socket()
         if len(self.events) == 1:

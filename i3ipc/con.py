@@ -181,7 +181,7 @@ class Con:
         :returns: Whether this is a floating node
         :rtype: bool
         """
-        if self.floating in ['user_on', 'auto_on']:
+        if self.floating in ['user_on', 'auto_on']: # type: ignore[attr-defined]
             return True
         return False
 
@@ -249,7 +249,7 @@ class Con:
             string.
         :rtype: list(:class:`CommandReply <i3ipc.CommandReply>`)
         """
-        return self._conn.command('[con_id="{}"] {}'.format(self.id, command))
+        return self._conn.command('[con_id="{}"] {}'.format(self.id, command)) # type: ignore[attr-defined]
 
     def command_children(self, command: str) -> List[replies.CommandReply]:
         """Runs a command on the immediate children of the currently selected
@@ -261,13 +261,13 @@ class Con:
         :rtype: list(:class:`CommandReply <i3ipc.CommandReply>`)
         """
         if not len(self.nodes):
-            return
+            return []
 
         commands = []
         for c in self.nodes:
             commands.append('[con_id="{}"] {};'.format(c.id, command))
 
-        self._conn.command(' '.join(commands))
+        return self._conn.command(' '.join(commands))
 
     def workspaces(self) -> List['Con']:
         """Gets a list of workspace containers for this tree.
@@ -393,8 +393,8 @@ class Con:
             pattern.
         :rtype: list(:class:`Con`)
         """
-        pattern = re.compile(pattern)
-        return [c for c in self if any(pattern.search(mark) for mark in c.marks)]
+        compiled_pattern = re.compile(pattern)
+        return [c for c in self if any(compiled_pattern.search(mark) for mark in c.marks)]
 
     def find_fullscreen(self) -> List['Con']:
         """Finds all the containers under this node that are in fullscreen
@@ -425,7 +425,7 @@ class Con:
 
         return ret
 
-    def scratchpad(self) -> 'Con':
+    def scratchpad(self) -> Optional['Con']:
         """Finds the scratchpad container.
 
         :returns: The scratchpad container.

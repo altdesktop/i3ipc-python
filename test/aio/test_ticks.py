@@ -1,3 +1,6 @@
+from typing import List
+
+from i3ipc.events import TickEvent
 from .ipctest import IpcTest
 
 import pytest
@@ -5,7 +8,7 @@ import asyncio
 
 
 class TestTicks(IpcTest):
-    events = []
+    events: List[TickEvent] = []
 
     async def on_tick(self, i3, e):
         self.events.append(e)
