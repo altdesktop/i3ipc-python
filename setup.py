@@ -34,6 +34,7 @@ setup(
     install_requires=REQUIRED,
     extras_require=EXTRAS,
     include_package_data=True,
+    package_data={"i3ipc": ["py.typed"]},
     license='BSD',
     keywords='i3 i3wm extensions add-ons',
     classifiers=[
