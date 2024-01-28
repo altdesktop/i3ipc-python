@@ -1,15 +1,21 @@
-from .model import Rect, OutputMode
+from typing import List, cast, get_args, get_origin, get_type_hints
+
+from .model import OutputMode, Rect
 
 
 class _BaseReply:
     def __init__(self, data):
         self.ipc_data = data
-        for member in self.__class__._members:
-            value = data.get(member[0], None)
+        for member_name, member_type in get_type_hints(self.__class__).items():
+            value = data.get(member_name, None)
             if value is not None:
-                setattr(self, member[0], member[1](value))
+                if get_origin(member_type) == list:
+                    parsed_value = cast(_BaseReply, get_args(member_type)[0])._parse_list(value)
+                else:
+                    parsed_value = member_type(value)
+                setattr(self, member_name, parsed_value)
             else:
-                setattr(self, member[0], None)
+                setattr(self, member_name, None)
 
     @classmethod
     def _parse_list(cls, data):
@@ -28,10 +34,8 @@ class CommandReply(_BaseReply):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
-    _members = [
-        ('success', bool),
-        ('error', str),
-    ]
+    success: bool
+    error: str
 
 
 class WorkspaceReply(_BaseReply):
@@ -61,15 +65,13 @@ class WorkspaceReply(_BaseReply):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
-    _members = [
-        ('num', int),
-        ('name', str),
-        ('visible', bool),
-        ('focused', bool),
-        ('urgent', bool),
-        ('rect', Rect),
-        ('output', str),
-    ]
+    num: int
+    name: str
+    visible: bool
+    focused: bool
+    urgent: bool
+    rect: Rect
+    output: str
 
 
 class OutputReply(_BaseReply):
@@ -114,25 +116,23 @@ class OutputReply(_BaseReply):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
-    _members = [
-        ('name', str),
-        ('active', bool),
-        ('primary', bool),
-        ('current_workspace', str),
-        ('rect', Rect),
-        # Sway only output fields:
-        ('make', str),
-        ('model', str),
-        ('serial', str),
-        ('scale', float),
-        ('transform', str),
-        ('max_render_time', int),
-        ('focused', bool),
-        ('dpms', bool),
-        ('subpixel_hinting', str),
-        ('modes', OutputMode._parse_list),
-        ('current_mode', OutputMode),
-    ]
+    name: str
+    active: bool
+    primary: bool
+    current_workspace: str
+    rect: Rect
+    # Sway only output fields:
+    make: str
+    model: str
+    serial: str
+    scale: float
+    transform: str
+    max_render_time: int
+    focused: bool
+    dpms: bool
+    subpixel_hinting: str
+    modes: List[OutputMode]
+    current_mode: OutputMode
 
 
 class BarConfigGaps:
@@ -204,28 +204,26 @@ class BarConfigReply(_BaseReply):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
-    _members = [
-        ('id', str),
-        ('tray_padding', int),
-        ('hidden_state', str),
-        ('mode', str),
-        ('modifier', int),
-        ('position', str),
-        ('status_command', str),
-        ('font', str),
-        ('workspace_buttons', bool),
-        ('workspace_min_width', int),
-        ('strip_workspace_numbers', bool),
-        ('strip_workspace_name', bool),
-        ('binding_mode_indicator', bool),
-        ('separator_symbol', str),
-        ('verbose', bool),
-        ('colors', dict),
-        ('gaps', BarConfigGaps),
-        ('bar_height', int),
-        ('status_padding', int),
-        ('status_edge_padding', int),
-    ]
+    id: str
+    tray_padding: int
+    hidden_state: str
+    mode: str
+    modifier: int
+    position: str
+    status_command: str
+    font: str
+    workspace_buttons: bool
+    workspace_min_width: int
+    strip_workspace_numbers: bool
+    strip_workspace_name: bool
+    binding_mode_indicator: bool
+    separator_symbol: str
+    verbose: bool
+    colors: dict
+    gaps: BarConfigGaps
+    bar_height: int
+    status_padding: int
+    status_edge_padding: int
 
 
 class VersionReply(_BaseReply):
@@ -247,13 +245,11 @@ class VersionReply(_BaseReply):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
-    _members = [
-        ('major', int),
-        ('minor', int),
-        ('patch', int),
-        ('human_readable', str),
-        ('loaded_config_file_name', str),
-    ]
+    major: int
+    minor: int
+    patch: int
+    human_readable: str
+    loaded_config_file_name: str
 
 
 class ConfigReply(_BaseReply):
@@ -267,9 +263,7 @@ class ConfigReply(_BaseReply):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
-    _members = [
-        ('config', str),
-    ]
+    config: str
 
 
 class TickReply(_BaseReply):
@@ -282,9 +276,7 @@ class TickReply(_BaseReply):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
-    _members = [
-        ('success', bool),
-    ]
+    success: bool
 
 
 class InputReply(_BaseReply):
@@ -314,17 +306,15 @@ class InputReply(_BaseReply):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
-    _members = [
-        ('identifier', str),
-        ('name', str),
-        ('vendor', int),
-        ('product', int),
-        ('type', str),
-        ('xkb_active_layout_name', str),
-        ('xkb_layout_names', list),
-        ('xkb_active_layout_index', int),
-        ('libinput', dict),
-    ]
+    identifier: str
+    name: str
+    vendor: int
+    product: int
+    type: str
+    xkb_active_layout_name: str
+    xkb_layout_names: list
+    xkb_active_layout_index: int
+    libinput: dict
 
 
 class SeatReply(_BaseReply):
@@ -345,5 +335,7 @@ class SeatReply(_BaseReply):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
-    _members = [('name', str), ('capabilities', int), ('focus', int),
-                ('devices', InputReply._parse_list)]
+    name: str
+    capabilities: int
+    focus: int
+    devices: List[InputReply]
