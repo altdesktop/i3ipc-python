@@ -300,12 +300,22 @@ class Connection:
         except Exception as e:
             self.main_quit(_error=e)
 
-    def _read_message(self):
+    def _recv(self, size):
+      buf = bytearray(size)
+      mem = memoryview(buf)
+      sock = self._sub_socket
+      while len(mem):
+        if not (rsize := sock.recv_into(mem)):
+          return b''
+        mem = mem[rsize:]
+      mem.release()
+      return buf
 
+    def _read_message(self):
         error = None
         buf = b''
         try:
-            buf = self._sub_socket.recv(_struct_header_size)
+            buf = self._recv(_struct_header_size)
         except ConnectionError as e:
             error = e
 
@@ -325,7 +335,7 @@ class Connection:
 
         magic, message_length, event_type = _unpack_header(buf)
         assert magic == _MAGIC
-        raw_message = self._sub_socket.recv(message_length)
+        raw_message = self._recv(message_length)
         message = json.loads(raw_message)
 
         # events have the highest bit set
