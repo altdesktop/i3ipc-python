@@ -244,6 +244,9 @@ class VersionReply(_BaseReply):
     :vartype human_readable: str
     :ivar loaded_config_file_name: The current config path.
     :vartype loaded_config_file_name: str
+    :ivar variant: (sway only) The string "sway," to disambiguate Sway and i3
+        versions.
+    :vartype variant: str from Sway, or :class:`None` from i3
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
@@ -253,6 +256,7 @@ class VersionReply(_BaseReply):
         ('patch', int),
         ('human_readable', str),
         ('loaded_config_file_name', str),
+        ('variant', str),
     ]
 
 
