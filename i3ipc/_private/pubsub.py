@@ -1,9 +1,27 @@
-class PubSub(object):
-    def __init__(self, conn):
-        self.conn = conn
-        self._subscriptions = []
+from typing import Callable, Optional, TypeAlias, TypedDict, TypeVar, TYPE_CHECKING
 
-    def subscribe(self, detailed_event, handler):
+from i3ipc.events import IpcBaseEvent
+
+if TYPE_CHECKING:
+    from i3ipc.connection import Connection
+
+_BaseEvent = TypeVar('_BaseEvent', bound=IpcBaseEvent, contravariant=True)
+
+Handler: TypeAlias = Callable[['Connection', _BaseEvent], None]
+
+
+class Subscription(TypedDict):
+    event: str
+    detail: Optional[str]
+    handler: Handler
+
+
+class PubSub(object):
+    def __init__(self, conn: 'Connection'):
+        self.conn = conn
+        self._subscriptions: list[Subscription] = []
+
+    def subscribe(self, detailed_event: str, handler: Handler):
         event = detailed_event.replace('-', '_')
         detail = ''
 
@@ -12,10 +30,10 @@ class PubSub(object):
 
         self._subscriptions.append({'event': event, 'detail': detail, 'handler': handler})
 
-    def unsubscribe(self, handler):
+    def unsubscribe(self, handler: Handler):
         self._subscriptions = list(filter(lambda s: s['handler'] != handler, self._subscriptions))
 
-    def emit(self, event, data):
+    def emit(self, event: str, data: Optional[IpcBaseEvent]):
         detail = ''
 
         if data and hasattr(data, 'change'):
@@ -27,4 +45,4 @@ class PubSub(object):
                     if data:
                         s['handler'](self.conn, data)
                     else:
-                        s['handler'](self.conn)
+                        s['handler'](self.conn)  # type: ignore[call-arg]

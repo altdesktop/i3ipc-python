@@ -43,11 +43,11 @@ class EventType(Enum):
     TICK = (1 << 7)
     INPUT = (1 << 21)
 
-    def to_string(self):
+    def to_string(self) -> str:
         return str.lower(self.name)
 
     @staticmethod
-    def from_string(val):
+    def from_string(val) -> 'EventType':
         match = [e for e in EventType if e.to_string() == val]
 
         if not match:
@@ -55,7 +55,7 @@ class EventType(Enum):
 
         return match[0]
 
-    def to_list(self):
+    def to_list(self) -> list[str]:
         events_list = []
         if self.value & EventType.WORKSPACE.value:
             events_list.append(EventType.WORKSPACE.to_string())

@@ -6,7 +6,7 @@ from ..events import (IpcBaseEvent, BarconfigUpdateEvent, BindingEvent, OutputEv
 from .. import con
 import os
 import json
-from typing import Optional, List, Tuple, Callable, Union
+from typing import Callable, Coroutine, Optional, TypedDict, TypeVar, Union
 import struct
 import socket
 import logging
@@ -33,9 +33,24 @@ def ensure_future(obj):
     return future
 
 
+_EV = TypeVar('_EV', bound=IpcBaseEvent, contravariant=True)
+
+
+type Handler[T] = Callable[['Connection', T], None] | Callable[['Connection', T], Coroutine[None, None, None]]
+
+
+
+class _Subscription(TypedDict):
+    event: str
+    detail: Optional[str]
+    handler: Handler[IpcBaseEvent]
+
+
 class _AIOPubSub(PubSub):
-    def queue_handler(self, handler, data=None):
-        conn = self.conn
+    _subscriptions: list[_Subscription]  # type: ignore[assignment]
+
+    def queue_handler(self, handler: Handler[_EV], data: Optional[IpcBaseEvent] = None):
+        conn: Connection = self.conn  # type: ignore[assignment]
 
         async def handler_coroutine():
             try:
@@ -46,15 +61,15 @@ class _AIOPubSub(PubSub):
                         handler(conn, data)
                 else:
                     if asyncio.iscoroutinefunction(handler):
-                        await handler(conn)
+                        await handler(conn)  # type: ignore[call-arg]
                     else:
-                        handler(conn)
+                        handler(conn)  # type: ignore[call-arg]
             except Exception as e:
                 conn.main_quit(_error=e)
 
         ensure_future(handler_coroutine())
 
-    def emit(self, event, data):
+    def emit(self, event: str, data: Optional[IpcBaseEvent]):
         detail = ''
 
         if data and hasattr(data, 'change'):
@@ -137,7 +152,9 @@ class Con(con.Con):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
-    async def command(self, command: str) -> List[CommandReply]:
+    _conn: 'Connection'  # type: ignore[assignment]
+
+    async def command(self, command: str) -> list[CommandReply]:  # type: ignore[override]
         """Runs a command on this container.
 
         .. seealso:: https://i3wm.org/docs/userguide.html#list_of_commands
@@ -148,7 +165,7 @@ class Con(con.Con):
         """
         return await self._conn.command('[con_id="{}"] {}'.format(self.id, command))
 
-    async def command_children(self, command: str) -> List[CommandReply]:
+    async def command_children(self, command: str) -> list[CommandReply]:  # type: ignore[override]
         """Runs a command on the immediate children of the currently selected
         container.
 
@@ -173,7 +190,7 @@ def _pack(msg_type: MessageType, payload: str) -> bytes:
     return b''.join((_MAGIC, s, pb))
 
 
-def _unpack_header(data: bytes) -> Tuple[bytes, int, int]:
+def _unpack_header(data: bytes) -> tuple[bytes, int, int]:
     return struct.unpack(_struct_header, data[:_struct_header_size])
 
 
@@ -257,11 +274,11 @@ class Connection:
     def __init__(self, socket_path: Optional[str] = None, auto_reconnect: bool = False):
         self._socket_path = socket_path
         self._auto_reconnect = auto_reconnect
-        self._pubsub = _AIOPubSub(self)
-        self._subscriptions = set()
-        self._main_future = None
-        self._reconnect_future = None
-        self._synchronizer = None
+        self._pubsub = _AIOPubSub(self)  # type: ignore[arg-type]
+        self._subscriptions: set = set()
+        self._main_future: Optional[Future] = None
+        self._reconnect_future: Optional[Future] = None
+        self._synchronizer: Optional[Synchronizer] = None
 
     def _sync(self):
         if self._synchronizer is None:
@@ -270,7 +287,7 @@ class Connection:
         self._synchronizer.sync()
 
     @property
-    def socket_path(self) -> str:
+    def socket_path(self) -> Optional[str]:
         """The path of the socket this ``Connection`` is connected to.
 
         :rtype: str
@@ -323,28 +340,29 @@ class Connection:
 
             return
 
-        magic, message_length, event_type = _unpack_header(buf)
+        magic, message_length, event_type_int = _unpack_header(buf)
         assert magic == _MAGIC
         raw_message = self._sub_socket.recv(message_length)
         message = json.loads(raw_message)
 
         # events have the highest bit set
-        if not event_type & (1 << 31):
+        if not event_type_int & (1 << 31):
             # a reply
             return
 
-        event_type = EventType(1 << (event_type & 0x7f))
+        event_type = EventType(1 << (event_type_int & 0x7f))
         logger.info('got message on subscription socket: type=%s, message=%s', event_type,
                     raw_message)
 
+        event: IpcBaseEvent
         if event_type == EventType.WORKSPACE:
-            event = WorkspaceEvent(message, self, _Con=Con)
+            event = WorkspaceEvent(message, self, _Con=Con)  # type: ignore[arg-type]
         elif event_type == EventType.OUTPUT:
             event = OutputEvent(message)
         elif event_type == EventType.MODE:
             event = ModeEvent(message)
         elif event_type == EventType.WINDOW:
-            event = WindowEvent(message, self, _Con=Con)
+            event = WindowEvent(message, self, _Con=Con)  # type: ignore[arg-type]
         elif event_type == EventType.BARCONFIG_UPDATE:
             event = BarconfigUpdateEvent(message)
         elif event_type == EventType.BINDING:
@@ -409,6 +427,7 @@ class Connection:
                     error = e
                     await asyncio.sleep(0.001)
 
+            assert self._reconnect_future is not None
             if error:
                 self._reconnect_future.set_exception(error)
             else:
@@ -464,7 +483,7 @@ class Connection:
         logger.info('got message reply: %s', message)
         return message
 
-    async def subscribe(self, events: Union[List[Event], List[str]], force: bool = False):
+    async def subscribe(self, events: Union[list[Event], list[str]], force: bool = False):
         """Send a ``SUBSCRIBE`` command to the ipc subscription connection and
         await the result. To attach event handlers, use :func:`Connection.on()
         <i3ipc.aio.Connection.on()>`. Calling this is only needed if you want
@@ -487,7 +506,7 @@ class Connection:
 
         for e in events:
             e = Event(e)
-            if e not in Event._subscribable_events:
+            if e not in (Event._subscribable_events):  # type: ignore[attr-defined]
                 correct_event = str.split(e.value, '::')[0].upper()
                 raise ValueError(
                     f'only nondetailed events are subscribable (use Event.{correct_event})')
@@ -510,10 +529,10 @@ class Connection:
 
         await self._loop.sock_sendall(self._sub_socket, _pack(MessageType.SUBSCRIBE, payload))
 
-    def on(self,
-           event: Union[Event, str],
-           handler: Callable[['Connection', IpcBaseEvent], None] = None):
-        def on_wrapped(handler):
+    def on(
+        self, event: Event | str, handler: Handler[_EV] | None = None
+    ) -> Handler[_EV] | Callable[[Handler[_EV]], Handler[_EV]]:
+        def on_wrapped(handler: Handler[_EV]) -> Handler[_EV]:
             self._on(event, handler)
             return handler
 
@@ -522,7 +541,7 @@ class Connection:
         else:
             return on_wrapped
 
-    def _on(self, event: Union[Event, str], handler: Callable[['Connection', IpcBaseEvent], None]):
+    def _on(self, event: Event | str, handler: Handler[_EV]):
         """Subscribe to the event and call the handler when it is emitted by
         the i3 ipc.
 
@@ -534,6 +553,7 @@ class Connection:
         if type(event) is Event:
             event = event.value
 
+        assert type(event) is str
         event = event.replace('-', '_')
 
         if event.count('::') > 0:
@@ -543,10 +563,10 @@ class Connection:
 
         logger.info('adding event handler: event=%s, handler=%s', event, handler)
 
-        self._pubsub.subscribe(event, handler)
+        self._pubsub.subscribe(event, handler)  # type: ignore[arg-type]
         ensure_future(self.subscribe([base_event]))
 
-    def off(self, handler: Callable[['Connection', IpcBaseEvent], None]):
+    def off(self, handler: Handler[_EV]):
         """Unsubscribe the handler from being called on ipc events.
 
         :param handler: The handler that was previously attached with
@@ -554,9 +574,9 @@ class Connection:
         :type handler: :class:`Callable`
         """
         logger.info('removing event handler: handler=%s', handler)
-        self._pubsub.unsubscribe(handler)
+        self._pubsub.unsubscribe(handler)  # type: ignore[arg-type]
 
-    async def command(self, cmd: str) -> List[CommandReply]:
+    async def command(self, cmd: str) -> list[CommandReply]:
         """Sends a command to i3.
 
         .. seealso:: https://i3wm.org/docs/userguide.html#list_of_commands
@@ -567,10 +587,10 @@ class Connection:
             command given.
         :rtype: list(:class:`CommandReply <i3ipc.CommandReply>`)
         """
-        data = await self._message(MessageType.COMMAND, cmd)
+        data_raw = await self._message(MessageType.COMMAND, cmd)
 
-        if data:
-            data = json.loads(data)
+        if data_raw:
+            data = json.loads(data_raw)
             return CommandReply._parse_list(data)
         else:
             return []
@@ -581,11 +601,11 @@ class Connection:
         :returns: The i3 version.
         :rtype: :class:`i3ipc.VersionReply`
         """
-        data = await self._message(MessageType.GET_VERSION)
-        data = json.loads(data)
+        data_raw = await self._message(MessageType.GET_VERSION)
+        data = json.loads(data_raw)
         return VersionReply(data)
 
-    async def get_bar_config_list(self) -> List[str]:
+    async def get_bar_config_list(self) -> list[str]:
         """Gets the names of all bar configurations.
 
         :returns: A list of all bar configurations.
@@ -611,28 +631,28 @@ class Connection:
                 return None
             bar_id = bar_config_list[0]
 
-        data = await self._message(MessageType.GET_BAR_CONFIG, bar_id)
-        data = json.loads(data)
+        data_raw = await self._message(MessageType.GET_BAR_CONFIG, bar_id)
+        data = json.loads(data_raw)
         return BarConfigReply(data)
 
-    async def get_outputs(self) -> List[OutputReply]:
+    async def get_outputs(self) -> list[OutputReply]:
         """Gets the list of current outputs.
 
         :returns: A list of current outputs.
         :rtype: list(:class:`i3ipc.OutputReply`)
         """
-        data = await self._message(MessageType.GET_OUTPUTS)
-        data = json.loads(data)
+        data_raw = await self._message(MessageType.GET_OUTPUTS)
+        data = json.loads(data_raw)
         return OutputReply._parse_list(data)
 
-    async def get_workspaces(self) -> List[WorkspaceReply]:
+    async def get_workspaces(self) -> list[WorkspaceReply]:
         """Gets the list of current workspaces.
 
         :returns: A list of current workspaces
         :rtype: list(:class:`i3ipc.WorkspaceReply`)
         """
-        data = await self._message(MessageType.GET_WORKSPACES)
-        data = json.loads(data)
+        data_raw = await self._message(MessageType.GET_WORKSPACES)
+        data = json.loads(data_raw)
         return WorkspaceReply._parse_list(data)
 
     async def get_tree(self) -> Con:
@@ -642,9 +662,9 @@ class Connection:
         :rtype: :class:`i3ipc.Con`
         """
         data = await self._message(MessageType.GET_TREE)
-        return Con(json.loads(data), None, self)
+        return Con(json.loads(data), None, self)  # type: ignore[arg-type]
 
-    async def get_marks(self) -> List[str]:
+    async def get_marks(self) -> list[str]:
         """Gets the names of all currently set marks.
 
         :returns: A list of currently set marks.
@@ -653,7 +673,7 @@ class Connection:
         data = await self._message(MessageType.GET_MARKS)
         return json.loads(data)
 
-    async def get_binding_modes(self) -> List[str]:
+    async def get_binding_modes(self) -> list[str]:
         """Gets the names of all currently configured binding modes
 
         :returns: A list of binding modes
@@ -668,8 +688,8 @@ class Connection:
         :returns: A class containing the config.
         :rtype: :class:`i3ipc.ConfigReply`
         """
-        data = await self._message(MessageType.GET_CONFIG)
-        data = json.loads(data)
+        data_raw = await self._message(MessageType.GET_CONFIG)
+        data = json.loads(data_raw)
         return ConfigReply(data)
 
     async def send_tick(self, payload: str = "") -> TickReply:
@@ -678,28 +698,28 @@ class Connection:
         :returns: The reply to the tick command
         :rtype: :class:`i3ipc.TickReply`
         """
-        data = await self._message(MessageType.SEND_TICK, payload)
-        data = json.loads(data)
+        data_raw = await self._message(MessageType.SEND_TICK, payload)
+        data = json.loads(data_raw)
         return TickReply(data)
 
-    async def get_inputs(self) -> List[InputReply]:
+    async def get_inputs(self) -> list[InputReply]:
         """(sway only) Gets the inputs connected to the compositor.
 
         :returns: The reply to the inputs command
         :rtype: list(:class:`i3ipc.InputReply`)
         """
-        data = await self._message(MessageType.GET_INPUTS)
-        data = json.loads(data)
+        data_raw = await self._message(MessageType.GET_INPUTS)
+        data = json.loads(data_raw)
         return InputReply._parse_list(data)
 
-    async def get_seats(self) -> List[SeatReply]:
+    async def get_seats(self) -> list[SeatReply]:
         """(sway only) Gets the seats configured on the compositor
 
         :returns: The reply to the seats command
         :rtype: list(:class:`i3ipc.SeatReply`)
         """
-        data = await self._message(MessageType.GET_SEATS)
-        data = json.loads(data)
+        data_raw = await self._message(MessageType.GET_SEATS)
+        data = json.loads(data_raw)
         return SeatReply._parse_list(data)
 
     def main_quit(self, _error=None):

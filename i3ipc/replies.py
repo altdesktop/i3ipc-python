@@ -1,8 +1,11 @@
 from .model import Rect, OutputMode
+from typing import Any, Callable, cast, TypeVar
+
+_BaseReplyType = TypeVar('_BaseReplyType', bound='_BaseReply')
 
 
 class _BaseReply:
-    def __init__(self, data):
+    def __init__(self, data: dict[str, Any]):
         self.ipc_data = data
         for member in self.__class__._members:
             value = data.get(member[0], None)
@@ -12,8 +15,11 @@ class _BaseReply:
                 setattr(self, member[0], None)
 
     @classmethod
-    def _parse_list(cls, data):
-        return [cls(d) for d in data]
+    def _parse_list(cls, data: list[dict[str, Any]]) -> list[_BaseReplyType]:
+        return [cast(_BaseReplyType, cls(d)) for d in data]
+
+    ipc_data: dict[str, Any]
+    _members: list[tuple[str, Callable]]
 
 
 class CommandReply(_BaseReply):
@@ -28,6 +34,8 @@ class CommandReply(_BaseReply):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
+    success: bool
+    error: str
     _members = [
         ('success', bool),
         ('error', str),
@@ -61,6 +69,12 @@ class WorkspaceReply(_BaseReply):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
+    num: int
+    name: str
+    visible: bool
+    focused: bool
+    rect: Rect
+    output: str
     _members = [
         ('num', int),
         ('name', str),
@@ -114,6 +128,21 @@ class OutputReply(_BaseReply):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
+    name: str
+    active: bool
+    primary: bool
+    current_workspace: str
+    rect: Rect
+    make: str
+    model: str
+    serial: str
+    scale: float
+    transform: str
+    max_render_time: int
+    focused: bool
+    dpms: bool
+    modes: list[OutputMode]
+    current_mode: OutputMode
     _members = [
         ('name', str),
         ('active', bool),
@@ -147,11 +176,11 @@ class BarConfigGaps:
     :ivar bottom: The gap on the bottom.
     :vartype bottom: int
     """
-    def __init__(self, data):
-        self.left = data['left']
-        self.right = data['right']
-        self.top = data['top']
-        self.bottom = data['bottom']
+    def __init__(self, data: dict[str, Any]):
+        self.left: int = data['left']
+        self.right: int = data['right']
+        self.top: int = data['top']
+        self.bottom: int = data['bottom']
 
 
 class BarConfigReply(_BaseReply):
@@ -179,19 +208,30 @@ class BarConfigReply(_BaseReply):
     :ivar colors: Contains key/value pairs of colors. Each value is a color
         code in hex, formatted #rrggbb (like in HTML).
     :vartype colors: dict
-    :ivar tray_padding: The tray is shown on the right-hand side of the bar. By default, a padding of 2 pixels is used for the upper, lower and right-hand side of the tray area and between the individual icons.
+    :ivar tray_padding: The tray is shown on the right-hand side of the bar. By default, a padding
+        of 2 pixels is used for the upper, lower and right-hand side of the tray area and between
+        the individual icons.
     :vartype tray_padding: int
-    :ivar hidden_state: In order to control whether i3bar is hidden or shown in hide mode, there exists the hidden_state option, which has no effect in dock mode or invisible mode. It indicates the current hidden_state of the bar: (1) The bar acts like in normal hide mode, it is hidden and is only unhidden in case of urgency hints or by pressing the modifier key (hide state), or (2) it is drawn on top of the currently visible workspace (show state).
+    :ivar hidden_state: In order to control whether i3bar is hidden or shown in hide mode, there
+        exists the hidden_state option, which has no effect in dock mode or invisible mode. It
+        indicates the current hidden_state of the bar: (1) The bar acts like in normal hide mode,
+        it is hidden and is only unhidden in case of urgency hints or by pressing the modifier key
+        (hide state), or (2) it is drawn on top of the currently visible workspace (show state).
     :vartype hidden_state: str
     :ivar modifier: The modifier used to switch between hide/show mode.
     :vartype modifier: int
-    :ivar separator_symbol: Specifies a custom symbol to be used for the separator as opposed to the vertical, one pixel thick separator.
+    :ivar separator_symbol: Specifies a custom symbol to be used for the separator as opposed to the
+        vertical, one pixel thick separator.
     :vartype separator_symbol: str
     :ivar workspace_min_width:
     :vartype workspace_min_width: int
-    :ivar strip_workspace_numbers: When strip_workspace_numbers is set to yes, any workspace that has a name of the form "[n][:][NAME]" will display only the name. You could use this, for instance, to display Roman numerals rather than digits by naming your workspaces to "2:I", "2:II", "3:III", "4:IV", ...
+    :ivar strip_workspace_numbers: When strip_workspace_numbers is set to yes, any workspace that
+        has a name of the form "[n][:][NAME]" will display only the name. You could use this, for
+        instance, to display Roman numerals rather than digits by naming your workspaces to "2:I",
+        "2:II", "3:III", "4:IV", ...
     :vartype strip_workspace_numbers: bool
-    :ivar strip_workspace_name: When strip_workspace_name is set to yes, any workspace that has a name of the form "[n][:][NAME]" will display only the number.
+    :ivar strip_workspace_name: When strip_workspace_name is set to yes, any workspace that has a
+        name of the form "[n][:][NAME]" will display only the number.
     :vartype strip_workspace_name: bool
     :ivar gaps: (sway only)
     :vartype gaps: :class:`BarConfigGaps`
@@ -204,6 +244,26 @@ class BarConfigReply(_BaseReply):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
+    id: int
+    tray_padding: int
+    hidden_state: str
+    mode: str
+    modifier: int
+    position: str
+    status_command: str
+    font: str
+    workspace_buttons: bool
+    workspace_min_width: int
+    strip_workspace_name: bool
+    strip_workspace_numbers: bool
+    binding_mode_indicator: bool
+    separator_symbol: str
+    verbose: bool
+    colors: dict
+    gaps: BarConfigGaps
+    bar_height: int
+    status_padding: int
+    status_edge_padding: int
     _members = [
         ('id', str),
         ('tray_padding', int),
@@ -247,6 +307,11 @@ class VersionReply(_BaseReply):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
+    major: int
+    minor: int
+    patch: int
+    human_readable: str
+    loaded_config_file_name: str
     _members = [
         ('major', int),
         ('minor', int),
@@ -267,6 +332,7 @@ class ConfigReply(_BaseReply):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
+    config: str
     _members = [
         ('config', str),
     ]
@@ -282,6 +348,7 @@ class TickReply(_BaseReply):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
+    success: bool
     _members = [
         ('success', bool),
     ]
@@ -314,6 +381,14 @@ class InputReply(_BaseReply):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
+    name: str
+    vendor: int
+    product: int
+    type: str
+    xkb_active_layout_name: str
+    xkb_layout_names: list
+    xkb_active_layout_index: int
+    libinput: dict
     _members = [
         ('identifier', str),
         ('name', str),
@@ -345,5 +420,13 @@ class SeatReply(_BaseReply):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
-    _members = [('name', str), ('capabilities', int), ('focus', int),
-                ('devices', InputReply._parse_list)]
+    name: str
+    capabilities: int
+    focus: int
+    devices: list[InputReply]
+    _members = [
+        ('name', str),
+        ('capabilities', int),
+        ('focus', int),
+        ('devices', InputReply._parse_list)
+    ]

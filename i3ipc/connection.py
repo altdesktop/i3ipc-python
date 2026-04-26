@@ -5,9 +5,9 @@ from .replies import (BarConfigReply, CommandReply, ConfigReply, OutputReply, Ti
                       VersionReply, WorkspaceReply, SeatReply, InputReply)
 from .events import (IpcBaseEvent, BarconfigUpdateEvent, BindingEvent, OutputEvent, ShutdownEvent,
                      WindowEvent, TickEvent, ModeEvent, WorkspaceEvent, InputEvent, Event)
-from ._private import PubSub, MessageType, EventType, Synchronizer
+from ._private import PubSub, Handler, MessageType, EventType, Synchronizer
 
-from typing import List, Optional, Union, Callable
+from typing import List, Optional, Union
 import struct
 import json
 import socket
@@ -232,7 +232,7 @@ class Connection:
         data = json.loads(data)
         return VersionReply(data)
 
-    def get_bar_config(self, bar_id: str = None) -> Optional[BarConfigReply]:
+    def get_bar_config(self, bar_id: Optional[str] = None) -> Optional[BarConfigReply]:
         """Gets the bar configuration specified by the id.
 
         :param bar_id: The bar id to get the configuration for. If not given,
@@ -380,7 +380,7 @@ class Connection:
         self.subscriptions |= events
         return result
 
-    def off(self, handler: Callable[['Connection', IpcBaseEvent], None]):
+    def off(self, handler: Handler):
         """Unsubscribe the handler from being called on ipc events.
 
         :param handler: The handler that was previously attached with
@@ -389,9 +389,7 @@ class Connection:
         """
         self._pubsub.unsubscribe(handler)
 
-    def on(self,
-           event: Union[Event, str],
-           handler: Callable[['Connection', IpcBaseEvent], None] = None):
+    def on(self, event: Union[Event, str], handler: Optional[Handler] = None):
         def on_wrapped(handler):
             self._on(event, handler)
             return handler
@@ -401,7 +399,7 @@ class Connection:
         else:
             return on_wrapped
 
-    def _on(self, event: Union[Event, str], handler: Callable[['Connection', IpcBaseEvent], None]):
+    def _on(self, event: Union[Event, str], handler: Handler):
         """Subscribe to the event and call the handler when it is emitted by
         the i3 ipc.
 
@@ -413,6 +411,7 @@ class Connection:
         if type(event) is Event:
             event = event.value
 
+        assert type(event) is str
         event = event.replace('-', '_')
 
         if event.count('::') > 0:
@@ -426,7 +425,6 @@ class Connection:
             self._pubsub.subscribe(event, handler)
             return
 
-        event_type = 0
         if base_event == 'workspace':
             event_type = EventType.WORKSPACE
         elif base_event == 'output':
@@ -445,26 +443,25 @@ class Connection:
             event_type = EventType.TICK
         elif base_event == 'input':
             event_type = EventType.INPUT
-
-        if not event_type:
+        else:
             raise Exception('event not implemented')
 
         self.subscriptions |= event_type.value
 
         self._pubsub.subscribe(event, handler)
 
-    def _event_socket_setup(self):
+    def _event_socket_setup(self) -> None:
         self._sub_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self._sub_socket.connect(self._socket_path)
 
         self._subscribe(self.subscriptions)
 
-    def _event_socket_teardown(self):
+    def _event_socket_teardown(self) -> None:
         if self._sub_socket:
             self._sub_socket.shutdown(socket.SHUT_RDWR)
         self._sub_socket = None
 
-    def _event_socket_poll(self):
+    def _event_socket_poll(self: 'Connection'):
         if self._sub_socket is None:
             return True
 
@@ -479,7 +476,7 @@ class Connection:
         data = json.loads(data)
         msg_type = 1 << (msg_type & 0x7f)
         event_name = ''
-        event = None
+        event: IpcBaseEvent
 
         if msg_type == EventType.WORKSPACE.value:
             event_name = 'workspace'
@@ -518,7 +515,7 @@ class Connection:
             print(e)
             raise e
 
-    def main(self, timeout: float = 0.0):
+    def main(self, timeout: float = 0.0) -> None:
         """Starts the main loop for this connection to start handling events.
 
         :param timeout: If given, quit the main loop after ``timeout`` seconds.
@@ -557,7 +554,7 @@ class Connection:
         if loop_exception:
             raise loop_exception
 
-    def main_quit(self):
+    def main_quit(self) -> None:
         """Quits the running main loop for this connection."""
         logger.info('shutting down the main loop')
         self._quitting = True

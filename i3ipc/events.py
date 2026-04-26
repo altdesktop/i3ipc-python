@@ -1,6 +1,10 @@
 from . import con
 from .replies import BarConfigReply, InputReply
 from enum import Enum
+from typing import Any, Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .connection import Connection
 
 
 class IpcBaseEvent:
@@ -45,7 +49,7 @@ class Event(Enum):
     INPUT_REMOVED = 'input::removed'
 
 
-Event._subscribable_events = [e for e in Event if '::' not in e.value]
+Event._subscribable_events = [e for e in Event if '::' not in e.value]  # type: ignore[attr-defined]
 
 
 class WorkspaceEvent(IpcBaseEvent):
@@ -65,11 +69,11 @@ class WorkspaceEvent(IpcBaseEvent):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
-    def __init__(self, data, conn, _Con=con.Con):
+    def __init__(self, data: dict[str, Any], conn: 'Connection', _Con=con.Con):
         self.ipc_data = data
-        self.change = data['change']
-        self.current = None
-        self.old = None
+        self.change: str = data['change']
+        self.current: Optional[con.Con] = None
+        self.old: Optional[con.Con] = None
 
         if 'current' in data and data['current']:
             self.current = _Con(data['current'], None, conn)
@@ -89,9 +93,9 @@ class OutputEvent(IpcBaseEvent):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
-    def __init__(self, data):
+    def __init__(self, data: dict[str, Any]):
         self.ipc_data = data
-        self.change = data['change']
+        self.change: str = data['change']
 
 
 class ModeEvent(IpcBaseEvent):
@@ -107,10 +111,10 @@ class ModeEvent(IpcBaseEvent):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
-    def __init__(self, data):
+    def __init__(self, data: dict[str, Any]):
         self.ipc_data = data
-        self.change = data['change']
-        self.pango_markup = data.get('pango_markup', False)
+        self.change: str = data['change']
+        self.pango_markup: bool = data.get('pango_markup', False)
 
 
 class WindowEvent(IpcBaseEvent):
@@ -126,9 +130,9 @@ class WindowEvent(IpcBaseEvent):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
-    def __init__(self, data, conn, _Con=con.Con):
+    def __init__(self, data: dict[str, Any], conn: 'Connection', _Con=con.Con):
         self.ipc_data = data
-        self.change = data['change']
+        self.change: str = data['change']
         self.container = _Con(data['container'], None, conn)
 
 
@@ -185,13 +189,13 @@ class BindingInfo:
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
-    def __init__(self, data):
+    def __init__(self, data: dict[str, Any]):
         self.ipc_data = data
-        self.command = data['command']
-        self.event_state_mask = data.get('event_state_mask', [])
-        self.input_code = data['input_code']
-        self.symbol = data.get('symbol', None)
-        self.input_type = data['input_type']
+        self.command: str = data['command']
+        self.event_state_mask: list[str] = data.get('event_state_mask', [])
+        self.input_code: int = data['input_code']
+        self.symbol: Optional[str] = data.get('symbol', None)
+        self.input_type: str = data['input_type']
         # sway only
         self.symbols = data.get('symbols', [])
         # not included in sway
@@ -211,9 +215,9 @@ class BindingEvent(IpcBaseEvent):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
-    def __init__(self, data):
+    def __init__(self, data: dict[str, Any]):
         self.ipc_data = data
-        self.change = data['change']
+        self.change: str = data['change']
         self.binding = BindingInfo(data['binding'])
 
 
@@ -228,9 +232,9 @@ class ShutdownEvent(IpcBaseEvent):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
-    def __init__(self, data):
+    def __init__(self, data: dict[str, Any]):
         self.ipc_data = data
-        self.change = data['change']
+        self.change: str = data['change']
 
 
 class TickEvent(IpcBaseEvent):
@@ -248,11 +252,11 @@ class TickEvent(IpcBaseEvent):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
-    def __init__(self, data):
+    def __init__(self, data: dict[str, Any]):
         self.ipc_data = data
         # i3 didn't include the 'first' field in 4.15. See i3/i3#3271.
-        self.first = data.get('first', None)
-        self.payload = data['payload']
+        self.first: Optional[bool] = data.get('first', None)
+        self.payload: str = data['payload']
 
 
 class InputEvent(IpcBaseEvent):
@@ -265,7 +269,7 @@ class InputEvent(IpcBaseEvent):
     :ivar ipc_data: The raw data from the i3 ipc.
     :vartype ipc_data: dict
     """
-    def __init__(self, data):
+    def __init__(self, data: dict[str, Any]):
         self.ipc_data = data
-        self.change = data['change']
+        self.change: str = data['change']
         self.input = InputReply(data['input'])
