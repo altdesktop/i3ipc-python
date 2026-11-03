@@ -148,18 +148,37 @@ class Connection:
         """
         return struct.unpack(self._struct_header, data[:self._struct_header_size])
 
+    def _recv_exact(self, sock, size):
+        """Reads exactly ``size`` bytes from the socket. A stream socket can
+        deliver a message in any number of pieces, so keep reading until all
+        of it has arrived. Returns fewer bytes only if the peer closed the
+        connection first.
+        """
+        data = b''
+        while len(data) < size:
+            chunk = sock.recv(size - len(data))
+            if not chunk:
+                break
+            data += chunk
+        return data
+
     def _ipc_recv(self, sock):
-        data = sock.recv(14)
+        data = self._recv_exact(sock, self._struct_header_size)
 
         if len(data) == 0:
             logger.info('got EOF from ipc socket')
             return '', 0
 
+        if len(data) < self._struct_header_size:
+            raise ConnectionError('ipc socket closed in the middle of a message header')
+
         msg_magic, msg_length, msg_type = self._unpack_header(data)
         logger.info('reading ipc message: type=%s, length=%s', msg_type, msg_length)
-        msg_size = self._struct_header_size + msg_length
-        while len(data) < msg_size:
-            data += sock.recv(msg_length)
+        payload = self._recv_exact(sock, msg_length)
+        if len(payload) < msg_length:
+            raise ConnectionError('ipc socket closed in the middle of a message: '
+                                  'got %d of %d bytes' % (len(payload), msg_length))
+        data += payload
         payload = self._unpack(data)
         logger.info('message payload: %s', payload)
         return payload, msg_type

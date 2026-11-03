@@ -420,6 +420,20 @@ class Connection:
 
         return self._reconnect_future
 
+    async def _sock_recv_exact(self, sock, size: int) -> bytearray:
+        """Reads exactly ``size`` bytes from the socket. A stream socket can
+        deliver a message in any number of pieces, so keep reading until all
+        of it has arrived. Returns fewer bytes only if the peer closed the
+        connection first.
+        """
+        data = bytearray()
+        while len(data) < size:
+            chunk = await self._loop.sock_recv(sock, size - len(data))
+            if not chunk:
+                break
+            data.extend(chunk)
+        return data
+
     async def _message(self, message_type: MessageType, payload: str = '') -> bytearray:
         if message_type is MessageType.SUBSCRIBE:
             raise Exception('cannot subscribe on the command socket')
@@ -429,7 +443,7 @@ class Connection:
         for tries in range(0, 5):
             try:
                 await self._loop.sock_sendall(self._cmd_socket, _pack(message_type, payload))
-                buf = await self._loop.sock_recv(self._cmd_socket, _struct_header_size)
+                buf = await self._sock_recv_exact(self._cmd_socket, _struct_header_size)
                 break
             except ConnectionError as e:
                 if not self._auto_reconnect:
@@ -441,21 +455,18 @@ class Connection:
         if not buf:
             return bytearray()
 
-        magic, message_length, reply_type = _unpack_header(buf)
-        assert reply_type == message_type.value
-        assert magic == _MAGIC
-
         try:
-            message = bytearray()
-            remaining_length = message_length
-            while remaining_length:
-                buf = await self._loop.sock_recv(self._cmd_socket, remaining_length)
-                if not buf:
-                    logger.error('premature ending while reading message (%s bytes remaining)',
-                                 remaining_length)
-                    break
-                message.extend(buf)
-                remaining_length -= len(buf)
+            if len(buf) < _struct_header_size:
+                raise ConnectionError('ipc socket closed in the middle of a reply header')
+
+            magic, message_length, reply_type = _unpack_header(buf)
+            assert reply_type == message_type.value
+            assert magic == _MAGIC
+
+            message = await self._sock_recv_exact(self._cmd_socket, message_length)
+            if len(message) < message_length:
+                raise ConnectionError('ipc socket closed in the middle of a reply: '
+                                      'got %d of %d bytes' % (len(message), message_length))
         except ConnectionError as e:
             if self._auto_reconnect:
                 ensure_future(self._reconnect())
